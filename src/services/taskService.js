@@ -11,7 +11,7 @@ const computeDurationHours = (start, end) => {
 
 // Get all tasks with computed duration if task is done.
 const getAllTasks = async () => {
-  const [rows] = await db.query('SELECT * FROM tasks');
+  const [rows] = await db.query('SELECT * FROM tasks ');
   return rows.map(task => {
     if (task.status === 'done' && task.start_timestamp && task.end_timestamp) {
       task.durationHours = computeDurationHours(task.start_timestamp, task.end_timestamp);
