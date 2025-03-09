@@ -1,0 +1,39 @@
+.button {
+    border-radius: 10px;
+    background-color: var(--color-green-dark);
+    color: var(--color-text-light);
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.regular {
+    padding: 10px 15px;
+    font-weight: bold;
+}
+
+.small {
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 12px;
+}
+
+.mini {
+    border-radius: 5px;
+    padding: 5px 10px;
+    font-size: 10px;
+}
+
+.primary {
+    background-color: var(--color-green-dark);
+}
+
+.secondary {
+    background-color: var(--color-green-light);
+}
+
+.negative {
+    background-color: var(--color-negative);
+}
+  

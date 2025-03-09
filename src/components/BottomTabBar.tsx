@@ -1,0 +1,35 @@
+"use client";
+import Link from "next/link";
+import { Wheat, ClipboardList, Package, Truck, User } from "lucide-react";
+import styles from "@/styles/BottomTabBar.module.css";
+import { usePathname } from "next/navigation";
+
+const tabs = [
+  { name: "Control de procesos", path: "/process-control", icon: <Wheat /> },
+  { name: "Bitácora", path: "/logbook", icon: <ClipboardList /> },
+  { name: "Inventario", path: "/inventory", icon: <Package /> },
+  { name: "Pedidos", path: "/orders", icon: <Truck /> },
+  { name: "Usuario", path: "/user", icon: <User /> },
+];
+
+const BottomTabBar = () => {
+  const pathname = usePathname();
+  return (
+    <nav className={styles.bottomTabBar}>
+      {tabs.map((tab) => (
+        <Link
+          key={tab.name}
+          href={tab.path}
+          className={
+            (pathname == tab.path) ? `${styles.tab} ${styles.tabActive}` : styles.tab
+          }
+        >
+          <div className={styles.tabIcon}>{tab.icon}</div>
+          <span className={styles.tabText}>{tab.name}</span> 
+        </Link>
+      ))}
+    </nav>
+  );
+};
+
+export default BottomTabBar;

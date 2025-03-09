@@ -1,0 +1,59 @@
+.bottomTabBar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background-color: var(--color-green-dark);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 12px 0;
+  border-top: 2px solid var(--color-gray-dark);
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: var(--color-text-light);
+  font-size: 14px;
+  padding: 8px 12px;
+  transition: transform 0.2s ease-in-out, color 0.3s;
+}
+
+.tabIcon {
+  width: 24px;
+  height: 24px;
+  stroke-width: 1.5;
+  transition: stroke-width 0.2s ease-in-out;
+}
+
+.tabText {
+  margin-left: 8px;
+  font-weight: normal;
+  transition: font-weight 0.2s ease-in-out;
+  display: none;
+}
+
+.tabActive {
+  color: var(--color-accent);
+  transform: scale(1.1);
+}
+
+.tabActive .tabIcon {
+  stroke-width: 2.5;
+}
+
+.tabActive .tabText {
+  font-weight: bold;
+}
+
+@media (min-width: 1024px) {
+  .tab {
+    flex-direction: row;
+  }
+
+  .tabText {
+    display: inline;
+  }
+}
