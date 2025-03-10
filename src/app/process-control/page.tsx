@@ -1,6 +1,7 @@
 "use client";
 import Card from "@/components/Card";
 import BottomButton from "@/components/BottomButton";
+import ImageCard from "@/components/ImageCard";
 
 const ProcessControl = () => {
   return (
@@ -21,6 +22,16 @@ const ProcessControl = () => {
       <BottomButton onClick={() => alert("¡Acción ejecutada!")}>
         Continuar
       </BottomButton>
+
+      <div>
+        <ImageCard imageSrc="/file.svg" text="Harina de Plátano verde" type="small" />
+        <p></p>
+        <ImageCard imageSrc="/globe.svg" text="Nueva producción" type="large" />
+        <p></p>
+        <ImageCard imageSrc="/window.svg" text="Frijol" type="square" />
+      </div>
+
+      
 
     </div>
   );
