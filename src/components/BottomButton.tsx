@@ -1,10 +1,22 @@
-import React, { ButtonHTMLAttributes, FC } from "react";
-import styles from "../styles/Button.module.css";
+import React from "react";
+import Button from "./Button"
+import styles from "../styles/BottomButton.module.css";
 
-const BottomButton: FC<ButtonHTMLAttributes<HTMLButtonElement>> = ({ children, ...props }) => {
-  return (
-    <button className={styles.bottomButton} {...props}>
-      {children}
-    </button>
-  );
+interface BottomButtonProps {
+  children: React.ReactNode;
+  onClick: () => void;
+  size?: "regular" | "small" | "mini";
+  action?: "primary" | "secondary" | "negative";
 }
+
+const BottomButton: React.FC<BottomButtonProps> = ({ children, onClick, size, action }) => {
+  return (
+    <div className={styles.bottomButtonContainer}>
+      <Button onClick={onClick} size={size} action={action}>
+        {children}
+      </Button>
+    </div>
+  );
+};
+
+export default BottomButton;
