@@ -1,5 +1,6 @@
 "use client";
 import Card from "@/components/Card";
+import BottomButton from "@/components/BottomButton";
 
 const ProcessControl = () => {
   return (
@@ -16,6 +17,10 @@ const ProcessControl = () => {
         </p>
       </div>
       </Card>
+
+      <BottomButton onClick={() => alert("¡Acción ejecutada!")}>
+        Continuar
+      </BottomButton>
 
     </div>
   );
