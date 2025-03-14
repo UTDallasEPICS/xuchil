@@ -13,6 +13,13 @@ export const deliveryVariants = {
     label: "Envío por correo",
     containerClass: styles.mail,
   },
+  consignment: {
+    iconSrc: "/Consignment.svg",
+    alt: "Ícono de producto en consignación",
+    label: "En consignación",
+    iconClass: styles.iconConsignment,
+    containerClass: styles.consignment,
+  },
 };
 
 export const availableVariants = Object.keys(deliveryVariants) as Array<

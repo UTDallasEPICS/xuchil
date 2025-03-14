@@ -55,6 +55,12 @@ const User = () => {
           <DeliveryType type="badge" variant="mail"/>
           <DeliveryType type="picker" variant="mail"/>
         </div>
+        <br />
+        <div>
+          <DeliveryType type="icon" variant="consignment"/>
+          <DeliveryType type="badge" variant="consignment"/>
+          <DeliveryType type="picker" variant="consignment"/>
+        </div>
       </div>
     );
   };
