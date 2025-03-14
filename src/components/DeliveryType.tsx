@@ -1,33 +1,62 @@
-import { FC } from "react";
+"use client";
+import { FC, useState } from "react";
 import { ChevronDown } from "lucide-react";
-import styles from "@/styles/DeliveryType.module.css";
 import Image from "next/image";
 
+import styles from "@/styles/DeliveryType.module.css";
+import { deliveryVariants, availableVariants } from "@/constants/deliveryConfig";
+
 interface DeliveryTypeProps {
-  variant?: "personal" | "mail";
+  variant?: keyof typeof deliveryVariants;
   type?: "icon" | "badge" | "picker";
 }
 
-const DeliveryType: FC<DeliveryTypeProps> = ({ variant = "personal", type = "badge"}) => {
+const DeliveryType: FC<DeliveryTypeProps> = ({
+  variant = "personal",
+  type = "badge",
+}) => {
+  const [currentVariant, setCurrentVariant] = useState(variant);
+
+  const { iconSrc, alt, label, containerClass } =
+    deliveryVariants[currentVariant];
+
+  const handlePickerClick = () => {
+    if (type !== "picker") return;
+    const currentIndex = availableVariants.indexOf(currentVariant);
+    const nextIndex = (currentIndex + 1) % availableVariants.length;
+    setCurrentVariant(availableVariants[nextIndex]);
+  };
+
+  const TagName = type === "picker" ? "button" : "div";
+
   return (
-    <div className={`${styles.deliveryTypeContainer} ${styles[variant]} ${styles[type]}`}>
-        <Image
-          src={variant == "personal" ? "/Personal.svg" : "/Mail.svg"}
-          alt={variant == "personal" ? "Ícono de entrega personal" : "Ícono de entrega por correo"} 
-          width={variant == "personal" ? 40 : 40}
-          height={variant == "personal" ? 40 : 50}
-          className={variant == "personal" ? styles.iconPersonal : styles.iconMail} 
-        />
-        {(type=="badge" || type=="picker")&&
-            <p className={styles.deliveryTypeText}>
-                {variant == "personal" ? "Entrega personal" : "Envío por correo"}
-            </p>
-        }
-        {
-            type=="picker"&&
-            <div className={styles.chevron}>{<ChevronDown/>}</div>
-        }
-    </div>
+    <TagName
+      onClick={type === "picker" ? handlePickerClick : undefined}
+      type={type === "picker" ? "button" : undefined}
+      className={`
+        ${styles.deliveryTypeContainer}
+        ${containerClass}
+        ${styles[type]}
+      `}
+    >
+      <Image
+        src={iconSrc}
+        alt={alt}
+        width={40}
+        height={40}
+        className={styles.iconImg}
+      />
+
+      {(type === "badge" || type === "picker") && (
+        <p className={styles.deliveryTypeText}>{label}</p>
+      )}
+
+      {type === "picker" && (
+        <div className={styles.chevron}>
+          <ChevronDown />
+        </div>
+      )}
+    </TagName>
   );
 };
 

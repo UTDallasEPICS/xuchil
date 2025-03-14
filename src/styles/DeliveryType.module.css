@@ -29,7 +29,11 @@
     background-color: var(--color-green-light);
 }
 
-.iconMail, .iconPersonal {
+.consignment{
+    background-color: var(--color-green-light);
+}
+
+.iconImg {
     height: 26px;
     object-fit: fill;
     margin: 0;
