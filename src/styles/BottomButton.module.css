@@ -1,8 +1,13 @@
 .bottomButtonContainer {
     position: fixed;
-    bottom: 66px;
+    bottom: 64px;
     left: 50%;
     transform: translateX(-50%);
-    z-index: 1000;
+    z-index: 2;
     width: fit-content;
+    padding: 10px 0;
+    background-color: var(--color-green-light);
+    width: 100%;
+    display: flex;
+    justify-content: center;
 }

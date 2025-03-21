@@ -1,5 +1,6 @@
 "use client";
 import Button from "@/components/Button";
+import Chronometer from "@/components/Chronometer";
 import DeliveryType from "@/components/DeliveryType";
 import HeaderXuchil from "@/components/HeaderXuchil";
 
@@ -10,6 +11,9 @@ const User = () => {
         <p>Contenido de la sección Usuario.</p>
         <HeaderXuchil/>
         <br />
+        <div>
+          <Chronometer estimatedTime={1} />
+        </div>
         <div>
           <Button size="regular" action="primary" onClick={() => alert("Presionado")}>
             Botón 1
@@ -41,6 +45,17 @@ const User = () => {
           </Button>
           <Button size="mini" action="negative" onClick={() => alert("Presionado")}>
             Botón 9
+          </Button>
+        </div>
+        <div>
+          <Button size="regular" action="inverted" onClick={() => alert("Presionado")}>
+            Botón 10
+          </Button>
+          <Button size="small" action="inverted" onClick={() => alert("Presionado")}>
+            Botón 11
+          </Button>
+          <Button size="mini" action="inverted" onClick={() => alert("Presionado")}>
+            Botón 12
           </Button>
         </div>
         <br />
