@@ -33,7 +33,13 @@
     background-color: var(--color-green-light);
 }
 
+
+.inverted {
+    font-weight: bold;
+    color: var(--color-green-dark);
+    background-color: var(--color-background);
+}
+
 .negative {
     background-color: var(--color-negative);
 }
-  

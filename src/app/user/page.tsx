@@ -43,6 +43,17 @@ const User = () => {
             Botón 9
           </Button>
         </div>
+        <div>
+          <Button size="regular" action="inverted" onClick={() => alert("Presionado")}>
+            Botón 10
+          </Button>
+          <Button size="small" action="inverted" onClick={() => alert("Presionado")}>
+            Botón 11
+          </Button>
+          <Button size="mini" action="inverted" onClick={() => alert("Presionado")}>
+            Botón 12
+          </Button>
+        </div>
         <br />
         <div>
           <DeliveryType type="icon" variant="personal"/>
