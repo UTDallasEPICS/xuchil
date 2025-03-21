@@ -1,5 +1,6 @@
 "use client";
 import Button from "@/components/Button";
+import DeliveryType from "@/components/DeliveryType";
 import HeaderXuchil from "@/components/HeaderXuchil";
 
 const User = () => {
@@ -41,6 +42,24 @@ const User = () => {
           <Button size="mini" action="negative" onClick={() => alert("Presionado")}>
             Botón 9
           </Button>
+        </div>
+        <br />
+        <div>
+          <DeliveryType type="icon" variant="personal"/>
+          <DeliveryType type="badge" variant="personal"/>
+          <DeliveryType type="picker" variant="personal"/>
+        </div>
+        <br />
+        <div>
+          <DeliveryType type="icon" variant="mail"/>
+          <DeliveryType type="badge" variant="mail"/>
+          <DeliveryType type="picker" variant="mail"/>
+        </div>
+        <br />
+        <div>
+          <DeliveryType type="icon" variant="consignment"/>
+          <DeliveryType type="badge" variant="consignment"/>
+          <DeliveryType type="picker" variant="consignment"/>
         </div>
       </div>
     );
