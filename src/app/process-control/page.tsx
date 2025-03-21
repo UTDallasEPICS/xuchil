@@ -2,6 +2,14 @@
 import Card from "@/components/Card";
 import BottomButton from "@/components/BottomButton";
 import ImageCard from "@/components/ImageCard";
+import ProductPicker from "@/components/ProductPicker";
+
+const products = [
+  { id: 1, name: "Harina de Mezquite", weight: "5kg", image: "/file.svg" },
+  { id: 2, name: "Harina de Maíz Negro", weight: "5kg", image: "/file.svg" },
+  { id: 3, name: "Harina de Maíz Amarillo", weight: "1kg", image: "/file.svg" },
+  { id: 4, name: "Sustituto de Café", weight: "500g", image: "/file.svg" },
+];
 
 const ProcessControl = () => {
   return (
@@ -31,7 +39,17 @@ const ProcessControl = () => {
         <ImageCard imageSrc="/window.svg" text="Frijol" type="square" />
       </div>
 
-      
+      <div>
+        <h1>Producto 1</h1>
+        <ProductPicker products={products} />
+      </div>
+
+      <div>
+        <h1>Producto 2</h1>
+        <ProductPicker products={products} />
+      </div>
+
+      <div style={{ height: "150px" }} />
 
     </div>
   );
