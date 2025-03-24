@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@prisma/client": "^6.4.1",
+    "jose": "^6.0.10",
     "lucide-react": "^0.476.0",
     "next": "15.2.1",
     "react": "^19.0.0",
