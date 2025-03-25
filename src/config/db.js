@@ -5,7 +5,7 @@ const pool = mysql.createPool({
   host: 'localhost',           // Only the host name
   port: 3306,                  // Specify the port separately
   user: 'root', // Replace with your MySQL username
-  password: 'Thatwyliebandis#1', // Replace with your MySQL password
+  password: 'TWB1', // Replace with your MySQL password
   database: 'xuchilDemo1',
   waitForConnections: true,
   connectionLimit: 10,
