@@ -9,3 +9,12 @@ datasource db {
   provider = "postgresql"
   url      = env("PRISMA_DB_URL")
 }
+
+model User {
+  user_id Int @id @default(autoincrement())
+  user_name String @db.VarChar(50)
+  user_password String @db.VarChar(50)
+  user_role String @db.VarChar(50)
+  user_email String? @db.VarChar(50)
+  user_phoneno String? @db.VarChar(50)
+}
