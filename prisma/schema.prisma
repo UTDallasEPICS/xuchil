@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,10 +8,16 @@ datasource db {
 }
 
 model User {
-  user_id Int @id @default(autoincrement())
-  user_name String @db.VarChar(50)
-  user_password String @db.VarChar(50)
-  user_role String @db.VarChar(50)
-  user_email String? @db.VarChar(50)
-  user_phoneno String? @db.VarChar(50)
+  id Int @id @default(autoincrement())
+  username String
+  name String
+  passwordHash String
+  role Role
+  email String?
+  phoneno String?
+}
+
+enum Role {
+  WORKER
+  ADMIN
 }

@@ -1,4 +1,4 @@
 export default interface SessionPayload {
-    userId: number
-    role: string
+  id: number
+  role: string
 }
