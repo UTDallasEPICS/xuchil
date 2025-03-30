@@ -6,15 +6,15 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("PRISMA_DB_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 model User {
   user_id Int @id @default(autoincrement())
-  user_name String @db.VarChar(50)
-  user_password String @db.VarChar(50)
-  user_role String @db.VarChar(50)
-  user_email String? @db.VarChar(50)
-  user_phoneno String? @db.VarChar(50)
+  user_name String
+  user_password String
+  user_role String
+  user_email String?
+  user_phoneno String?
 }
