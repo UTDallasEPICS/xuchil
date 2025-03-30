@@ -4,26 +4,24 @@ import { createSession } from '@/lib/session';
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const { username, password } = body;
 
+  // lookup user
   const user = await prisma.user.findUnique({
     where: {
-      username,
+      username: body.username,
     },
   });
   if (!user) {
-    return new Response("Invalid Credentials", {
-      status: 401,
-    });
+    return new Response("Invalid Credentials", { status: 401 });
   }
 
-  const match = await bcrypt.compare(password, user.passwordHash);
+  // compare passwords
+  const match = await bcrypt.compare(body.password, user.passwordHash);
   if (!match) {
-    return new Response("Invalid Credentials", {
-      status: 401
-    });
+    return new Response("Invalid Credentials", { status: 401 });
   }
 
+  // create session cookies
   const payload = {
     id: user.id,
     role: user.role,
