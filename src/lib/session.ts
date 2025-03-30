@@ -29,10 +29,12 @@ export async function decrypt(session: string | undefined = '') {
 }
 
 export async function createSession(payload: SessionPayload) {
+  // calculate expiration one week from now
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  // encrypt payload
   const session = await encrypt(payload, expiresAt);
+  // set cookie
   const cookieStore = await cookies();
- 
   cookieStore.set('session', session, {
     httpOnly: true,
     secure: true,
@@ -43,14 +45,14 @@ export async function createSession(payload: SessionPayload) {
 }
 
 export const verifySession = cache(async (): Promise<SessionPayload> => {
+  // get cookie
   const cookieStore = await cookies();
   const session = cookieStore.get('session')?.value;
+  // decrypt payload
   const payload = await decrypt(session);
-  
   if (!payload?.id) {
     redirect('/login');
   }
-
   return payload;
 })
 
@@ -59,7 +61,6 @@ export const getUser = cache(async () => {
   if (!payload) {
     return null;
   }
-
   try {
     const user = await prisma.user.findUnique({
       where: {
