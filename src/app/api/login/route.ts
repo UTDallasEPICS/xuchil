@@ -27,4 +27,6 @@ export async function POST(request: Request) {
     role: user.role,
   };
   await createSession(payload);
+
+  return new Response(null, { status: 204 })
 }
