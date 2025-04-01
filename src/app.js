@@ -15,7 +15,7 @@ app.use('/tasks', taskRoutes);
 
 // Import and use product routes
 const productRoutes = require('./routes/productRoutes');
-app.use('/products', productRoutes);
+app.use('/api/products', productRoutes);
 
 // A simple home route
 app.get('/', (req, res) => {

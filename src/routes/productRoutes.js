@@ -2,10 +2,10 @@ const express = require('express');
 const router = express.Router();
 const productController = require('../controllers/productController');
 
-// GET /products - Retrieve all products
+// GET /api/products - Retrieve all products
 router.get('/', productController.getProducts);
 
-// GET /products/category/:category - Retrieve products filtered by category
-router.get('/category/:category', productController.getProductsByCategory);
+// GET /api/products/:id - Retrieve a specific product
+router.get('/:id', productController.getProduct);
 
 module.exports = router;

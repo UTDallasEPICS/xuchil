@@ -1,6 +1,6 @@
 const productService = require('../services/productService');
 
-// Handler for GET /products
+// Handler for GET /api/products
 const getProducts = async (req, res) => {
   try {
     const products = await productService.getAllProducts();
@@ -10,12 +10,14 @@ const getProducts = async (req, res) => {
   }
 };
 
-// Handler for GET /products/category/:category
-const getProductsByCategory = async (req, res) => {
+// Handler for GET /api/products/:id
+const getProduct = async (req, res) => {
   try {
-    const category = req.params.category;
-    const products = await productService.getProductsByCategory(category);
-    res.status(200).json(products);
+    const product = await productService.getProductById(req.params.id);
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+    res.status(200).json(product);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -23,5 +25,5 @@ const getProductsByCategory = async (req, res) => {
 
 module.exports = {
   getProducts,
-  getProductsByCategory
+  getProduct
 };

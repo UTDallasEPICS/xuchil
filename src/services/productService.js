@@ -1,18 +1,18 @@
 const db = require('../config/db');
 
-// Retrieve all products.
+// Get all products
 const getAllProducts = async () => {
-  const [rows] = await db.query('SELECT * FROM products');
+  const [rows] = await db.query('SELECT * FROM product');
   return rows;
 };
 
-// Retrieve products by category.
-const getProductsByCategory = async (category) => {
-  const [rows] = await db.query('SELECT * FROM products WHERE category = ?', [category]);
-  return rows;
+// Get a specific product by ID
+const getProductById = async (id) => {
+  const [rows] = await db.query('SELECT * FROM product WHERE product_id = ?', [id]);
+  return rows[0] || null;
 };
 
 module.exports = {
   getAllProducts,
-  getProductsByCategory
+  getProductById
 };
