@@ -11,7 +11,7 @@ const products = [
   { id: 4, name: "Sustituto de Café", weight: "500g", image: "/file.svg" },
 ];
 
-const Inentory = () => {
+const Inventory = () => {
   return (
     <div className="page">
       <h1>Inventario</h1>
@@ -55,5 +55,5 @@ const Inentory = () => {
   );
 };
 
-export default Inentory;
+export default Inventory;
   
