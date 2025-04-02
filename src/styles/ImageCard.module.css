@@ -1,50 +1,81 @@
 .card {
-    background-color: var(--color-gray-light);
-    border-radius: 12px;
-    padding: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
-    text-align: center;
-  }
-  
+  background-color: var(--color-gray-light);
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  width: 100%;
+}
+
+.small {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 10px 15px;
+  max-width: 320px; 
+  margin: 0 auto;
+}
+
+.small .image {
+  width: 40px;
+  height: 40px;
+  margin-right: 10px;
+  object-fit: cover;
+}
+
+.square {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 150px; 
+  aspect-ratio: 1 / 1;
+  margin: 0 auto;
+}
+
+.square .image {
+  width: 60%; 
+  height: auto;
+  object-fit: cover;
+  margin-bottom: 8px;
+}
+
+.large {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 320px;
+  aspect-ratio: 16 / 10; 
+  margin: 0 auto;
+  padding: 10px 15px; 
+}
+
+
+.large .image {
+  width: 40%; 
+  height: auto;
+  object-fit: cover;
+  margin-bottom: 10px;
+}
+
+.text {
+  font-size: 24px;
+  font-weight: 900;
+  color: var(--color-text-dark);
+}
+
+@media (min-width: 1024px) {
   .small {
-    flex-direction: row;
-    padding: 10px 15px;
+    max-width: 320px; 
   }
-  
-  .small .image {
-    width: 30px;
-    height: 30px;
-    margin-right: 10px;
-  }
-  
   .square {
-    flex-direction: column;
-    width: 80px;
-    height: 80px;
+    max-width: 150px;
   }
-  
-  .square .image {
-    width: 50px;
-    height: 50px;
-  }
-  
   .large {
-    flex-direction: column;
-    width: 160px;
-    height: 100px;
+    max-width: 320px;
   }
-  
-  .large .image {
-    width: 60px;
-    height: 60px;
-  }
-  
-  .text {
-    font-size: 14px;
-    font-weight: bold;
-    color: var(--color-text-dark);
-  }
-  
+}

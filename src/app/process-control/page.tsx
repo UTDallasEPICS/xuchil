@@ -36,7 +36,10 @@ const ProcessControl = () => {
         <p></p>
         <ImageCard imageSrc="/globe.svg" text="Nueva producción" type="large" />
         <p></p>
-        <ImageCard imageSrc="/window.svg" text="Frijol" type="square" />
+        <div style={{display:'flex'}}>
+          <ImageCard imageSrc="/window.svg" text="Frijol" type="square" />
+          <ImageCard imageSrc="/window.svg" text="Frijol" type="square" />
+        </div>
       </div>
 
       <div>
