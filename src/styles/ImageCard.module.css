@@ -5,6 +5,8 @@
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
   text-align: center;
   width: 100%;
+  box-sizing: border-box; 
+  cursor: pointer;
 }
 
 .small {
@@ -20,6 +22,7 @@
 .small .image {
   width: 40px;
   height: 40px;
+  margin-left: 10px;
   margin-right: 10px;
   object-fit: cover;
 }
@@ -51,9 +54,9 @@
   max-width: 320px;
   aspect-ratio: 16 / 10; 
   margin: 0 auto;
-  padding: 10px 15px; 
+  padding: 10px 15px;
+  box-sizing: border-box;
 }
-
 
 .large .image {
   width: 40%; 
@@ -63,9 +66,17 @@
 }
 
 .text {
+  margin: 0;
   font-size: 24px;
   font-weight: 900;
   color: var(--color-text-dark);
+  text-align: center;
+  user-select: none;
+}
+
+.small .text {
+  margin-left: 20px;
+  text-align: left;
 }
 
 @media (min-width: 1024px) {
