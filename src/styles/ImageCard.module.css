@@ -52,14 +52,14 @@
   justify-content: center;
   width: 100%;
   max-width: 320px;
-  aspect-ratio: 16 / 10; 
+  aspect-ratio: 2/1; 
   margin: 0 auto;
   padding: 10px 15px;
   box-sizing: border-box;
 }
 
 .large .image {
-  width: 40%; 
+  width: 35%; 
   height: auto;
   object-fit: cover;
   margin-bottom: 10px;
