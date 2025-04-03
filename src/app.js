@@ -6,12 +6,12 @@ const port = process.env.PORT || 3000;
 app.use(express.json());
 
 // Import user routes and set them up
-const userRoutes = require('./routes/userRoutes');
-app.use('/users', userRoutes);
+//const userRoutes = require('./routes/userRoutes');
+//app.use('/users', userRoutes);
 
 // Import and use task routes
-const taskRoutes = require('./routes/taskRoutes');
-app.use('/tasks', taskRoutes);
+//const taskRoutes = require('./routes/taskRoutes');
+//app.use('/tasks', taskRoutes);
 
 // Import and use product routes
 const productRoutes = require('./routes/productRoutes');
