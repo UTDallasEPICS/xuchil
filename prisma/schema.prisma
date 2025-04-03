@@ -9,3 +9,40 @@ datasource db {
   provider = "sqlite"
   url      = "file:./dev.db"
 }
+
+model Order {
+  id               Int              @id @default(autoincrement())
+  client           String
+  deliveryAddress  String
+  deliveryDate     DateTime
+  deliveryMethod   DeliveryMethod
+  deliveryStatus   DeliveryStatus  @default(pending)
+  productsOrdered  OrderEntry[]
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+}
+
+model OrderEntry {
+  id Int @id @default(autoincrement())
+
+  order      Order   @relation(fields: [orderId], references: [id])
+  orderId    Int  
+
+  product Product @relation(fields: [productId], references: [id])
+  productId Int
+}
+
+enum DeliveryMethod {
+  personal
+  mail
+}
+
+enum DeliveryStatus {
+  pending
+  done
+}
+
+model Product {
+  id Int @id @default(autoincrement())
+  orderEntries OrderEntry[]
+}
