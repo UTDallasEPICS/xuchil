@@ -1,8 +1,9 @@
 import prisma from '@/lib/db'
 import bcrypt from 'bcrypt'
 import { createSession } from '@/lib/session';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   const body = await request.json();
 
   // lookup user
@@ -12,13 +13,13 @@ export async function POST(request: Request) {
     },
   });
   if (!user) {
-    return new Response("Invalid Credentials", { status: 401 });
+    return new NextResponse("Invalid Credentials", { status: 401 });
   }
 
   // compare passwords
   const match = await bcrypt.compare(body.password, user.passwordHash);
   if (!match) {
-    return new Response("Invalid Credentials", { status: 401 });
+    return new NextResponse("Invalid Credentials", { status: 401 });
   }
 
   // create session cookies
@@ -28,5 +29,5 @@ export async function POST(request: Request) {
   };
   await createSession(payload);
 
-  return new Response(null, { status: 204 })
+  return new NextResponse(null, { status: 204 })
 }
