@@ -6,21 +6,24 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("PRISMA_DB_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 model Task {
-  log_id          Int      @id @default(autoincrement())
+  id              Int       @id @default(autoincrement())
   activity        String
   input_weight    Float?
   output_weight   Float?
   loss_weight     Float?
-  status          String
-  start_timestamp DateTime @default(now())
+  status          String    // "progressing", "paused", or "done"
+  start_timestamp DateTime  @default(now())
   end_timestamp   DateTime?
   notes           String?
   
-  worker         User     @relation(fields: [worker_id], references: [id])
-  product        Product  @relation(fields: [product_id], references: [id])
+  worker_id       Int
+  worker          User      @relation(fields: [worker_id], references: [id])
+  
+  product_id      Int
+  product         Product   @relation(fields: [product_id], references: [id])
 }
