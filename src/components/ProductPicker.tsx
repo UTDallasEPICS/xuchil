@@ -23,14 +23,12 @@ const ProductPicker: React.FC<ProductPickerProps> = ({ products }) => {
 
   return (
     <div className={styles.productPicker}>
-      {/* Botón de selección */}
       <button className={styles.selectedProduct} onClick={() => setIsOpen(!isOpen)}>
         <img src={selectedProduct.image} alt={selectedProduct.name} className={styles.productImage} />
         <span>{selectedProduct.name} ({selectedProduct.weight})</span>
         <div className={styles.arrow}></div>
       </button>
 
-      {/* Lista desplegable */}
       {isOpen && (
         <div className={styles.dropdown}>
           {products.map((product) => (
