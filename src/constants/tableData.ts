@@ -1,18 +1,61 @@
+// tableData.ts
+import { Proceso } from "@/types/Activities";
+
+export const procesos: Proceso[] = [
+  {
+    id: "143217",
+    producto: "Galletas de amaranto",
+    fechaInicio: "2025-02-04",
+    fechaFin: "2025-02-06",
+    materiaPrimaKg: 16.2,
+    productoKg: 15.4,
+    mermaKg: 0.71,
+    observaciones: "Todo el proceso se realizó correctamente. Se notó ligera merma en el horneado.",
+    actividades: [
+      {
+        usuario: "Antonio López",
+        tarea: "Molienda y tamizado",
+        fecha: "2025-02-04",
+        horaInicio: "10:30",
+        horaFin: "11:15",
+      },
+      {
+        usuario: "Minerva Cruz",
+        tarea: "Lavado y secado",
+        fecha: "2025-02-04",
+        horaInicio: "11:15",
+        horaFin: "12:00",
+      },
+      {
+        usuario: "Zoraida Pérez",
+        tarea: "Envasado",
+        fecha: "2025-02-06",
+        horaInicio: "12:00",
+        horaFin: "13:00",
+      },
+    ],
+  },
+];
+
 export const userTaskColumns = [
     { key: "usuario", label: "Usuario" },
     { key: "tarea", label: "Tarea" },
     { key: "detalles", label: "Detalles", isButton: true },
   ];
   
-  export const userTaskData = [
-    { usuario: "Antonio López", tarea: "Molienda y tamizado", detalles: { text: "Ver", onClick: () => alert("Ver detalles de Antonio López") } },
-    { usuario: "Minerva Cruz", tarea: "Lavado y secado", detalles: { text: "Ver", onClick: () => alert("Ver detalles de Minerva Cruz") } },
-    { usuario: "Zoraida Pérez", tarea: "Envasado", detalles: { text: "Ver", onClick: () => alert("Ver detalles de Zoraida Pérez") } },
-    { usuario: "Petronila Hernández", tarea: "Preparación de la mezcla", detalles: { text: "Ver", onClick: () => alert("Ver detalles de Petronila Hernández") } },
-    { usuario: "Minerva Cruz", tarea: "Dar forma a las galletas", detalles: { text: "Ver", onClick: () => alert("Ver detalles de Minerva Cruz") } },
-    { usuario: "Antonio López", tarea: "Horneado", detalles: { text: "Ver", onClick: () => alert("Ver detalles de Antonio López") } },
-    { usuario: "Petronila López", tarea: "Empacado", detalles: { text: "Ver", onClick: () => alert("Ver detalles de Petronila López") } },
-  ];
+  export const userTaskData = procesos.flatMap((proceso) =>
+    proceso.actividades.map((actividad) => ({
+      usuario: actividad.usuario,
+      tarea: actividad.tarea,
+      detalles: {
+        text: "Ver",
+        onClick: () => {
+          console.log("Proceso completo:", proceso);
+          alert(`Detalles de proceso para ${actividad.usuario}:\nProducto: ${proceso.producto}`);
+        },
+      },
+    }))
+  );
   
   export const movementColumns = [
     { key: "movimiento", label: "Movimiento" },
