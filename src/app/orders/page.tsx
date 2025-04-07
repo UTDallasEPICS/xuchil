@@ -2,6 +2,7 @@
 import DynamicTable from "@/components/DynamicTable";
 import FilterButton from "@/components/FilterButton";
 import TextField from "@/components/TextField";
+import UnitField from "@/components/UnitField";
 import { monthFilterOptions, productFilterOptions, userFilterOptions } from "@/constants/filterOptions";
 import { movementColumns, movementData, userTaskColumns, userTaskData } from "@/constants/tableData";
 
@@ -20,6 +21,8 @@ const Orders = () => {
         <FilterButton title="Filtrar por mes" options={monthFilterOptions} />
       </div>
       <div style={{ padding: "20px" }}>
+        <UnitField titulo="Materia prima" cantidad={16.2} unidad="Kg" />
+        <UnitField cantidad={15.4} unidad="Kg" />
         <h1>Tabla de Usuarios y Tareas</h1>
 
         <h1>Tabla de Movimientos</h1>

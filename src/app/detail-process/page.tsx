@@ -4,6 +4,7 @@ import { procesos } from "@/constants/tableData";
 import { Calendar, User } from "lucide-react";
 import Card from "@/components/Card";
 import styles from "@/styles/DetailProcess.module.css";
+import UnitField from "@/components/UnitField";
 
 const DetailProcess = () => {
   const searchParams = useSearchParams();
@@ -36,11 +37,14 @@ const DetailProcess = () => {
         ))}
       </ul>
 
-      <div className={styles.pesos}>
-        <div><span>Materia prima</span><strong>{proceso.materiaPrimaKg} Kg</strong></div>
-        <div><span>Producto</span><strong>{proceso.productoKg} Kg</strong></div>
-        <div><span>Merma</span><strong>{proceso.mermaKg} Kg</strong></div>
-      </div>
+        <UnitField titulo="Materia prima" cantidad={proceso.materiaPrimaKg} unidad="Kg" />
+        <UnitField titulo="Producto" cantidad={proceso.productoKg} unidad="Kg" />
+        <UnitField titulo="Merma" cantidad={proceso.mermaKg} unidad="Kg" />
+      {/* <div className={styles.pesos}>
+        <UnitField titulo="Materia prima" cantidad={proceso.materiaPrimaKg} unidad="Kg" />
+        <UnitField titulo="Producto" cantidad={proceso.productoKg} unidad="Kg" />
+        <UnitField titulo="Merma" cantidad={proceso.mermaKg} unidad="Kg" />
+      </div> */}
 
       <div className={styles.observaciones}>
         <h4>Observaciones</h4>
