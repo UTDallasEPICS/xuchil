@@ -3,4 +3,7 @@ export interface ProcessStep {
     title: string;
     estimatedTime: number; 
     hasInput: boolean;
-}
+    unit?: string;         
+    description?: string;
+  }
+  
