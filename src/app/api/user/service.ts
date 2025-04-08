@@ -1,8 +1,8 @@
-import prisma from '@/lib/db'; // Adjusted path for Prisma client
+import prisma from '@/lib/db';
 
 // Get all users from the database
 export const getAllUsers = async () => {
-  return await prisma.user.findMany(); // Prisma query to get all users
+  return await prisma.user.findMany(); 
 };
 
 // Get a specific user by ID
@@ -26,7 +26,7 @@ export const createUser = async (userData: { user_name: string; user_password: s
       user_phoneno,
     },
   });
-  return newUser.user_id; // Return the ID of the newly created user
+  return newUser.user_id;
 };
 
 // Update a specific user by ID
@@ -46,6 +46,6 @@ export const deleteUser = async (id: number) => {
     });
     return true;
   } catch (error) {
-    return false; // Return false if the user was not found
+    return false;
   }
 };
