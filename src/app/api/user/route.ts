@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllUsers, getUserById, createUser, updateUser, deleteUser } from './service';
+import prisma from '@/lib/db';
 
 // Get all users
 export async function GET(req: NextRequest) {
   try {
-    const users = await getAllUsers();
+    const users = await prisma.user.findMany();
     return NextResponse.json({ message: 'Users fetched successfully', data: users }, { status: 200 });
   } catch (error) {
     return NextResponse.json({ message: error instanceof Error ? error.message : "An unknown error occurred" }, { status: 500 });
@@ -15,8 +15,19 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const newUser = await createUser(body);
-    return NextResponse.json({ message: 'User created successfully', userId: newUser }, { status: 201 });
+    const { user_name, user_password, user_role, user_email, user_phoneno } = body;
+    
+    const newUser = await prisma.user.create({
+      data: {
+        user_name,
+        user_password,
+        user_role,
+        user_email,
+        user_phoneno,
+      },
+    });
+    
+    return NextResponse.json({ message: 'User created successfully', userId: newUser.user_id }, { status: 201 });
   } catch (error) {
     return NextResponse.json({ message: error instanceof Error ? error.message : "An unknown error occurred" }, { status: 500 });
   }
