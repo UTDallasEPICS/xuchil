@@ -1,0 +1,71 @@
+.filterButton {
+    background-color: var(--color-gray-light);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 10px 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    font-family: "Lato", sans-serif;
+    font-weight: 700;
+  }
+  
+  .filterButton:hover {
+    background-color: #a9a495;
+  }
+  
+  .overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(193, 188, 172, 0.94); 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  
+  .modal {
+    background: none;
+    padding: 20px;
+    text-align: center;
+    min-width: 90%;
+    height: 90%;
+    align-items: flex-start;
+    overflow-y: auto;
+  }
+  
+  .modal h2 {
+    margin-bottom: 20px;
+    font-size: 1.8rem;
+    color: white;
+    font-weight: bold;
+  }
+  
+  .modal ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .modal li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px;
+    font-size: 1.2rem;
+    color: white;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+  
+  .modal li:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+  }
+  

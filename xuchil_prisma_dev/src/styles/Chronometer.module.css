@@ -1,0 +1,67 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .idealTime {
+    color: var(--color-green-light);
+    font-size: 18px;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+  
+  .startButton,
+  .disabledButton {
+    background: none;
+    border: none;
+    padding: 0;
+  }
+  
+  .disabledButton {
+    cursor: default;
+  }
+  
+  .timerContainer {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background-color: var(--color-green-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .progressSvg {
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+  
+  .timerTextContainer {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  
+  .timerText {
+    color: var(--color-text-light);
+    font-size: 28px;
+    font-weight: bold;
+  }
+  
+  .pausePlayButton {
+    margin-top: 16px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: var(--color-gray-dark);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  

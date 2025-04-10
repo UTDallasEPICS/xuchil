@@ -1,0 +1,12 @@
+.card {
+    border: 3px solid var(--color-green-dark);
+    border-radius: 20px;
+    padding: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 10px;
+    min-width: 75vw;
+    min-height: 10vh;
+  }
+  
