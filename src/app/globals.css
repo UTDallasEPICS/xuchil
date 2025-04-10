@@ -1,0 +1,147 @@
+@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap');
+
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  
+  --color-background: #f6edeb;
+  --color-secondary: #efd0ca;
+  --color-mail: #dc8e5e;
+  --color-consignment: #c13636;
+  --color-accent: #ffb133;
+  --color-text-dark: #050902;
+  --color-text-light: #ffffff;
+  --color-gray-light: #c1bcac;
+  --color-gray-dark: #979b8d;
+  --color-green-light: #5c7457;
+  --color-green-dark: #214e34;
+  --color-negative: #e63535;
+
+  --font-size-h1: 2.5rem; 
+  --max-width-h1: 1200px;
+  --font-size-h2: 2rem;
+  --font-size-h3: 1.5rem;
+  --font-size-p: 1rem; 
+
+  @media (max-width: 1024px) {
+    --font-size-h1: 2rem;
+    --font-size-h2: 1.75rem; 
+    --font-size-h3: 1.25rem;
+    --max-width-h1: 800px;
+  }
+
+  @media (max-width: 768px) {
+    --font-size-h1: 1.75rem; 
+    --font-size-h2: 1.5rem; 
+    --font-size-h3: 1.15rem; 
+    --max-width-h1: 600px;
+  }
+
+  @media (max-width: 480px) {
+    --font-size-h1: 1.5rem; 
+    --font-size-h2: 1.25rem; 
+    --font-size-h3: 1.05rem;
+    --font-size-p: 0.9rem; 
+  }
+}
+
+body {
+  font-family: "Lato", sans-serif;
+  margin: 0;
+  padding: 0;
+  font-size: var(--font-size-p);
+  background-color: var(--color-background);
+  color: var(--color-text);
+}
+
+h1 {
+  font-family: "Lato", sans-serif;
+  font-weight: 900;
+  font-size: var(--font-size-h1);
+  color: var(--color-green-dark);
+  text-align: left;
+  width: 100%;
+  max-width: var(--max-width-h1);
+  /* border-style: solid; */
+
+}
+
+h2 {
+  font-family: "Lato", sans-serif;
+  font-weight: 700;
+  font-size: var(--font-size-h2);
+  color: var(--color-green-light);
+}
+
+h3 {
+  font-family: "Lato", sans-serif;
+  font-weight: 700;
+  font-size: var(--font-size-h3);
+}
+
+p {
+  font-family: "Lato", sans-serif;
+  font-weight: 400;
+  font-size: var(--font-size-p);
+}
+
+textarea {
+  font-family: "Lato", sans-serif;
+  font-weight: 400;
+  font-size: var(--font-size-p);
+}
+
+.lato-thin { font-weight: 100; }
+.lato-light { font-weight: 300; }
+.lato-regular { font-weight: 400; }
+.lato-bold { font-weight: 700; }
+.lato-black { font-weight: 900; }
+.lato-thin-italic { font-weight: 100; font-style: italic; }
+.lato-light-italic { font-weight: 300; font-style: italic; }
+.lato-regular-italic { font-weight: 400; font-style: italic; }
+.lato-bold-italic { font-weight: 700; font-style: italic; }
+.lato-black-italic { font-weight: 900; font-style: italic; }
+
+body {
+  margin: 0;
+  background-color: var(--color-background);
+  color: var(--color-text-dark);
+  min-width: 320px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+a {
+  font-weight: 500;
+  color: var(--color-green-dark);
+  text-decoration: inherit;
+}
+
+a:hover {
+  color: var(--color-accent);
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: var(--color-secondary);
+  cursor: pointer;
+  transition: border-color 0.25s;
+  color: var(--color-text-dark);
+}
+
+button:hover {
+  border-color: var(--color-green-dark);
+}
+
+button:focus,
+button:focus-visible {
+  outline: 4px auto var(--color-green-dark);
+}
