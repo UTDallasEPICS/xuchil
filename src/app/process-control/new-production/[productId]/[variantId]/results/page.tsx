@@ -21,7 +21,6 @@ const ProcessResultsPage: React.FC = () => {
   };
 
   return (
-    // <div className="page">
     <div className={`page ${styles.container}`}>
         <HeaderXuchil />
         <h1>Resultados</h1>

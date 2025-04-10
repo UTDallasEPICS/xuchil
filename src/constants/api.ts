@@ -1,5 +1,6 @@
 import { ProcessStep } from "@/types/ProcessStep";
 import { ProductVariant } from "@/types/ProductVariant";
+import { PendingTask } from "@/types/PendingTask";
 
 export function fetchProducts() {
     return [
@@ -327,4 +328,42 @@ export function fetchProductVariants(productId: string): ProductVariant[] {
       ];
     }
     return [];
+  }
+
+  export function fetchPendingTasks(): PendingTask[] {
+    return [
+      {
+        id: 1,
+        productId: "harina",
+        productName: "Harina de Mezquite",
+        variantId: "mezquite",
+        startDate: "13/02/2025",
+        startedBy: "Antonio López",
+        currentStep: "Tatemado (Mezquite 5kg)",
+        currentStepNumber: 2,
+        totalSteps: 7,
+      },
+      {
+        id: 2,
+        productId: "cafe",
+        productName: "Sustituto de Café",
+        variantId: "sustituto",
+        startDate: "15/03/2025",
+        startedBy: "Juan Pérez",
+        currentStep: "Tostado",
+        currentStepNumber: 3,
+        totalSteps: 15,
+      },
+      {
+        id: 3,
+        productId: "harina",
+        productName: "Harina de Mezquite",
+        variantId: "mezquite",
+        startDate: "13/02/2025",
+        startedBy: "Zoraida Jiménez",
+        currentStep: "Transporte",
+        currentStepNumber: 4,
+        totalSteps: 7,
+      },
+    ];
   }
