@@ -22,6 +22,14 @@ enum Role {
   ADMIN
 }
 
+model Product {
+  product_id     Int     @id @default(autoincrement())
+  category       String
+  name           String
+  is_end_product Boolean
+}
+
+
 model Order {
   id               Int              @id @default(autoincrement())
   client           String
@@ -52,9 +60,4 @@ enum DeliveryMethod {
 enum DeliveryStatus {
   pending
   done
-}
-
-model Product {
-  id Int @id @default(autoincrement())
-  orderEntries OrderEntry[]
 }
