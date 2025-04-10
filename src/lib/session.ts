@@ -44,14 +44,14 @@ export async function createSession(payload: SessionPayload) {
   });
 }
 
-export const verifySession = cache(async (): Promise<SessionPayload> => {
+export const verifySession = cache(async (): Promise<SessionPayload | null> => {
   // get cookie
   const cookieStore = await cookies();
   const session = cookieStore.get('session')?.value;
   // decrypt payload
   const payload = await decrypt(session);
   if (!payload?.id) {
-    redirect('/login');
+    return null;
   }
   return payload;
 })

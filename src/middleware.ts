@@ -7,18 +7,18 @@ export default async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname
   const isPublicRoute = publicRoutes.includes(path)
  
-  const payload = await verifySession();
-  if (!isPublicRoute && !payload?.id) {
-    return NextResponse.redirect(new URL('/login', req.nextUrl))
-  }
+  // const payload = await verifySession();
+  // if (!isPublicRoute && !payload) {
+  //   return NextResponse.redirect(new URL('/login', req.nextUrl))
+  // }
  
-  if (
-    isPublicRoute &&
-    payload?.id &&
-    !req.nextUrl.pathname.startsWith('/inventory')
-  ) {
-    return NextResponse.redirect(new URL('/inventory', req.nextUrl))
-  }
+  // if (
+  //   isPublicRoute &&
+  //   payload?.id &&
+  //   !req.nextUrl.pathname.startsWith('/inventory')
+  // ) {
+  //   return NextResponse.redirect(new URL('/inventory', req.nextUrl))
+  // }
  
   return NextResponse.next()
 }
