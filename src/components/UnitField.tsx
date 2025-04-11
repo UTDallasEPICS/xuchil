@@ -8,16 +8,20 @@ interface UnitFieldProps {
 }
 
 const UnitField: React.FC<UnitFieldProps> = ({ titulo, cantidad, unidad }) => {
+  const hasTitle = !!titulo;
+
   return (
-    <div className={styles.wrapper}>
+    <div
+      className={`${styles.wrapper} ${
+        hasTitle ? styles.conTitulo : styles.sinTitulo
+      }`}
+    >
       <div className={styles.base}>
-        {titulo ? (
-          <span className={styles.label}>{titulo}</span>
-        ) : (
-          <span className={styles.label}>{cantidad}</span>
-        )}
+        <span className={styles.label}>
+          {hasTitle ? titulo : cantidad}
+        </span>
         <div className={styles.overlay}>
-          {titulo ? `${cantidad} ${unidad}` : unidad}
+          {hasTitle ? `${cantidad} ${unidad}` : unidad}
         </div>
       </div>
     </div>

@@ -5,6 +5,7 @@ import { Calendar, User } from "lucide-react";
 import Card from "@/components/Card";
 import styles from "@/styles/DetailProcess.module.css";
 import UnitField from "@/components/UnitField";
+import HeaderXuchil from "@/components/HeaderXuchil";
 
 const DetailProcess = () => {
   const searchParams = useSearchParams();
@@ -15,27 +16,46 @@ const DetailProcess = () => {
 
   return (
     <div className={styles.container}>
-      <h2>Producto: <span className={styles.product}>{proceso.producto}</span></h2>
-      <p className={styles.procesoId}>Proceso no. <span>{proceso.id}</span></p>
+      <HeaderXuchil/>
+      <h1>Producto: {proceso.producto}</h1>
+      <h3 className={styles.procesoId}>Proceso no. <span>{proceso.id}</span></h3>
 
       <div className={styles.dateRange}>
         <Calendar size={18} />
         <span>{proceso.fechaInicio} - {proceso.fechaFin}</span>
       </div>
 
+      <div className={styles.timelineContainer}>
       <ul className={styles.timeline}>
-        {proceso.actividades.map((a, index) => (
-          <li key={index}>
-            <div className={styles.dot}></div>
-            <div>
-              <strong>{a.tarea} <User size={16} style={{ marginLeft: 6 }} /></strong>
-              <p>{a.fecha}</p>
-              <p>{a.horaInicio} - {a.horaFin}</p>
-              <p className={styles.usuario}>Responsable: {a.usuario}</p>
-            </div>
-          </li>
-        ))}
-      </ul>
+  {proceso.actividades.map((a, index) => (
+    <li
+      key={index}
+      className={
+        index === 0
+          ? styles.first
+          : index === proceso.actividades.length - 1
+          ? styles.last
+          : ""
+      }
+    >
+      <div className={styles.dot}></div>
+      <div>
+        <strong>
+          {a.tarea} <User size={16} style={{ marginLeft: 6 }} />
+        </strong>
+        <div className={styles.fechaHora}>
+          <span>{a.fecha}</span>
+          <span>{a.horaInicio} - {a.horaFin}</span>
+        </div>
+        <p className={styles.usuario}>Responsable: {a.usuario}</p>
+      </div>
+    </li>
+  ))}
+</ul>
+</div>
+
+
+
 
         <UnitField titulo="Materia prima" cantidad={proceso.materiaPrimaKg} unidad="Kg" />
         <UnitField titulo="Producto" cantidad={proceso.productoKg} unidad="Kg" />
@@ -48,9 +68,9 @@ const DetailProcess = () => {
 
       <div className={styles.observaciones}>
         <h4>Observaciones</h4>
-        <Card>
+        <div className={styles.provisionalCard}>
             <p>{proceso.observaciones}</p>
-        </Card>
+        </div>
       </div>
     </div>
   );

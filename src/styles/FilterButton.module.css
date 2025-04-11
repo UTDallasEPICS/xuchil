@@ -12,6 +12,10 @@
     transition: background 0.3s ease;
     font-family: "Lato", sans-serif;
     font-weight: 700;
+
+    white-space: nowrap;      /* 🔥 evita saltos de línea */
+  flex-shrink: 0;           /* 🔥 evita que se achique */
+  /* max-height: 48px; */
   }
   
   .filterButton:hover {

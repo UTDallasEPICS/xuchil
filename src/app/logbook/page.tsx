@@ -57,10 +57,10 @@ const Logbook = () => {
 
   return (
     <>
-      <div className="page" style={{ padding: "20px"}}>
-        <h1 style={{textAlign: 'center'}}>Bitácora</h1>
+      <div className="page" style={{ padding: "0px", maxWidth: "700px"}}>
+        <h1 style={{textAlign: 'center', paddingTop: "15px"}}>Bitácora</h1>
 
-        <div style={{ display: "flex", overflowX: "auto", gap: "10px", padding: "10px 0" }}>
+        <div style={{width: "100vw", maxWidth: "700px", display: "flex", overflowX: "auto", gap: "10px", padding: "10px", marginLeft: "30px"}}>
           <FilterButton
             title="Filtrar por producto"
             options={productFilterOptions}

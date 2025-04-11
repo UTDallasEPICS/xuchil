@@ -1,6 +1,16 @@
 .wrapper {
-    width: fit-content;
     margin-bottom: 16px;
+    padding-inline: 20%;
+  }
+  
+  /* Ancho fijo si hay título */
+  .conTitulo {
+    width: 250px;
+  }
+  
+  /* Ancho compacto si no hay título */
+  .sinTitulo {
+    width: 150px;
   }
   
   .base {
@@ -9,7 +19,7 @@
     border: 2px solid black;
     border-radius: 15px;
     padding: 10px 16px;
-    padding-right: 100px; /* Aumentamos de 80px a 100px */
+    padding-right: 100px;
     font-weight: bold;
     font-family: sans-serif;
     font-size: 1rem;
