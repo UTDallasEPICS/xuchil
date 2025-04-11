@@ -1,23 +1,5 @@
-/* .tableContainer {
-  display: flex;
-  justify-content: center;
-  width: 100%;
-  padding: 0 16px;
-  box-sizing: border-box;
-  background-color: red;
-}
-
-.table {
-  width: 100%;
-  max-width: 95vw;
-  border-collapse: collapse;
-  margin: 0 auto;
-  table-layout: auto;
-} */
-
 .tableContainer {
   width: 100%;
-  /* padding: 0 16px; */
   box-sizing: border-box;
 }
 
