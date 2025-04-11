@@ -19,6 +19,7 @@
   --color-negative: #e63535;
 
   --font-size-h1: 2.5rem; 
+  --max-width-h1: 1200px;
   --font-size-h2: 2rem;
   --font-size-h3: 1.5rem;
   --font-size-p: 1rem; 
@@ -27,12 +28,14 @@
     --font-size-h1: 2rem;
     --font-size-h2: 1.75rem; 
     --font-size-h3: 1.25rem;
+    --max-width-h1: 800px;
   }
 
   @media (max-width: 768px) {
     --font-size-h1: 1.75rem; 
     --font-size-h2: 1.5rem; 
     --font-size-h3: 1.15rem; 
+    --max-width-h1: 600px;
   }
 
   @media (max-width: 480px) {
@@ -56,12 +59,19 @@ h1 {
   font-family: "Lato", sans-serif;
   font-weight: 900;
   font-size: var(--font-size-h1);
+  color: var(--color-green-dark);
+  text-align: left;
+  width: 100%;
+  max-width: var(--max-width-h1);
+  text-align: center;
+
 }
 
 h2 {
   font-family: "Lato", sans-serif;
   font-weight: 700;
   font-size: var(--font-size-h2);
+  color: var(--color-green-light);
 }
 
 h3 {

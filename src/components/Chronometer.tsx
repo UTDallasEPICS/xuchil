@@ -4,9 +4,10 @@ import styles from '../styles/Chronometer.module.css';
 
 interface ChronometerProps {
   estimatedTime: number;
+  onStart?: () => void; 
 }
 
-const Chronometer: React.FC<ChronometerProps> = ({ estimatedTime }) => {
+const Chronometer: React.FC<ChronometerProps> = ({ estimatedTime, onStart }) => {
   const [hasStarted, setHasStarted] = useState<boolean>(false);
   const [time, setTime] = useState<number>(0);
   const [isRunning, setIsRunning] = useState<boolean>(false);
@@ -28,6 +29,9 @@ const Chronometer: React.FC<ChronometerProps> = ({ estimatedTime }) => {
   const handleStart = () => {
     setHasStarted(true);
     setIsRunning(true);
+    if (onStart) {
+      onStart();
+    }
   };
 
   const handlePauseResume = () => {
@@ -36,9 +40,7 @@ const Chronometer: React.FC<ChronometerProps> = ({ estimatedTime }) => {
 
   const minutes = Math.floor(time / 60);
   const seconds = time % 60;
-  const formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds
-    .toString()
-    .padStart(2, '0')}`;
+  const formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 
   const size = 200;
   const strokeWidth = 10;
