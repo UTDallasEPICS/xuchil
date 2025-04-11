@@ -57,7 +57,7 @@ const Logbook = () => {
 
   return (
     <>
-      <div className="page" style={{ padding: "0px", maxWidth: "700px"}}>
+      <div className="page" style={{ maxWidth: "700px"}}>
         <h1 style={{textAlign: 'center', paddingTop: "15px"}}>Bitácora</h1>
 
         <div style={{width: "100vw", maxWidth: "700px", display: "flex", overflowX: "auto", gap: "10px", padding: "10px", marginLeft: "30px"}}>
@@ -79,7 +79,7 @@ const Logbook = () => {
         </div>
       </div>
 
-      <div style={{}}>
+      <div style={{paddingBottom: "90px"}}>
         <DynamicTable columns={userTaskColumns} data={filteredTasks} />
       </div>
     </>

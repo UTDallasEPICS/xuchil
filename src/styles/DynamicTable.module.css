@@ -12,7 +12,6 @@
   table-layout: auto;
 }
 
-
 .table th,
 .table td {
   border: 1px solid var(--color-gray-light);
@@ -49,6 +48,13 @@
 
 .button:hover {
   background-color: var(--color-gray-dark);
+}
+
+.noResults {
+  text-align: center;
+  color: #444;
+  padding: 20px;
+  font-size: large;
 }
 
 @media (max-width: 600px) {

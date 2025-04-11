@@ -4,7 +4,7 @@ import { procesos } from "@/constants/tableData";
 import { Calendar, User } from "lucide-react";
 import Card from "@/components/Card";
 import styles from "@/styles/DetailProcess.module.css";
-import UnitField from "@/components/UnitField";
+import UnitField from "@/components/UnitField2";
 import HeaderXuchil from "@/components/HeaderXuchil";
 
 const DetailProcess = () => {

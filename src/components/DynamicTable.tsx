@@ -28,37 +28,43 @@ const DynamicTable: React.FC<DynamicTableProps> = ({ columns, data }) => {
 
   return (
     <div className={styles.tableContainer}>
-      <table className={styles.table}>
-        <thead>
-          <tr>
-            {columns.map((col) => (
-              <th key={col.key}>{col.label}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((row, rowIndex) => (
-            <tr key={rowIndex}>
+      {data.length > 0 ? (
+        <table className={styles.table}>
+          <thead>
+            <tr>
               {columns.map((col) => (
-                <td key={col.key} className={col.isButton ? styles.buttonCell : ""}>
-                  {col.isButton && typeof row[col.key] === "object" ? (
-                    <button
-                      className={styles.button}
-                      onClick={() =>
-                        handleVerClick((row[col.key] as { idProceso: string }).idProceso)
-                      }
-                    >
-                      {(row[col.key] as { text: string }).text}
-                    </button>
-                  ) : (
-                    row[col.key] as string
-                  )}
-                </td>
+                <th key={col.key}>{col.label}</th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {data.map((row, rowIndex) => (
+              <tr key={rowIndex}>
+                {columns.map((col) => (
+                  <td key={col.key} className={col.isButton ? styles.buttonCell : ""}>
+                    {col.isButton && typeof row[col.key] === "object" ? (
+                      <button
+                        className={styles.button}
+                        onClick={() =>
+                          handleVerClick((row[col.key] as { idProceso: string }).idProceso)
+                        }
+                      >
+                        {(row[col.key] as { text: string }).text}
+                      </button>
+                    ) : (
+                      row[col.key] as string
+                    )}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        <div style={{width:"100%",justifyContent:"center"}}>
+          <p className={styles.noResults}>No se encontraron resultados que coincidan con los filtros seleccionados.</p>
+        </div>
+      )}
     </div>
   );
 };
