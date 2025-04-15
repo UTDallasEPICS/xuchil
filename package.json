@@ -1,5 +1,4 @@
 {
-<<<<<<< HEAD
   "name": "xuchil",
   "version": "1.0.0",
   "description": "",
@@ -145,36 +144,5 @@
   "homepage": "https://github.com/UTDallasEPICS/xuchil#readme",
   "devDependencies": {
     "nodemon": "^3.1.9"
-=======
-  "name": "xuchil_project",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
-  },
-  "dependencies": {
-    "@prisma/client": "^6.5.0",
-    "bcrypt": "^5.1.1",
-    "jose": "^6.0.10",
-    "lucide-react": "^0.476.0",
-    "next": "15.2.1",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "react-icons": "^5.5.0"
-  },
-  "devDependencies": {
-    "@eslint/eslintrc": "^3.3.1",
-    "@types/bcrypt": "^5.0.2",
-    "@types/node": "^20.17.30",
-    "@types/react": "^19.1.0",
-    "@types/react-dom": "^19.1.1",
-    "eslint": "^9.23.0",
-    "eslint-config-next": "15.2.1",
-    "prisma": "^6.5.0",
-    "typescript": "^5.8.2"
->>>>>>> origin/dev
   }
 }
