@@ -3,13 +3,36 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
-  url      = "mysql://root:root@localhost:3306/Xuchil"
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
-model product {
-  product_id     Int     @id @default(autoincrement())
-  category       String  @db.VarChar(50)
-  name           String  @db.VarChar(100)
-  is_end_product Boolean
+model User {
+  id Int @id @default(autoincrement())
+  username String
+  name String
+  passwordHash String
+  role Role
+  email String?
+  phoneno String?
+}
+
+enum Role {
+  WORKER
+  ADMIN
+}
+
+model Inventory {
+  id          Int          @id @default(autoincrement())
+  quantity    Int
+  threshold   Int
+  product     Product      @relation(fields: [id], references: [id])
+}
+
+model Product {
+  id              Int      @id @default(autoincrement())
+  category        String
+  name            String
+  is_end_product  Boolean
+  inventory       Inventory?  @relation
 }
