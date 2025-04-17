@@ -10,11 +10,13 @@ datasource db {
   url      = "file:./dev.db"
 }
 
+// name/username are 2 different fields
 model User {
   user_id Int @id @default(autoincrement())
-  user_name String
-  user_password String
-  user_role String
-  user_email String?
-  user_phoneno String?
+  username String
+  name String
+  password String
+  role String
+  email String?
+  phoneno String?
 }
