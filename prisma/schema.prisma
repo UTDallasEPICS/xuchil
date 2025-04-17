@@ -13,7 +13,7 @@ datasource db {
 // name/username are 2 different fields
 model User {
   user_id Int @id @default(autoincrement())
-  username String
+  username String @unique
   name String
   password String
   role String

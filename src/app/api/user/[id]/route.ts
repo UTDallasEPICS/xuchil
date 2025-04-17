@@ -12,6 +12,14 @@ export async function GET(req: NextRequest, context: { params: { id: string } })
       where: {
         user_id: parsedId,
       },
+      select: {
+        user_id: true,
+        username: true,
+        name: true,
+        role: true,
+        email: true,
+        phoneno: true,
+      },
     });
     
     if (user) {
@@ -35,6 +43,14 @@ export async function PUT(req: NextRequest, context: { params: { id: string } })
     const updatedUser = await prisma.user.update({
       where: { user_id: parsedId },
       data: body,
+      select: {
+        user_id: true,
+        username: true,
+        name: true,
+        role: true,
+        email: true,
+        phoneno: true,
+      },
     });
     
     if (updatedUser) {
