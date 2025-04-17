@@ -3,11 +3,16 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
   _req: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await context.params;
+    const id = parseInt(params.id);
+    if (isNaN(id)) {
+      return NextResponse.json({ message: 'Id not a number' }, { status: 400 });
+    }
     const product = await prisma.product.findUnique({
-      where: { product_id: parseInt(params.id) },
+      where: { id: id },
     });
 
 
@@ -25,15 +30,20 @@ export async function GET(
 
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const body = await req.json();
     const { name, category, is_end_product } = body;
 
+    const params = await context.params;
+    const id = parseInt(params.id);
+    if (isNaN(id)) {
+      return NextResponse.json({ message: 'Id not a number' }, { status: 400 });
+    }
 
     const updatedProduct = await prisma.product.update({
-      where: { product_id: parseInt(params.id) },
+      where: { id: id },
       data: { name, category, is_end_product },
     });
 
@@ -47,11 +57,16 @@ export async function PUT(
 
 export async function DELETE(
   _req: Request,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const params = await context.params;
+    const id = parseInt(params.id);
+    if (isNaN(id)) {
+      return NextResponse.json({ message: 'Id not a number' }, { status: 400 });
+    }
     await prisma.product.delete({
-      where: { product_id: parseInt(params.id) },
+      where: { id: id },
     });
 
 
