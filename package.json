@@ -13,7 +13,7 @@
     "bcrypt": "^5.1.1",
     "jose": "^6.0.10",
     "lucide-react": "^0.476.0",
-    "next": "15.2.1",
+    "next": "^15.3.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-icons": "^5.5.0"

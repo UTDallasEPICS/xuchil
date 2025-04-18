@@ -8,6 +8,7 @@
   justify-content: space-around;
   align-items: center;
   padding: 12px 0;
+  z-index: 100;
 }
 
 .tab {

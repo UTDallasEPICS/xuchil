@@ -1,0 +1,48 @@
+.wrapper {
+    margin-bottom: 16px;
+    padding-inline: 20%;
+  }
+  
+  .conTitulo {
+    width: 250px;
+  }
+  
+  .sinTitulo {
+    width: 150px;
+  }
+  
+  .base {
+    position: relative;
+    background-color: var(--color-text-light);
+    border: 2px solid #000;
+    border-radius: 15px;
+    padding: 10px 16px;
+    padding-right: 100px;
+    font-weight: bold;
+    font-family: sans-serif;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    max-width: 100%;
+  }
+  
+  .label {
+    z-index: 1;
+    white-space: nowrap;
+  }
+  
+  .overlay {
+    position: absolute;
+    top: 50%;
+    right: -1px;
+    transform: translateY(-50%);
+    background-color: var(--color-green-light);
+    color: var(--color-text-light);
+    padding: 10px 16px;
+    border-radius: 15px;
+    border: 2px solid #000;
+    font-weight: bold;
+    white-space: nowrap;
+    z-index: 2;
+  }
+  

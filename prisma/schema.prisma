@@ -2,6 +2,7 @@ generator client {
   provider = "prisma-client-js"
 }
 
+
 datasource db {
   provider = "sqlite"
   url      = "file:./dev.db"
@@ -36,3 +37,4 @@ model Product {
   is_end_product  Boolean
   inventory       Inventory?  @relation
 }
+
