@@ -1,3 +1,6 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,7 +12,7 @@ datasource db {
 
 model User {
   id           Int @id @default(autoincrement())
-  username     String
+  username     String @unique
   name         String
   passwordHash String
   role         Role
@@ -24,7 +27,7 @@ enum Role {
 
 model Product {
   id             Int     @id @default(autoincrement())
-  category       String  
-  name           String  
+  category       String
+  name           String
   is_end_product Boolean
 }
