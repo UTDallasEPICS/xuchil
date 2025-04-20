@@ -11,13 +11,13 @@ datasource db {
 }
 
 model User {
-  id           Int @id @default(autoincrement())
-  username     String @unique
+  id           Int     @id @default(autoincrement())
+  username     String  @unique
   name         String
   passwordHash String
   role         Role
   email        String?
-  phoneno      String?
+  phoneNo      String?
 }
 
 enum Role {
@@ -26,8 +26,8 @@ enum Role {
 }
 
 model Product {
-  id             Int     @id @default(autoincrement())
-  category       String
-  name           String
-  is_end_product Boolean
+  id           Int     @id @default(autoincrement())
+  category     String
+  name         String
+  isEndProduct Boolean
 }
