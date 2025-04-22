@@ -23,8 +23,28 @@ enum Role {
 }
 
 model Product {
-  id             Int     @id @default(autoincrement())
-  category       String  
-  name           String  
+  id             Int       @id @default(autoincrement())
+  category       String
+  name           String
   is_end_product Boolean
+  imageSrc       String?   // New field
+  processSteps   ProcessStep[] // New relationship
+  productCategory   ProductCategory? @relation(fields: [productCategoryId], references: [id])
+  productCategoryId Int?
+}
+
+model ProductCategory {
+  id        Int      @id @default(autoincrement())
+  name      String
+  imageSrc  String?
+  products  Product[]
+}
+
+model ProcessStep {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  order       Int      // To maintain the order of steps
+  product     Product? @relation(fields: [productId], references: [id])
+  productId   Int?
 }
