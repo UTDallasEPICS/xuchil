@@ -30,6 +30,7 @@ model Product {
   category     String
   name         String
   isEndProduct Boolean
+  imageSrc     String
 
   ProcessStep ProcessStep[]
 }

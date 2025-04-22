@@ -13,17 +13,16 @@ export async function GET() {
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const {name, category, isEndProduct} = body;
-
 
     const product = await prisma.product.create({
       data: {
-        name,
-        category,
-        isEndProduct,
+        name: body.name,
+        category: body.category,
+        isEndProduct: body.isEndProduct,
+        imageSrc: body.imageSrc,
       },
     });
 

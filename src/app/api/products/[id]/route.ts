@@ -2,7 +2,7 @@ import prisma from '@/lib/db'
 import {NextRequest, NextResponse} from 'next/server';
 
 export async function GET(
-  _req: Request,
+  _req: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -34,12 +34,11 @@ export async function GET(
 
 
 export async function PUT(
-  req: Request,
+  req: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
     const body = await req.json();
-    const {name, category, isEndProduct} = body;
 
     const params = await context.params;
     const id = parseInt(params.id);
@@ -51,7 +50,12 @@ export async function PUT(
 
     const updatedProduct = await prisma.product.update({
       where: {id: id},
-      data: {name, category, isEndProduct},
+      data: {
+        name: body.name,
+        category: body.category,
+        isEndProduct: body.isEndProduct,
+        imageSrc: body.imageSrc,
+      }
     });
 
 
@@ -65,7 +69,7 @@ export async function PUT(
 
 
 export async function DELETE(
-  _req: Request,
+  _req: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -81,7 +85,7 @@ export async function DELETE(
       where: {id: id},
     });
 
-    return new NextResponse(null, {status:204})
+    return new NextResponse(null, {status: 204})
   } catch (error) {
     console.log(error)
     return NextResponse.json({
