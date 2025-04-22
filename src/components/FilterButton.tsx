@@ -2,25 +2,27 @@
 
 import React, { useState } from "react";
 import styles from "@/styles/FilterButton.module.css";
-import { ChevronDown } from "lucide-react";
+import { LucideIcon, ChevronDown } from "lucide-react";
 
 interface FilterOption {
   label: string;
-  icon: React.ElementType;
+  icon: LucideIcon;
 }
 
 interface FilterButtonProps {
   title: string;
   options: FilterOption[];
+  onChange?: (selected: FilterOption) => void;
 }
 
-const FilterButton: React.FC<FilterButtonProps> = ({ title, options }) => {
+const FilterButton: React.FC<FilterButtonProps> = ({ title, options, onChange }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState<FilterOption>(options[0]);
 
   const handleSelect = (option: FilterOption) => {
     setSelectedOption(option);
     setIsOpen(false);
+    onChange?.(option);
   };
 
   return (

@@ -1,5 +1,6 @@
 .textField {
-    min-width: 75vw;
+    width: 75vw;
+    max-width: 300px;
     min-height: 10vh;
     padding: 10px;
     font-size: 1rem;

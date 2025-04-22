@@ -7,13 +7,10 @@ This is a Next.js, Prisma, and Postgres project based on the UTDEpics Next.js te
 In order to run this project, a few technologies are required:
 
 - [Node.js](https://nodejs.org)
-- [Docker](https://www.docker.com)
 
 If you have these installed already, you can skip to [running this project](#running-this-project).
 
 Node.js is what allows us to write all our applications in JavaScript. Usually, JavaScript is run only in a web browser. By building on top of Node.js, we can write code that is executed on the server, simpler to write, and/or more secure.
-
-Docker is a container framework. Containers allow us to standardize the environment that software runs on. In the case of this project, we use Docker to run the PostgreSQL database. By running the database in a container, the database of every person on the team will be configured exactly the same way. Since databases are quite complex applications, this greatly reduces the likelihood of experiencing issues with the database.
 
 ### Installing Node
 
@@ -42,10 +39,6 @@ These commands do the following:
 2. Update the node package manager (npm) to the latest version.
 
 This completes your installation of Node!
-
-### Installing Docker
-
-Docker Desktop is the recommended way to install Docker. If you choose to install Docker another way, there is no guarantee that you will have everything installed correctly. To install docker desktop download and run the installer from [Docker's Getting Started Page](https://www.docker.com/get-started/).
 
 ### Installing pnpm (recommended/optional)
 
