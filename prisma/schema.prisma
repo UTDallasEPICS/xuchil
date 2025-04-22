@@ -8,13 +8,13 @@ datasource db {
 }
 
 model User {
-  id Int @id @default(autoincrement())
-  username String
-  name String
+  id           Int     @id @default(autoincrement())
+  username     String  @unique
+  name         String
   passwordHash String
-  role Role
-  email String?
-  phoneno String?
+  role         Role
+  email        String?
+  phoneno      String?
 }
 
 enum Role {
@@ -23,33 +23,33 @@ enum Role {
 }
 
 model Product {
-  product_id     Int     @id @default(autoincrement())
+  product_id     Int          @id @default(autoincrement())
   category       String
   name           String
   is_end_product Boolean
+  OrderEntry     OrderEntry[]
 }
 
-
 model Order {
-  id               Int              @id @default(autoincrement())
-  client           String
-  deliveryAddress  String
-  deliveryDate     DateTime
-  deliveryMethod   DeliveryMethod
-  deliveryStatus   DeliveryStatus  @default(pending)
-  productsOrdered  OrderEntry[]
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
+  id              Int            @id @default(autoincrement())
+  client          String
+  deliveryAddress String
+  deliveryDate    DateTime
+  deliveryMethod  DeliveryMethod
+  deliveryStatus  DeliveryStatus @default(pending)
+  productsOrdered OrderEntry[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 }
 
 model OrderEntry {
   id Int @id @default(autoincrement())
 
-  order      Order   @relation(fields: [orderId], references: [id])
-  orderId    Int  
+  orderId Int
+  order   Order @relation(fields: [orderId], references: [id])
 
-  product Product @relation(fields: [productId], references: [id])
   productId Int
+  product   Product @relation(fields: [productId], references: [product_id])
 }
 
 enum DeliveryMethod {
