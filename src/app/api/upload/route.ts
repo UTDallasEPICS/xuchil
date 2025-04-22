@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
   const name = formData.get("name") as string;
   const file = formData.get("file") as File;
   const buffer = new Uint8Array(await file.arrayBuffer());
-  const filePath = path.join('public', 'img', name);
+  const filePath = path.join('public', 'uploads', name);
   try {
     await writeFile(filePath, buffer);
     return NextResponse.json({data: {path: `/uploads/${name}`}}, {status: 204})
