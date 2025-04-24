@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
         name,
         passwordHash,
         // Set default role to "worker" if not provided
-        role: role || 'worker',
+        role: role || 'WORKER',
         email,
         phoneNo,
       },

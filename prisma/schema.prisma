@@ -27,7 +27,7 @@ model Inventory {
   id        Int     @id @default(autoincrement())
   quantity  Int
   threshold Int
-  productId Int
+  productId Int     @unique
   product   Product @relation(fields: [productId], references: [id])
 }
 

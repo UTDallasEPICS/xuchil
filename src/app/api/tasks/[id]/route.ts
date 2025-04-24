@@ -1,32 +1,28 @@
 // app/api/tasks/[id]/route.ts
-import { NextRequest, NextResponse } from 'next/server';
+import {NextRequest, NextResponse} from 'next/server';
 import prisma from 'src/lib/db';
-import { UpdateTaskDto } from 'src/types/tasks';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const taskId = parseInt(await params.id);
-  
-  if (isNaN(taskId)) {
-    return NextResponse.json({ error: "Invalid task ID" }, { status: 400 });
+  const params = await context.params;
+  const id = parseInt(params.id);
+  if (isNaN(id)) {
+    return NextResponse.json({
+      error: {message: 'Id not a number'}
+    }, {status: 400});
   }
 
   try {
     const task = await prisma.task.findUnique({
       where: {
-        id: taskId,
+        id: id,
       },
       include: {
         worker: {
-          select: {
-            id: true,
-            username: true,
-            name: true,
-            role: true,
-            email: true,
-            phoneNo: true,
+          omit: {
+            passwordHash: true
           }
         },
         product: true
@@ -34,63 +30,60 @@ export async function GET(
     });
 
     if (!task) {
-      return NextResponse.json({ error: "Task not found" }, { status: 404 });
+      return NextResponse.json({error: "Task not found"}, {status: 404});
     }
 
-    return NextResponse.json(task);
+    return NextResponse.json(task, {status: 200});
   } catch (error) {
-    console.error("Error fetching task:", error);
-    return NextResponse.json({ error: "Failed to fetch task" }, { status: 500 });
+    return NextResponse.json({
+      error: {message: "Failed to fetch task", details: error}
+    }, {status: 500});
   }
 }
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const taskId = parseInt(await params.id);
-  
-  if (isNaN(taskId)) {
-    return NextResponse.json({ error: "Invalid task ID" }, { status: 400 });
-  }
-  
   try {
-    const body: UpdateTaskDto = await request.json();
-    
+    const params = await context.params;
+    const id = parseInt(params.id);
+    if (isNaN(id)) {
+      return NextResponse.json({
+        error: {message: 'Id not a number'}
+      }, {status: 400});
+    }
+
+    const body = await request.json();
+
     const updatedTask = await prisma.task.update({
       where: {
-        id: taskId,
+        id: id,
       },
       data: {
-        worker_id: body.worker_id,
-        product_id: body.product_id,
+        workerId: body.workerId,
+        productId: body.productId,
         activity: body.activity,
-        input_weight: body.input_weight,
-        output_weight: body.output_weight,
-        loss_weight: body.loss_weight,
+        inputWeight: body.inputWeight,
+        outputWeight: body.outputWeight,
+        lossWeight: body.lossWeight,
         status: body.status,
-        start_timestamp: body.start_timestamp ? new Date(body.start_timestamp) : undefined,
-        end_timestamp: body.end_timestamp ? new Date(body.end_timestamp) : undefined,
         notes: body.notes
       },
       include: {
         worker: {
-          select: {
-            id: true,
-            username: true,
-            name: true,
-            role: true,
-            email: true,
-            phoneNo: true,
+          omit: {
+            passwordHash: true
           }
         },
         product: true
       }
     });
-    
-    return NextResponse.json(updatedTask);
+
+    return NextResponse.json(updatedTask, {status: 200});
   } catch (error) {
-    console.error("Error updating task:", error);
-    return NextResponse.json({ error: "Failed to update task" }, { status: 500 });
+    return NextResponse.json({
+      error: {message: "Failed to update task", details: error}
+    }, {status: 500});
   }
 }
