@@ -11,13 +11,14 @@ datasource db {
 }
 
 model User {
-  id Int @id @default(autoincrement())
-  username String
-  name String
+  id           Int     @id @default(autoincrement())
+  username     String
+  name         String
   passwordHash String
-  role Role
-  email String?
-  phoneno String?
+  role         Role
+  email        String?
+  phoneNo      String?
+  tasks        Task[]
 }
 
 enum Role {
@@ -39,8 +40,8 @@ model Product {
   isEndProduct Boolean
   imageSrc     String
   inventory    Inventory?  @relation
-
-  ProcessStep ProcessStep[]
+  tasks        Task[]
+  ProcessStep  ProcessStep[]
 }
 
 model ProcessStep {
@@ -52,4 +53,31 @@ model ProcessStep {
   estimatedTime Int
   hasInput      Boolean
   unit          String
+}
+
+enum TaskStatus {
+  progressing
+  paused
+  done
+}
+
+model Task {
+  id              Int       @id @default(autoincrement())
+  activity        String
+  input_weight    Float?
+  output_weight   Float?
+  loss_weight     Float?
+  status          TaskStatus
+  start_timestamp DateTime  @default(now())
+  end_timestamp   DateTime?
+  notes           String?
+  
+  worker_id       Int
+  worker          User      @relation(fields: [worker_id], references: [id])
+  
+  product_id      Int
+  product         Product   @relation(fields: [product_id], references: [id])
+
+  @@index([worker_id])
+  @@index([product_id])
 }
