@@ -38,9 +38,13 @@ export async function PUT(
 
     // Allows the user to enter only quantity, or only threshold, or both
     const dataToUpdate: any = {};
-    if (quantity !== undefined) dataToUpdate.quantity = quantity;       
-    if (threshold !== undefined) dataToUpdate.threshold = threshold;
-
+    if (quantity !== undefined) {
+      dataToUpdate.quantity = quantity;
+    }   
+    if (threshold !== undefined) {
+      dataToUpdate.threshold = threshold;
+    }
+    
     const updatedInventoryItem = await prisma.inventory.update({
       where: { product_id: parseInt(params.id) },
       data: dataToUpdate,
