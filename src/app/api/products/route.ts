@@ -4,8 +4,17 @@ import {NextRequest, NextResponse} from 'next/server';
 
 export async function GET() {
   try {
-    const products = await prisma.product.findMany();
-    return NextResponse.json({data: products}, {status: 200});
+    const products = await prisma.product.findMany({
+      include: {
+        processSteps: {
+          orderBy: {
+            order: 'asc'
+          }
+        },
+        productCategory: true
+      }
+    });
+    return NextResponse.json({ data: products }, { status: 200 });
   } catch (error) {
     return NextResponse.json({
       error: {message: 'Failed to fetch products', details: error}
@@ -23,7 +32,12 @@ export async function POST(req: NextRequest) {
         category: body.category,
         isEndProduct: body.isEndProduct,
         imageSrc: body.imageSrc,
+        categoryId: body.categoryId,
       },
+      include: {
+        processSteps: true,
+        category: true,
+      }
     });
 
     return NextResponse.json({data: product}, {status: 201});

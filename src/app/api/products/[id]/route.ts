@@ -1,5 +1,5 @@
 import prisma from '@/lib/db'
-import {NextRequest, NextResponse} from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
   _req: NextRequest,
@@ -15,7 +15,15 @@ export async function GET(
     }
 
     const product = await prisma.product.findUnique({
-      where: {id: id},
+      where: { id: id },
+      include: {
+        processSteps: {
+          orderBy: {
+            order: 'asc'
+          }
+        },
+        category: true
+      }
     });
 
     if (!product) {
@@ -52,12 +60,22 @@ export async function PUT(
       where: {id: id},
       data: {
         name: body.name,
-        category: body.category,
+        categoryId: body.categoryId,
         isEndProduct: body.isEndProduct,
         imageSrc: body.imageSrc,
+        processSteps: {
+          create: body.processSteps.map((step, index) => ({
+            name: step.name,
+            description: step.description,
+            order: index,
+          }))
+        }
+      },
+      include: {
+        processSteps: true,
+        category: true
       }
     });
-
 
     return NextResponse.json({data: updatedProduct}, {status: 200});
   } catch (error) {
@@ -80,7 +98,6 @@ export async function DELETE(
         error: {message: 'Id not a number'}
       }, {status: 400});
     }
-
     await prisma.product.delete({
       where: {id: id},
     });

@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -27,12 +24,21 @@ enum Role {
 
 model Product {
   id           Int     @id @default(autoincrement())
-  category     String
-  name         String
+  name         String  @unique
   isEndProduct Boolean
   imageSrc     String
 
-  ProcessStep ProcessStep[]
+  categoryId  Int?
+  category ProductCategory? @relation(fields: [categoryId], references: [id])
+
+  processSteps ProcessStep[]
+}
+
+model ProductCategory {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  imageSrc  String?
+  products  Product[]
 }
 
 model ProcessStep {
@@ -44,4 +50,7 @@ model ProcessStep {
   estimatedTime Int
   hasInput      Boolean
   unit          String
+  order         Int
+
+  @@unique([productId, order])
 }
