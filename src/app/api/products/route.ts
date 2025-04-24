@@ -1,7 +1,6 @@
 import prisma from '@/lib/db'
 import {NextRequest, NextResponse} from 'next/server';
 
-
 export async function GET() {
   try {
     const products = await prisma.product.findMany({
@@ -11,7 +10,7 @@ export async function GET() {
             order: 'asc'
           }
         },
-        productCategory: true
+        category: true
       }
     });
     return NextResponse.json({ data: products }, { status: 200 });
@@ -33,6 +32,16 @@ export async function POST(req: NextRequest) {
         isEndProduct: body.isEndProduct,
         imageSrc: body.imageSrc,
         categoryId: body.categoryId,
+        processSteps: {
+          create: body.processSteps.map((step: any, index: number) => ({
+            title: step.title,
+            description: step.description,
+            estimatedTime: step.estimatedTime,
+            hasInput: step.hasInput,
+            unit: step.unit,
+            order: index,
+          }))
+        }
       },
       include: {
         processSteps: true,

@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
   const filePath = path.join('public', 'uploads', name);
   try {
     await writeFile(filePath, buffer);
-    return NextResponse.json({data: {path: `/uploads/${name}`}}, {status: 204})
+    return NextResponse.json({data: {path: `/uploads/${name}`}}, {status: 200})
   } catch (error) {
     return NextResponse.json({
       error: {message: 'Failed to write file', details: error}

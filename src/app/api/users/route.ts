@@ -3,7 +3,7 @@ import prisma from '@/lib/db';
 import bcrypt from 'bcrypt';
 
 // Get all users
-export async function GET(_req: NextRequest) {
+export async function GET() {
   try {
     const users = await prisma.user.findMany({
       omit: {

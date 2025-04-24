@@ -64,9 +64,12 @@ export async function PUT(
         isEndProduct: body.isEndProduct,
         imageSrc: body.imageSrc,
         processSteps: {
-          create: body.processSteps.map((step, index) => ({
-            name: step.name,
+          create: body.processSteps.map((step: any, index: number) => ({
+            title: step.title,
             description: step.description,
+            estimatedTime: step.estimatedTime,
+            hasInput: step.hasInput,
+            unit: step.unit,
             order: index,
           }))
         }

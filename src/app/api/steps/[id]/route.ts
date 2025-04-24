@@ -71,33 +71,3 @@ export async function PUT(
     }, {status: 500});
   }
 }
-
-
-export async function DELETE(
-  _req: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
-  try {
-    const params = await context.params;
-    const id = parseInt(params.id);
-    if (isNaN(id)) {
-      return NextResponse.json({
-        error: {message: 'Id not a number'}
-      }, {status: 400});
-    }
-
-    await prisma.processStep.delete({
-      where: {id: id},
-    });
-
-    return new NextResponse(null, {status:204})
-  } catch (error) {
-    console.log(error)
-    return NextResponse.json({
-      error: {message: 'Failed to delete step', details: error}
-    }, {status: 500});
-  }
-}
-
-
-
