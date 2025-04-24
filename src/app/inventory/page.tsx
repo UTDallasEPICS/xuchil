@@ -32,11 +32,11 @@ const Inventory = () => {
       </BottomButton>
 
       <div>
-        <ImageCard imageSrc="/file.svg" text="Harina de Plátano verde" type="small" />
+        <ImageCard imageSrc="/file.svg" text="Harina de Plátano verde" type="small" route="/inventory/platano" />
         <p></p>
-        <ImageCard imageSrc="/globe.svg" text="Nueva producción" type="large" />
+        <ImageCard imageSrc="/globe.svg" text="Nueva producción" type="large" route="/inventory/production" />
         <p></p>
-        <ImageCard imageSrc="/window.svg" text="Frijol" type="square" />
+        <ImageCard imageSrc="/window.svg" text="Frijol" type="square" route="/inventory/frijol" />
       </div>
 
       <div>

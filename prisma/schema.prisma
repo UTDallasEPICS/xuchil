@@ -11,13 +11,43 @@ datasource db {
 }
 
 model User {
-  id Int @id @default(autoincrement())
-  username String
-  name String
+  id           Int     @id @default(autoincrement())
+  username     String  @unique
+  name         String
   passwordHash String
-  role Role
-  email String?
-  phoneno String?
+  role         String
+  email        String?
+  phoneno      String?
+}
+
+model Product {
+  product_id    Int     @id @default(autoincrement()) @map("product_id")
+  category      String
+  name          String
+  is_end_product Boolean @map("is_end_product")
+  orders        OrderEntry[]
+  inventory     Inventory?
+  processSteps  ProcessStep[]
+}
+
+model Order {
+  id              Int          @id @default(autoincrement())
+  client          String
+  deliveryAddress String
+  deliveryDate    DateTime
+  deliveryMethod  String
+  deliveryStatus  String       @default("pending")
+  productsOrdered OrderEntry[]
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+}
+
+model OrderEntry {
+  id        Int     @id @default(autoincrement())
+  orderId   Int
+  order     Order   @relation(fields: [orderId], references: [id])
+  productId Int
+  product   Product @relation(fields: [productId], references: [product_id])
 }
 
 enum Role {
@@ -29,27 +59,27 @@ model Inventory {
   id          Int          @id @default(autoincrement())
   quantity    Int
   threshold   Int
-  product     Product      @relation(fields: [id], references: [id])
-}
-
-model Product {
-  id           Int     @id @default(autoincrement())
-  category     String
-  name         String
-  isEndProduct Boolean
-  imageSrc     String
-  inventory    Inventory?  @relation
-
-  ProcessStep ProcessStep[]
+  productId   Int          @unique
+  product     Product      @relation(fields: [productId], references: [product_id])
 }
 
 model ProcessStep {
   id            Int     @id @default(autoincrement())
   productId     Int
-  product       Product @relation(fields: [productId], references: [id])
+  product       Product @relation(fields: [productId], references: [product_id])
   title         String
   description   String
   estimatedTime Int
   hasInput      Boolean
   unit          String
+}
+
+enum DeliveryMethod {
+  personal
+  mail
+}
+
+enum DeliveryStatus {
+  pending
+  done
 }
