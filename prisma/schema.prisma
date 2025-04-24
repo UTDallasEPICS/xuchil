@@ -34,13 +34,19 @@ model Product {
   tasks        Task[]
 }
 
+enum TaskStatus {
+  progressing
+  paused
+  done
+}
+
 model Task {
   id              Int       @id @default(autoincrement())
   activity        String
   input_weight    Float?
   output_weight   Float?
   loss_weight     Float?
-  status          String    // "progressing", "paused", or "done"
+  status          TaskStatus
   start_timestamp DateTime  @default(now())
   end_timestamp   DateTime?
   notes           String?
@@ -50,4 +56,7 @@ model Task {
   
   product_id      Int
   product         Product   @relation(fields: [product_id], references: [id])
+
+  @@index([worker_id])
+  @@index([product_id])
 }

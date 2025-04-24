@@ -7,7 +7,7 @@ export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const taskId = parseInt(params.id);
+  const taskId = parseInt(await params.id);
   
   if (isNaN(taskId)) {
     return NextResponse.json({ error: "Invalid task ID" }, { status: 400 });
@@ -19,7 +19,16 @@ export async function GET(
         id: taskId,
       },
       include: {
-        worker: true,
+        worker: {
+          select: {
+            id: true,
+            username: true,
+            name: true,
+            role: true,
+            email: true,
+            phoneNo: true,
+          }
+        },
         product: true
       }
     });
@@ -39,7 +48,7 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const taskId = parseInt(params.id);
+  const taskId = parseInt(await params.id);
   
   if (isNaN(taskId)) {
     return NextResponse.json({ error: "Invalid task ID" }, { status: 400 });
@@ -65,7 +74,16 @@ export async function PUT(
         notes: body.notes
       },
       include: {
-        worker: true,
+        worker: {
+          select: {
+            id: true,
+            username: true,
+            name: true,
+            role: true,
+            email: true,
+            phoneNo: true,
+          }
+        },
         product: true
       }
     });
