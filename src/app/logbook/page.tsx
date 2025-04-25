@@ -15,7 +15,7 @@ import {
 
 const currentUserName = "Antonio López";
 
-const isAdminMode = false;
+const isAdminMode = false; 
 
 const Logbook = () => {
   const [selectedProduct, setSelectedProduct] = useState(productFilterOptions[0]);
@@ -34,7 +34,7 @@ const Logbook = () => {
         .filter((actividad) => {
           const matchUsuario = isAdminMode
             ? selectedUser.label === "Todos" || actividad.usuario === selectedUser.label
-            : actividad.usuario === currentUserName; 
+            : actividad.usuario === currentUserName;
 
           const matchMes =
             selectedMonth.label === "Cualquiera" ||
@@ -66,6 +66,12 @@ const Logbook = () => {
     <>
       <div className="page" style={{ maxWidth: "700px" }}>
         <h1 style={{ textAlign: 'center', paddingTop: "15px" }}>Bitácora</h1>
+
+        {!isAdminMode && (
+          <div style={{ textAlign: "center", margin: "10px 0" }}>
+            <h2>{currentUserName}</h2>
+          </div>          
+        )}
 
         <div
           style={{
