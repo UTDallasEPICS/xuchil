@@ -1,84 +1,90 @@
 "use client";
+import { useRouter } from "next/navigation";
 import Button from "@/components/Button";
-import Chronometer from "@/components/Chronometer";
-import DeliveryType from "@/components/DeliveryType";
 import HeaderXuchil from "@/components/HeaderXuchil";
 
-const User = () => {
-    return (
-      <div className="page">
-        <h1>Usuario</h1>
-        <p>Contenido de la sección Usuario.</p>
-        <HeaderXuchil/>
-        <br />
-        <div>
-          <Chronometer estimatedTime={1} />
-        </div>
-        <div>
-          <Button size="regular" action="primary" onClick={() => alert("Presionado")}>
-            Botón 1
-          </Button>
-          <Button size="small" action="primary" onClick={() => alert("Presionado")}>
-            Botón 2
-          </Button>
-          <Button size="mini" action="primary" onClick={() => alert("Presionado")}>
-            Botón 3
-          </Button>
-        </div>
-        <div>
-          <Button size="regular" action="secondary" onClick={() => alert("Presionado")}>
-            Botón 4
-          </Button>
-          <Button size="small" action="secondary" onClick={() => alert("Presionado")}>
-            Botón 5
-          </Button>
-          <Button size="mini" action="secondary" onClick={() => alert("Presionado")}>
-            Botón 6
-          </Button>
-        </div>
-        <div>
-          <Button size="regular" action="negative" onClick={() => alert("Presionado")}>
-            Botón 7
-          </Button>
-          <Button size="small" action="negative" onClick={() => alert("Presionado")}>
-            Botón 8
-          </Button>
-          <Button size="mini" action="negative" onClick={() => alert("Presionado")}>
-            Botón 9
-          </Button>
-        </div>
-        <div>
-          <Button size="regular" action="inverted" onClick={() => alert("Presionado")}>
-            Botón 10
-          </Button>
-          <Button size="small" action="inverted" onClick={() => alert("Presionado")}>
-            Botón 11
-          </Button>
-          <Button size="mini" action="inverted" onClick={() => alert("Presionado")}>
-            Botón 12
-          </Button>
-        </div>
-        <br />
-        <div>
-          <DeliveryType type="icon" variant="personal"/>
-          <DeliveryType type="badge" variant="personal"/>
-          <DeliveryType type="picker" variant="personal"/>
-        </div>
-        <br />
-        <div>
-          <DeliveryType type="icon" variant="mail"/>
-          <DeliveryType type="badge" variant="mail"/>
-          <DeliveryType type="picker" variant="mail"/>
-        </div>
-        <br />
-        <div>
-          <DeliveryType type="icon" variant="consignment"/>
-          <DeliveryType type="badge" variant="consignment"/>
-          <DeliveryType type="picker" variant="consignment"/>
-        </div>
-      </div>
-    );
+const UserProfile = () => {
+  const router = useRouter();
+
+  const handleLogout = () => {
+    const confirmLogout = confirm("¿Estás seguro de que deseas cerrar sesión?");
+    if (confirmLogout) {
+      localStorage.removeItem("userData");
+      sessionStorage.removeItem("authToken");
+      router.push("/login");
+    }
   };
-  
-  export default User;
-  
+
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        backgroundColor: "var(--color-background)",
+        paddingTop: "1rem",
+      }}
+    >
+      <HeaderXuchil />
+
+      <div
+        style={{
+          position: "relative",
+          backgroundColor: "var(--color-background)",
+          padding: "1.5rem",
+          borderRadius: "20px",
+          width: "90%",
+          maxWidth: "360px",
+          textAlign: "center",
+        }}
+      >
+        {/* Botón Editar en esquina superior derecha */}
+        <div style={{ position: "absolute", top: "1rem", right: "1rem" }}>
+          <Button size="small" action="secondary" onClick={() => router.push("/edit_user")}>
+            Editar
+          </Button>
+        </div>
+
+        {/* Avatar */}
+        <img
+          src="/globe.svg"
+          alt="Avatar"
+          style={{
+            width: "140px",
+            height: "140px",
+            borderRadius: "50%",
+            backgroundColor: "#ccc",
+            margin: "0 auto 1rem",
+          }}
+        />
+
+        {/* Info usuario */}
+        <h2 style={{ color: "var(--color-green-dark)", margin: 0 }}>Antonio López</h2>
+        <p style={{ color: "var(--color-green-light)", margin: "4px 0 12px" }}>Operador</p>
+        <p style={{ fontSize: "0.9rem", margin: "0 0 1rem" }}>15.4hrs trabajadas</p>
+
+        <p style={{ fontWeight: 600, color: "var(--color-green-dark)", marginBottom: "4px" }}>
+          Correo Electrónico:
+        </p>
+        <p style={{ marginBottom: "1rem" }}>antonio.lopez@xuchilnatural.com</p>
+
+        <p style={{ fontWeight: 600, color: "var(--color-green-dark)", marginBottom: "4px" }}>
+          Teléfono:
+        </p>
+        <p>
+          <strong style={{ color: "var(--color-green-dark)" }}>+52 951</strong> 123 56 78
+        </p>
+      </div>
+
+      {/* Cerrar sesión */}
+      <div style={{ marginTop: "2rem" }}>
+        <Button size="regular" action="negative" onClick={handleLogout}>
+          Cerrar sesión
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+export default UserProfile;
