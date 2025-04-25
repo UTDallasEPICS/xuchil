@@ -1,19 +1,21 @@
 "use client";
+
 import React, { useState, useMemo } from "react";
 import DynamicTable from "@/components/DynamicTable";
 import FilterButton from "@/components/FilterButton";
-import TextField from "@/components/TextField";
 import {
   monthFilterOptions,
   productFilterOptions,
   userFilterOptions,
 } from "@/constants/filterOptions";
 import {
-  movementColumns,
-  movementData,
   userTaskColumns,
   procesos,
 } from "@/constants/tableData";
+
+const currentUserName = "Antonio López";
+
+const isAdminMode = false;
 
 const Logbook = () => {
   const [selectedProduct, setSelectedProduct] = useState(productFilterOptions[0]);
@@ -30,47 +32,64 @@ const Logbook = () => {
 
       return proceso.actividades
         .filter((actividad) => {
-          const matchUsuario =
-            selectedUser.label === "Todos" || actividad.usuario === selectedUser.label;
+          const matchUsuario = isAdminMode
+            ? selectedUser.label === "Todos" || actividad.usuario === selectedUser.label
+            : actividad.usuario === currentUserName; 
 
           const matchMes =
             selectedMonth.label === "Cualquiera" ||
-            new Date(actividad.fecha).toLocaleString("es-MX", { month: "long" }).toLowerCase() ===
-              selectedMonth.label.toLowerCase();
+            new Date(actividad.fecha)
+              .toLocaleString("es-MX", { month: "long" })
+              .toLowerCase() === selectedMonth.label.toLowerCase();
 
           return matchUsuario && matchMes;
         })
         .map((actividad) => ({
-          usuario: actividad.usuario,
           tarea: actividad.tarea,
+          fecha: actividad.fecha,
+          usuario: actividad.usuario,
           detalles: {
             text: "Ver",
             idProceso: proceso.id,
-            onClick: () => {
-              console.log("Proceso completo:", proceso);
-              alert(`Detalles de proceso:\nProducto: ${proceso.producto}\nActividad: ${actividad.tarea}`);
-            },
           },
         }));
     });
   }, [selectedProduct, selectedUser, selectedMonth]);
 
+  const userColumns = [
+    { key: "tarea", label: "Tarea" },
+    { key: "fecha", label: "Fecha" },
+    { key: "detalles", label: "Detalles", isButton: true },
+  ];
+
   return (
     <>
-      <div className="page" style={{ maxWidth: "700px"}}>
-        <h1 style={{textAlign: 'center', paddingTop: "15px"}}>Bitácora</h1>
+      <div className="page" style={{ maxWidth: "700px" }}>
+        <h1 style={{ textAlign: 'center', paddingTop: "15px" }}>Bitácora</h1>
 
-        <div style={{width: "100vw", maxWidth: "700px", display: "flex", overflowX: "auto", gap: "10px", padding: "10px", marginLeft: "30px"}}>
+        <div
+          style={{
+            width: "100vw",
+            maxWidth: "700px",
+            display: "flex",
+            overflowX: "auto",
+            gap: "10px",
+            padding: "10px",
+            marginLeft: "30px"
+          }}
+        >
           <FilterButton
             title="Filtrar por producto"
             options={productFilterOptions}
             onChange={setSelectedProduct}
           />
-          <FilterButton
-            title="Filtrar por usuario"
-            options={userFilterOptions}
-            onChange={setSelectedUser}
-          />
+          {isAdminMode && (
+            <FilterButton
+              title="Filtrar por usuario"
+              options={userFilterOptions}
+              onChange={setSelectedUser}
+            />
+          )}
           <FilterButton
             title="Filtrar por mes"
             options={monthFilterOptions}
@@ -79,12 +98,14 @@ const Logbook = () => {
         </div>
       </div>
 
-      <div style={{paddingBottom: "90px"}}>
-        <DynamicTable columns={userTaskColumns} data={filteredTasks} />
+      <div style={{ paddingBottom: "90px" }}>
+        <DynamicTable
+          columns={isAdminMode ? userTaskColumns : userColumns}
+          data={filteredTasks}
+        />
       </div>
     </>
   );
 };
 
 export default Logbook;
-
