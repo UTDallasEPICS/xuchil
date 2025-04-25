@@ -39,14 +39,12 @@ const UserProfile = () => {
           textAlign: "center",
         }}
       >
-        {/* Botón Editar en esquina superior derecha */}
         <div style={{ position: "absolute", top: "1rem", right: "1rem" }}>
           <Button size="small" action="secondary" onClick={() => router.push("/edit_user")}>
             Editar
           </Button>
         </div>
 
-        {/* Avatar */}
         <img
           src="/globe.svg"
           alt="Avatar"
@@ -59,7 +57,6 @@ const UserProfile = () => {
           }}
         />
 
-        {/* Info usuario */}
         <h2 style={{ color: "var(--color-green-dark)", margin: 0 }}>Antonio López</h2>
         <p style={{ color: "var(--color-green-light)", margin: "4px 0 12px" }}>Operador</p>
         <p style={{ fontSize: "0.9rem", margin: "0 0 1rem" }}>15.4hrs trabajadas</p>
@@ -77,7 +74,6 @@ const UserProfile = () => {
         </p>
       </div>
 
-      {/* Cerrar sesión */}
       <div style={{ marginTop: "2rem" }}>
         <Button size="regular" action="negative" onClick={handleLogout}>
           Cerrar sesión
