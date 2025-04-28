@@ -1,4 +1,5 @@
 import HeaderNavigator from "@/components/HeaderNavigator";
+import styles from "./OrdersLayout.module.css";
 
 const tabs = [
   { label: 'ENTREGAS', href: '/orders/deliveries' },
@@ -7,10 +8,9 @@ const tabs = [
 
 export default function OrdersLayout({ children }: { children: React.ReactNode }) {
   return (
-    <section>
+    <section className={styles.OrdersLayout}>
       <HeaderNavigator tabs={tabs} />
-
-      <main>{children}</main>
+      <main className="page">{children}</main>
     </section>
   );
 }
