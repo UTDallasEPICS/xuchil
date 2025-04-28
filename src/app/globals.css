@@ -46,15 +46,6 @@
   }
 }
 
-body {
-  font-family: "Lato", sans-serif;
-  margin: 0;
-  padding: 0;
-  font-size: var(--font-size-p);
-  background-color: var(--color-background);
-  color: var(--color-text);
-}
-
 h1 {
   font-family: "Lato", sans-serif;
   font-weight: 900;
@@ -105,13 +96,23 @@ textarea {
 
 body {
   margin: 0;
+  padding: 0;
+  font-family: "Lato", sans-serif;
+  font-size: var(--font-size-p);
   background-color: var(--color-background);
   color: var(--color-text-dark);
   min-width: 320px;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
+}
+
+.page {
+  width: 100%;
+  margin: 0 auto;
+  justify-items: center;
+  overflow-x: hidden;
 }
 
 a {
