@@ -24,6 +24,14 @@ function parseMXDate(raw: string): Date | null {
   return isNaN(d.getTime()) ? null : d;
 }
 
+function getISOWeek(date: Date) {
+  const tmp = new Date(date.getTime());
+  tmp.setUTCDate(tmp.getUTCDate() + 4 - (tmp.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(tmp.getUTCFullYear(), 0, 1));
+  return Math.floor(((+tmp - +yearStart) / 86400000 + 1) / 7);
+}
+
+
 const compareDates = (a: Order, b: Order, asc = true) => {
   const da = parseMXDate(a.deliveryDate);
   const db = parseMXDate(b.deliveryDate);
@@ -44,12 +52,48 @@ const Deliveries = () => {
   const orders = useMemo(() => fetchOrders(), []);
 
   const visibleOrders = useMemo(() => {
+    const today = new Date();
+    const currentDay   = today.getDate();
+    const currentMonth = today.getMonth();
+    const currentYear  = today.getFullYear();
+
     let list = orders;
 
     if (deliveryFilter.value !== "todos") {
       list = list.filter(
         (o) => o.deliveryVariant === deliveryFilter.value
       );
+    }
+
+    if (dateFilter.value !== "all") {
+      list = list.filter((o) => {
+        const d = parseMXDate(o.deliveryDate);
+  
+        if (dateFilter.value === "today") {
+          return (
+            d.getDate() === currentDay &&
+            d.getMonth() === currentMonth &&
+            d.getFullYear() === currentYear
+          );
+        }
+  
+        if (dateFilter.value === "week") {
+          const currWeek = getISOWeek(today);
+          const orderWeek = getISOWeek(d);
+          return (
+            currWeek === orderWeek && d.getFullYear() === currentYear
+          );
+        }
+  
+        if (dateFilter.value === "month") {
+          return (
+            d.getMonth() === currentMonth &&
+            d.getFullYear() === currentYear
+          );
+        }
+  
+        return true;
+      });
     }
 
     const asc = sortFilter.value === "asc";
