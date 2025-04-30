@@ -1,6 +1,7 @@
 import { ProcessStep } from "@/types/ProcessStep";
 import { ProductVariant } from "@/types/ProductVariant";
 import { PendingTask } from "@/types/PendingTask";
+import { Order } from "@/types/Order";
 
 export function fetchProducts() {
     return [
@@ -364,6 +365,32 @@ export function fetchProductVariants(productId: string): ProductVariant[] {
         currentStep: "Transporte",
         currentStepNumber: 4,
         totalSteps: 7,
+      },
+    ];
+  }
+
+  export function fetchOrders(): Order[] {
+    return [
+      {
+        id: 12376,
+        address:
+          "Blvd. Guadalupe Hinojosa de Murat 1100,\n71248 San Raymundo Jalpan, Oax.",
+        deliveryDate: "13/03/2025",
+        deliveryVariant: "personal",
+      },
+      {
+        id: 12832,
+        address:
+          "3ª privada de La Gloria s/n, Barrio del Peñasco, 68230 Oaxaca, Oax.",
+        deliveryDate: "18/03/2025",
+        deliveryVariant: "mail",
+      },
+      {
+        id: 13130,
+        address:
+          "Blvd. Guadalupe Hinojosa de Murat 1100,\n71248 San Raymundo Jalpan, Oax.",
+        deliveryDate: "27/03/2025",
+        deliveryVariant: "consignment",
       },
     ];
   }
