@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import OrderCard from "@/components/OrderCard";
 import FilterButton from "@/components/FilterButton";
 import BottomButton from "@/components/BottomButton";
-
+import { Order } from "@/types/Order";
 import { fetchOrders } from "@/constants/api";
 import {
   dateFilterOptions,
@@ -13,6 +13,28 @@ import {
 } from "@/constants/filterOptions";
 
 import styles from "./Deliveries.module.css";
+
+function parseMXDate(raw: string): Date | null {
+  if (!raw) return null;
+  const clean = raw.trim();
+  const parts = clean.split("/");
+  if (parts.length !== 3) return null;
+  const [dd, mm, yyyy] = parts.map((p) => Number(p));
+  const d = new Date(yyyy, mm - 1, dd);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+const compareDates = (a: Order, b: Order, asc = true) => {
+  const da = parseMXDate(a.deliveryDate);
+  const db = parseMXDate(b.deliveryDate);
+
+  if (!da && !db) return 0;
+  if (!da) return 1;
+  if (!db) return -1;
+
+  return asc ? da.getTime() - db.getTime() : db.getTime() - da.getTime();
+};
+
 
 const Deliveries = () => {
   const [dateFilter, setDateFilter] = useState(dateFilterOptions[0]);
@@ -30,21 +52,9 @@ const Deliveries = () => {
       );
     }
 
-    if (sortFilter.value === "asc") {
-      list = [...list].sort(
-        (a, b) =>
-          new Date(a.deliveryDate).getTime() -
-          new Date(b.deliveryDate).getTime()
-      );
-    } else {
-      list = [...list].sort(
-        (a, b) =>
-          new Date(b.deliveryDate).getTime() -
-          new Date(a.deliveryDate).getTime()
-      );
-    }
-    return list;
-  }, [orders, deliveryFilter, sortFilter]);
+    const asc = sortFilter.value === "asc";
+    return [...list].sort((a, b) => compareDates(a, b, asc));
+  }, [orders, deliveryFilter, dateFilter, sortFilter]);
 
   const handleNewOrder = () => {
     console.log("Nuevo pedido");
