@@ -1,13 +1,9 @@
 "use client";
 import React, { useState } from "react";
+import Image from "next/image";
 import styles from "@/styles/FilterButton.module.css";
 import { LucideIcon, ChevronDown } from "lucide-react";
-
-export interface FilterOption {
-  label: string;
-  icon: LucideIcon;
-  value?: string;
-}
+import type { FilterOption } from "@/types/FilterOption";
 
 interface FilterButtonProps {
   title: string;
@@ -15,6 +11,20 @@ interface FilterButtonProps {
   onChange?: (selected: FilterOption) => void;
   variant?: "light" | "dark";
 }
+
+const iconSize = (s: number) => ({ width: s, height: s });
+
+const renderGraphic = (opt: FilterOption, size = 20) => {
+  if (opt.icon)        return <opt.icon size={size} />;
+  if (opt.img)         return (
+    <Image
+      src={opt.img}
+      alt={opt.label}
+      {...iconSize(size)}
+    />
+  );
+  return null;
+};
 
 const FilterButton: React.FC<FilterButtonProps> = ({
   title,
@@ -40,7 +50,7 @@ const FilterButton: React.FC<FilterButtonProps> = ({
         `}
         onClick={() => setIsOpen(true)}
       >
-        <selectedOption.icon size={20} />
+        {renderGraphic(selectedOption)}
         <span>{selectedOption.label}</span>
         <ChevronDown size={20} />
       </button>
@@ -52,7 +62,7 @@ const FilterButton: React.FC<FilterButtonProps> = ({
             <ul>
               {options.map((option, index) => (
                 <li key={index} onClick={() => handleSelect(option)}>
-                  <option.icon size={24} />
+                  {renderGraphic(option, 24)}
                   {option.label}
                 </li>
               ))}

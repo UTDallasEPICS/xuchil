@@ -65,7 +65,7 @@ export const sortFilterOptions = [
 
 export const deliveryFilterOptions = [
   { label: "Todos", icon: ListFilter, value: "todos" },
-  { label: "Entrega personal", icon: ListFilter, value: "personal" },
-  { label: "Envío por correo", icon: ListFilter, value: "mail" },
-  { label: "En consignación", icon: ListFilter, value: "consignment" },
+  { label: "Entrega personal", img: "/Personal.svg", value: "personal" },
+  { label: "Envío por correo", img: "/Mail.svg", value: "mail" },
+  { label: "En consignación", img: "/Consignment.svg", value: "consignment" },
 ];
