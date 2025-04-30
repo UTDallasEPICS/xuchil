@@ -2,22 +2,25 @@
     display: flex;
     flex-direction: column;
     height: 100%;
-  }
+}
   
-  .filters {
+.filters {
     display: flex;
     gap: 6px;
-    padding: 4px 8px 8px;
+    padding: 12px 8px 12px;
     background: var(--color-gray-light, #eee);
     flex-shrink: 0;
-  }
-  
-  .scrollArea {
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: thin;
+}
+    
+.scrollArea {
     flex: 1;
     overflow-y: auto;
     padding-bottom: 12vh;
     display: flex;
     flex-direction: column;
     align-items: center;
-  }
+}
   

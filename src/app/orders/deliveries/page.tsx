@@ -57,19 +57,21 @@ const Deliveries = () => {
           title="Filtrar por fecha"
           options={dateFilterOptions}
           onChange={setDateFilter}
+          variant="dark"
         />
         <FilterButton
           title="Ordenar"
           options={sortFilterOptions}
           onChange={setSortFilter}
+          variant="dark"
         />
         <FilterButton
           title="Tipo de entrega"
           options={deliveryFilterOptions}
           onChange={setDeliveryFilter}
+          variant="dark"
         />
       </div>
-
       <div className={styles.scrollArea}>
         {visibleOrders.map((order) => (
           <OrderCard key={order.id} {...order} />

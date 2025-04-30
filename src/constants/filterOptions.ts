@@ -51,10 +51,11 @@ export const monthFilterOptions = [
 ];
 
 export const dateFilterOptions = [
-  { label: "Por fecha", icon: CalendarClock, value: "all" },
+  { label: "Cualquier fecha", icon: CalendarClock, value: "all" },
   { label: "Hoy", icon: CalendarClock, value: "today" },
   { label: "Esta semana", icon: CalendarClock, value: "week" },
   { label: "Este mes", icon: CalendarClock, value: "month" },
+  { label: "Este año", icon: CalendarClock, value: "year" },
 ];
 
 export const sortFilterOptions = [

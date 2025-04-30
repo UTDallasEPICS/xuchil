@@ -1,6 +1,5 @@
 .filterButton {
-    background-color: var(--color-gray-light);
-    color: white;
+    color: var(--color-text-light);
     border: none;
     border-radius: 20px;
     padding: 10px 15px;
@@ -14,13 +13,21 @@
     font-weight: 700;
     white-space: nowrap;     
     flex-shrink: 0;           
-  }
-  
-  .filterButton:hover {
+}
+
+.light {
+  background: var(--color-gray-light);
+}
+
+.dark {
+  background: var(--color-gray-dark);
+}
+
+.filterButton:hover {
     background-color: var(--color-gray-dark);
-  }
+}
   
-  .overlay {
+.overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -33,7 +40,7 @@
     z-index: 1000;
   }
   
-  .modal {
+.modal {
     background: none;
     padding: 20px;
     text-align: center;
@@ -41,21 +48,21 @@
     height: 90%;
     align-items: flex-start;
     overflow-y: auto;
-  }
+}
   
-  .modal h2 {
+.modal h2 {
     margin-bottom: 20px;
     font-size: 1.8rem;
     color: var(--color-text-light);
     font-weight: bold;
-  }
+}
   
-  .modal ul {
+.modal ul {
     list-style: none;
     padding: 0;
-  }
+}
   
-  .modal li {
+.modal li {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -64,10 +71,10 @@
     color: var(--color-text-light);
     cursor: pointer;
     transition: background 0.3s;
-  }
+}
   
-  .modal li:hover {
+.modal li:hover {
     background: rgba(255, 255, 255, 0.2);
     border-radius: 10px;
-  }
+}
   
