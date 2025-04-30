@@ -23,7 +23,11 @@ const OrderCard: FC<Order> = ({
 
       <div className={styles.rightColumn}>
         <div className={styles.typeWrapper}>
-          <DeliveryType variant={deliveryVariant} type="badge" />
+            <DeliveryType
+                variant={deliveryVariant}
+                type="badge"
+                size="sm"
+            />
         </div>
 
         <p className={styles.label}>Fecha de entrega</p>

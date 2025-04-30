@@ -58,3 +58,27 @@
 .chevron {
     display: flex;
 }
+
+.sm {
+    font-size: 0.7rem;
+    padding: 4px 10px;
+    gap: 6px;
+}
+  
+.md {
+    font-size: 1rem;
+    padding: 8px 15px;
+    gap: 10px;
+  }
+  
+.lg {
+    font-size: 1rem;
+    padding: 10px 18px;
+    gap: 12px;
+}
+  
+.iconImg {
+    object-fit: fill;
+    margin: 0;
+}
+  
