@@ -1,4 +1,17 @@
-import { Users, User, Calendar, Leaf, Cookie, Coffee, Package, Bean } from "lucide-react";
+import {
+  Users,
+  User,
+  Calendar,
+  Leaf,
+  Cookie,
+  Coffee,
+  Package,
+  Bean,
+  CalendarClock,
+  CalendarArrowUp,
+  CalendarArrowDown,
+  ListFilter,
+} from "lucide-react";
 
 export const productFilterOptions = [
   { label: "Todos", icon: Package },
@@ -35,4 +48,23 @@ export const monthFilterOptions = [
   { label: "Octubre", icon: Calendar },
   { label: "Noviembre", icon: Calendar },
   { label: "Diciembre", icon: Calendar },
+];
+
+export const dateFilterOptions = [
+  { label: "Por fecha", icon: CalendarClock, value: "all" },
+  { label: "Hoy", icon: CalendarClock, value: "today" },
+  { label: "Esta semana", icon: CalendarClock, value: "week" },
+  { label: "Este mes", icon: CalendarClock, value: "month" },
+];
+
+export const sortFilterOptions = [
+  { label: "Más próximos", icon: CalendarArrowUp, value: "asc" },
+  { label: "Más lejanos", icon: CalendarArrowDown, value: "desc" },
+];
+
+export const deliveryFilterOptions = [
+  { label: "Todos", icon: ListFilter, value: "todos" },
+  { label: "Entrega personal", icon: ListFilter, value: "personal" },
+  { label: "Envío por correo", icon: ListFilter, value: "mail" },
+  { label: "En consignación", icon: ListFilter, value: "consignment" },
 ];

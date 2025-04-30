@@ -1,0 +1,23 @@
+.wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+  
+  .filters {
+    display: flex;
+    gap: 6px;
+    padding: 4px 8px 8px;
+    background: var(--color-gray-light, #eee);
+    flex-shrink: 0;
+  }
+  
+  .scrollArea {
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 12vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  

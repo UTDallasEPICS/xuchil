@@ -392,5 +392,26 @@ export function fetchProductVariants(productId: string): ProductVariant[] {
         deliveryDate: "27/03/2025",
         deliveryVariant: "consignment",
       },
+      {
+        id: 12377,
+        address:
+          "Blvd. Guadalupe Hinojosa de Murat 1100,\n71248 San Raymundo Jalpan, Oax.",
+        deliveryDate: "13/03/2025",
+        deliveryVariant: "personal",
+      },
+      {
+        id: 12833,
+        address:
+          "3ª privada de La Gloria s/n, Barrio del Peñasco, 68230 Oaxaca, Oax.",
+        deliveryDate: "18/03/2025",
+        deliveryVariant: "mail",
+      },
+      {
+        id: 13131,
+        address:
+          "Blvd. Guadalupe Hinojosa de Murat 1100,\n71248 San Raymundo Jalpan, Oax.",
+        deliveryDate: "27/03/2025",
+        deliveryVariant: "consignment",
+      },
     ];
   }
