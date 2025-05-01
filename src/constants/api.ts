@@ -373,45 +373,173 @@ export function fetchProductVariants(productId: string): ProductVariant[] {
     return [
       {
         id: 12376,
+        clientName: "Adán Yair Jiménez Santiago",
         address:
           "Blvd. Guadalupe Hinojosa de Murat 1100,\n71248 San Raymundo Jalpan, Oax.",
-        deliveryDate: "30/04/2025",
+        deliveryDate: "01/05/2025",
         deliveryVariant: "personal",
+        delivered: false,
+        products: [
+          {
+            id: "mezquite-5kg",
+            photo: "/mezquite.webp",
+            name: "Harina de Mezquite",
+            presentation: "5 kg",
+            quantity: 20,
+            units: "Unidades",
+          },
+          {
+            id: "amaranto-1kg",
+            photo: "/amaranth.webp",
+            name: "Harina De Amaranto",
+            presentation: "5 kg",
+            quantity: 15,
+            units: "Unidades",
+          },
+          {
+            id: "sustituto-1kg",
+            photo: "/coffee.webp",
+            name: "Sustituto De Café",
+            presentation: "1 kg",
+            quantity: 12,
+            units: "Unidades",
+          },
+        ],
       },
       {
         id: 12832,
+        clientName: "Alejandra Cruz Martínez",
         address:
-          "3ª privada de La Gloria s/n, Barrio del Peñasco, 68230 Oaxaca, Oax.",
-        deliveryDate: "01/05/2025",
+          "3ª Privada de La Gloria s/n, Barrio del Peñasco, 68230 Oaxaca, Oax.",
+        deliveryDate: "02/05/2025",
         deliveryVariant: "mail",
+        delivered: false,
+        products: [
+          {
+            id: "mezquite-5kg",
+            photo: "/mezquite.webp",
+            name: "Harina de Mezquite",
+            presentation: "5 kg",
+            quantity: 20,
+            units: "Unidades",
+          },
+        ],
       },
       {
         id: 13130,
+        clientName: "Luis Fernando Vázquez Ríos",
         address:
           "Blvd. Guadalupe Hinojosa de Murat 1100,\n71248 San Raymundo Jalpan, Oax.",
         deliveryDate: "20/05/2025",
         deliveryVariant: "consignment",
+        delivered: true,
+        products: [
+          {
+            id: "mezquite-5kg",
+            photo: "/mezquite.webp",
+            name: "Harina de Mezquite",
+            presentation: "5 kg",
+            quantity: 20,
+            units: "Unidades",
+          },
+          {
+            id: "amaranto-1kg",
+            photo: "/amaranth.webp",
+            name: "Harina De Amaranto",
+            presentation: "5 kg",
+            quantity: 15,
+            units: "Unidades",
+          },
+        ],
       },
       {
         id: 12377,
+        clientName: "Patricia López Ramos",
         address:
           "Blvd. Guadalupe Hinojosa de Murat 1100,\n71248 San Raymundo Jalpan, Oax.",
         deliveryDate: "21/05/2025",
         deliveryVariant: "personal",
+        delivered: false,
+        products: [
+          {
+            id: "amaranto-1kg",
+            photo: "/amaranth.webp",
+            name: "Harina De Amaranto",
+            presentation: "5 kg",
+            quantity: 15,
+            units: "Unidades",
+          },
+          {
+            id: "sustituto-1kg",
+            photo: "/coffee.webp",
+            name: "Sustituto De Café",
+            presentation: "1 kg",
+            quantity: 12,
+            units: "Unidades",
+          },
+        ],
       },
       {
         id: 12833,
+        clientName: "José Armando Pérez Peña",
         address:
-          "3ª privada de La Gloria s/n, Barrio del Peñasco, 68230 Oaxaca, Oax.",
+          "3ª Privada de La Gloria s/n, Barrio del Peñasco, 68230 Oaxaca, Oax.",
         deliveryDate: "20/07/2025",
         deliveryVariant: "mail",
+        delivered: false,
+        products: [
+          {
+            id: "mezquite-5kg",
+            photo: "/mezquite.webp",
+            name: "Harina de Mezquite",
+            presentation: "5 kg",
+            quantity: 20,
+            units: "Unidades",
+          },
+          {
+            id: "sustituto-1kg",
+            photo: "/coffee.webp",
+            name: "Sustituto De Café",
+            presentation: "1 kg",
+            quantity: 12,
+            units: "Unidades",
+          },
+        ],
       },
       {
         id: 13131,
+        clientName: "María Teresa Gómez Vargas",
         address:
           "Blvd. Guadalupe Hinojosa de Murat 1100,\n71248 San Raymundo Jalpan, Oax.",
         deliveryDate: "28/07/2025",
         deliveryVariant: "consignment",
+        delivered: true,
+        products: [
+          {
+            id: "mezquite-5kg",
+            photo: "/mezquite.webp",
+            name: "Harina de Mezquite",
+            presentation: "5 kg",
+            quantity: 20,
+            units: "Unidades",
+          },
+          {
+            id: "amaranto-1kg",
+            photo: "/amaranth.webp",
+            name: "Harina De Amaranto",
+            presentation: "5 kg",
+            quantity: 15,
+            units: "Unidades",
+          },
+          {
+            id: "sustituto-1kg",
+            photo: "/coffee.webp",
+            name: "Sustituto De Café",
+            presentation: "1 kg",
+            quantity: 12,
+            units: "Unidades",
+          },
+        ],
       },
     ];
   }
