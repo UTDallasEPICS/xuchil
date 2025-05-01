@@ -1,9 +1,15 @@
+:root {
+    --item-height: 60px;          /* Alto mínimo de cada fila del dropdown (≈ 4 ítems visibles) */
+  }
+
 .productPicker {
     position: relative;
     width: 300px;
 }
 
 .selectedProduct {
+    all: unset;
+    box-sizing: border-box;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -16,11 +22,21 @@
 }
 
 .productImage {
+    flex: 0 0 40px;
     width: 40px;
     height: 40px;
     object-fit: cover;
     border-radius: 5px;
     margin-right: 10px;
+}
+
+.label {
+    flex: 1 1 auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding-right: 8px;
+    font-size: 0.9rem;
 }
 
 .arrow {
@@ -32,6 +48,7 @@
 
 .dropdown {
     position: absolute;
+    top: calc(100% + 4px);
     top: 100%;
     left: 0;
     width: 100%;
@@ -39,7 +56,7 @@
     border: 2px solid black;
     border-radius: 8px;
     box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-    max-height: 300px;
+    max-height: calc(var(--item-height) * 3);
     overflow-y: auto;
     z-index: 10;
 }
@@ -50,6 +67,10 @@
     padding: 10px;
     cursor: pointer;
     border-bottom: 1px solid #ddd;
+}
+
+.productItem:last-child {
+    border-bottom: none;
 }
 
 .productItem:hover {

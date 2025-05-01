@@ -5,10 +5,10 @@ import ImageCard from "@/components/ImageCard";
 import ProductPicker from "@/components/ProductPicker";
 
 const products = [
-  { id: 1, name: "Harina de Mezquite", weight: "5kg", image: "/file.svg" },
-  { id: 2, name: "Harina de Maíz Negro", weight: "5kg", image: "/file.svg" },
-  { id: 3, name: "Harina de Maíz Amarillo", weight: "1kg", image: "/file.svg" },
-  { id: 4, name: "Sustituto de Café", weight: "500g", image: "/file.svg" },
+  { id: 1, name: "Harina de Mezquite", presentation: "5kg", image: "/file.svg" },
+  { id: 2, name: "Harina de Maíz Negro", presentation: "5kg", image: "/file.svg" },
+  { id: 3, name: "Harina de Maíz Amarillo", presentation: "1kg", image: "/file.svg" },
+  { id: 4, name: "Sustituto de Café", presentation: "500g", image: "/file.svg" },
 ];
 
 const Inventory = () => {
