@@ -2,8 +2,9 @@ import { ProcessStep } from "@/types/ProcessStep";
 import { ProductVariant } from "@/types/ProductVariant";
 import { PendingTask } from "@/types/PendingTask";
 import { Order } from "@/types/Order";
+import { Product } from "@/types/Product";
 
-export function fetchProducts() {
+export function fetchProductCategories() {
     return [
       {
         id: "harina",
@@ -540,6 +541,35 @@ export function fetchProductVariants(productId: string): ProductVariant[] {
             units: "Unidades",
           },
         ],
+      },
+    ];
+  }
+
+  export function fetchProducts(): Product[] {
+    return [
+      {
+        id: "mezquite-5kg",
+        image: "/mezquite.webp",
+        name: "Harina de Mezquite",
+        presentation: "5 kg",
+        quantity: 20,
+        units: "Unidades",
+      },
+      {
+        id: "amaranto-1kg",
+        image: "/amaranth.webp",
+        name: "Harina De Amaranto",
+        presentation: "5 kg",
+        quantity: 15,
+        units: "Unidades",
+      },
+      {
+        id: "sustituto-1kg",
+        image: "/coffee.webp",
+        name: "Sustituto De Café",
+        presentation: "1 kg",
+        quantity: 12,
+        units: "Unidades",
       },
     ];
   }
