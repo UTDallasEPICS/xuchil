@@ -1,7 +1,7 @@
 "use client";
 
 import { ReactNode } from "react";
-import { useParams } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 import HeaderNavigator from "@/components/HeaderNavigator";
 import styles from "./OrdersLayout.module.css";
 
@@ -13,7 +13,10 @@ const tabs = [
 export default function OrdersLayout({ children }: { children: ReactNode }) {
   const { orderId } = useParams<{ orderId?: string }>();
 
-  const showHeader = orderId === undefined;
+  const pathname = usePathname();
+  const isNewOrder = pathname.endsWith("/new-order");
+
+  const showHeader = orderId === undefined && !isNewOrder;
 
   return (
     <section className={styles.OrdersLayout}>

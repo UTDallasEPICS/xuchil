@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import OrderCard from "@/components/OrderCard";
 import FilterButton from "@/components/FilterButton";
 import BottomButton from "@/components/BottomButton";
@@ -39,6 +40,7 @@ const Deliveries = () => {
   const [dateFilter, setDateFilter] = useState<FilterOption>(dateFilterOptions[0]);
   const [sortFilter, setSortFilter] = useState<FilterOption>(sortFilterOptions[0]);
   const [deliveryFilter, setDeliveryFilter] = useState<FilterOption>(deliveryFilterOptions[0]);
+  const router = useRouter();
 
   const orders = useMemo(() => fetchOrders(), []);
 
@@ -82,7 +84,9 @@ const Deliveries = () => {
     return [...list].sort((a, b) => compareDates(a, b, asc));
   }, [orders, deliveryFilter, dateFilter, sortFilter]);
 
-  const handleNewOrder = () => console.log("Nuevo pedido");
+  const handleNewOrder = () => {
+    router.push("/orders/deliveries/new-order");
+  };
 
   return (
     <div className={`${styles.wrapper} page`}>
