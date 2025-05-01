@@ -1,3 +1,6 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -16,6 +19,26 @@ model User {
   email        String?
   phoneNo      String?
   tasks        Task[]
+}
+
+model Order {
+  id              Int          @id @default(autoincrement())
+  client          String
+  deliveryAddress String
+  deliveryDate    DateTime
+  deliveryMethod  String
+  deliveryStatus  String       @default("pending")
+  productsOrdered OrderEntry[]
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+}
+
+model OrderEntry {
+  id        Int     @id @default(autoincrement())
+  orderId   Int
+  order     Order   @relation(fields: [orderId], references: [id])
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
 }
 
 enum Role {
@@ -84,4 +107,14 @@ model Task {
   worker         User        @relation(fields: [workerId], references: [id])
   processStepId  Int
   processStep    ProcessStep @relation(fields: [processStepId], references: [id])
+}
+
+enum DeliveryMethod {
+  personal
+  mail
+}
+
+enum DeliveryStatus {
+  pending
+  done
 }
