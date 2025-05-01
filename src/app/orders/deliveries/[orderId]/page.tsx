@@ -10,6 +10,15 @@ import { fetchOrders } from "@/constants/api";
 import { CircleUserRound as UserIcon, Calendar as CalendarIcon } from "lucide-react";
 import styles from "./OrderDetails.module.css";
 
+const formatMXDateLong = (raw: string) => {
+  const [dd, mm, yyyy] = raw.split("/").map(Number);
+  const months = [
+    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
+  ];
+  return `${dd} de ${months[mm - 1]} de ${yyyy}`;
+};
+
 const OrderDetailsPage = () => {
   const { orderId } = useParams<{ orderId: string }>();
   const order = fetchOrders().find((o) => o.id === Number(orderId));
@@ -52,7 +61,7 @@ const OrderDetailsPage = () => {
       <h3>Fecha de entrega:</h3>
       <div className={styles.row}>
         <CalendarIcon size={18} strokeWidth={2} className={styles.icon} />
-        <strong>{deliveryDate.replace("/", " de ").replace("/", " de ")}</strong>
+        <strong>{formatMXDateLong(deliveryDate)}</strong>
       </div>
       <h3>Dirección de entrega:</h3>
       <p className={styles.address}>{address}</p>
