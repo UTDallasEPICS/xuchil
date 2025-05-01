@@ -7,6 +7,7 @@
     flex-direction: column;
     gap: 0.5rem;
     width: 85vw;
+    max-width: 600px;
 }
   
 .header {

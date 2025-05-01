@@ -1,5 +1,5 @@
 :root {
-    --item-height: 60px;          /* Alto mínimo de cada fila del dropdown (≈ 4 ítems visibles) */
+    --item-height: 60px;
   }
 
 .productPicker {
