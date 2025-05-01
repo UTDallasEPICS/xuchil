@@ -14,7 +14,9 @@ export async function GET(request: NextRequest) {
   try {
     const tasks = await prisma.task.findMany({
       where: {
-        ...(productId !== null && {productId}),
+        processStep: {
+          ...(productId !== null && {productId}),
+        },
         ...(workerId !== null && {workerId}),
         ...(status !== null && {status}),
         ...(since !== null && {startTimestamp: {gte: since}}),
@@ -26,7 +28,11 @@ export async function GET(request: NextRequest) {
             passwordHash: true
           }
         },
-        product: true
+        processStep: {
+          include: {
+            product: true
+          }
+        }
       },
       orderBy: {
         startTimestamp: 'desc'
@@ -48,8 +54,7 @@ export async function POST(request: NextRequest) {
     const task = await prisma.task.create({
       data: {
         workerId: body.workerId,
-        productId: body.productId,
-        activity: body.activity,
+        processStepId: body.processStepId,
         inputWeight: body.inputWeight,
         outputWeight: body.outputWeight,
         lossWeight: body.lossWeight,
@@ -57,8 +62,16 @@ export async function POST(request: NextRequest) {
         notes: body.notes,
       },
       include: {
-        worker: true,
-        product: true
+        worker: {
+          omit: {
+            passwordHash: true
+          }
+        },
+        processStep: {
+          include: {
+            product: true
+          }
+        }
       }
     });
 

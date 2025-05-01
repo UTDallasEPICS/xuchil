@@ -25,7 +25,11 @@ export async function GET(
             passwordHash: true
           }
         },
-        product: true
+        processStep: {
+          include: {
+            product: true,
+          }
+        }
       }
     });
 
@@ -64,8 +68,7 @@ export async function PUT(
       },
       data: {
         workerId: body.workerId,
-        productId: body.productId,
-        activity: body.activity,
+        processStepId: body.processStepId,
         inputWeight: body.inputWeight,
         outputWeight: body.outputWeight,
         lossWeight: body.lossWeight,
@@ -78,7 +81,11 @@ export async function PUT(
             passwordHash: true
           }
         },
-        product: true
+        processStep: {
+          include: {
+            product: true,
+          }
+        }
       }
     });
 
