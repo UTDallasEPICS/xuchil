@@ -5,6 +5,7 @@ import BottomButton from "@/components/BottomButton";
 import ImageCard from "@/components/ImageCard";
 import ProductPicker from "@/components/ProductPicker";
 import QuantityPicker from "@/components/QuantityPicker";
+import DatePicker from "@/components/DatePicker";
 
 const products = [
   { id: 1, name: "Harina de Mezquite", presentation: "5kg", image: "/file.svg" },
@@ -15,10 +16,12 @@ const products = [
 
 const Inventory = () => {
   const [qty, setQty] = useState(15);
+  const [selected, setSelected] = useState<Date | null>(null);
   return (
     <div className="page">
       <h1>Inventario</h1>
       <p>Contenido de la sección Inventario.</p>
+      <DatePicker value={selected} onChange={setSelected} />
       <QuantityPicker
         value={qty}
         onChange={setQty}
