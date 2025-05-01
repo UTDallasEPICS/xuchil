@@ -11,7 +11,7 @@ import {
   sortFilterOptions,
   deliveryFilterOptions,
 } from "@/constants/filterOptions";
-
+import { FilterOption } from "@/types/FilterOption";
 import styles from "./Deliveries.module.css";
 
 function parseMXDate(raw: string): Date | null {
@@ -45,9 +45,10 @@ const compareDates = (a: Order, b: Order, asc = true) => {
 
 
 const Deliveries = () => {
-  const [dateFilter, setDateFilter] = useState(dateFilterOptions[0]);
-  const [sortFilter, setSortFilter] = useState(sortFilterOptions[0]);
-  const [deliveryFilter, setDeliveryFilter] = useState(deliveryFilterOptions[0]);
+  const [dateFilter, setDateFilter] = useState<FilterOption>(dateFilterOptions[0]);
+  const [sortFilter, setSortFilter] = useState<FilterOption>(sortFilterOptions[0]);
+  const [deliveryFilter, setDeliveryFilter] = useState<FilterOption>(deliveryFilterOptions[0]);
+  
 
   const orders = useMemo(() => fetchOrders(), []);
 
@@ -68,7 +69,7 @@ const Deliveries = () => {
     if (dateFilter.value !== "all") {
       list = list.filter((o) => {
         const d = parseMXDate(o.deliveryDate);
-  
+        if (!d) return false;
         if (dateFilter.value === "today") {
           return (
             d.getDate() === currentDay &&
