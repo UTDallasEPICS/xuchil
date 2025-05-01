@@ -72,7 +72,7 @@ const OrderDetailsPage = () => {
         ))}
       </div>
       <BottomButton onClick={handleDelivered}>
-        {delivered ? "Entregado" : "Marcar como entregado"}
+        {delivered ? "Marcar como pendiente" : "Marcar como entregado"}
       </BottomButton>
     </div>
   );
