@@ -1,8 +1,10 @@
 "use client";
+import { useState } from "react";
 import Card from "@/components/Card";
 import BottomButton from "@/components/BottomButton";
 import ImageCard from "@/components/ImageCard";
 import ProductPicker from "@/components/ProductPicker";
+import QuantityPicker from "@/components/QuantityPicker";
 
 const products = [
   { id: 1, name: "Harina de Mezquite", presentation: "5kg", image: "/file.svg" },
@@ -12,11 +14,18 @@ const products = [
 ];
 
 const Inventory = () => {
+  const [qty, setQty] = useState(15);
   return (
     <div className="page">
       <h1>Inventario</h1>
       <p>Contenido de la sección Inventario.</p>
-
+      <QuantityPicker
+        value={qty}
+        onChange={setQty}
+        min={0}
+        max={99}
+        step={1}
+      />
       <Card>
       <div>
         <p><strong>Pedido #<span style={{ fontWeight: "bold" }}>12376</span></strong></p>
