@@ -30,10 +30,12 @@ export async function GET(
     });
 
     if (!task) {
-      return NextResponse.json({error: "Task not found"}, {status: 404});
+      return NextResponse.json({
+        error: {message: "Task not found"}
+      }, {status: 404});
     }
 
-    return NextResponse.json(task, {status: 200});
+    return NextResponse.json({data: task}, {status: 200});
   } catch (error) {
     return NextResponse.json({
       error: {message: "Failed to fetch task", details: error}
@@ -80,7 +82,7 @@ export async function PUT(
       }
     });
 
-    return NextResponse.json(updatedTask, {status: 200});
+    return NextResponse.json({data: updatedTask}, {status: 200});
   } catch (error) {
     return NextResponse.json({
       error: {message: "Failed to update task", details: error}
