@@ -8,7 +8,7 @@ import { es } from "date-fns/locale";
 import styles from "@/styles/DatePicker.module.css";
 import "react-datepicker/dist/react-datepicker.css";
 
-registerLocale("es", es); // locale español
+registerLocale("es", es);
 
 export interface DatePickerProps {
   value: Date | null;
@@ -18,11 +18,10 @@ export interface DatePickerProps {
   disabled?: boolean;
 }
 
-/* ---------- Input personalizado ---------- */
 const todayPlaceholder = format(new Date(), "dd/MM/yyyy");
 
 interface CustomInputProps {
-  value?: string;                // ← string que inyecta react-datepicker
+  value?: string;
   onClick?: () => void;
   disabled?: boolean;
   placeholder: string;
@@ -47,7 +46,6 @@ const CustomInput = forwardRef<HTMLButtonElement, CustomInputProps>(
 
 CustomInput.displayName = "CustomInput";
 
-/* ---------- Componente principal ---------- */
 const DatePicker: React.FC<DatePickerProps> = ({
   value,
   onChange,
@@ -61,8 +59,6 @@ const DatePicker: React.FC<DatePickerProps> = ({
     minDate={minDate}
     maxDate={maxDate}
     customInput={
-      /* ❌  NO pasamos “value”, react-datepicker lo añade
-         ✅  Sólo pasamos el placeholder y disabled          */
       <CustomInput placeholder={todayPlaceholder} disabled={disabled} />
     }
     dateFormat="dd/MM/yyyy"
