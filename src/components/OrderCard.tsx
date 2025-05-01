@@ -1,17 +1,25 @@
 "use client";
 import { FC } from "react";
+import { useRouter } from "next/navigation";
 import DeliveryType from "@/components/DeliveryType";
 import { Order } from "@/types/Order";
 import styles from "@/styles/OrderCard.module.css";
 
-const OrderCard: FC<Order> = ({
+type Props = Order;
+
+const OrderCard: FC<Props> = ({
   id,
+  clientName,
   address,
   deliveryDate,
   deliveryVariant,
+  delivered,
+  products,
 }) => {
+  const router = useRouter();
+  const handleClick = () => router.push(`/orders/deliveries/${id}`);
   return (
-    <article className={styles.card}>
+    <article className={styles.card} onClick={handleClick}>
       <div className={styles.leftColumn}>
         <h3 className={styles.header}>
           <span className={styles.muted}>Pedido&nbsp;</span>
