@@ -376,7 +376,7 @@ export function fetchProductVariants(productId: string): ProductVariant[] {
         clientName: "Adán Yair Jiménez Santiago",
         address:
           "Blvd. Guadalupe Hinojosa de Murat 1100,\n71248 San Raymundo Jalpan, Oax.",
-        deliveryDate: "30/04/2025",
+        deliveryDate: "01/05/2025",
         deliveryVariant: "personal",
         delivered: false,
         products: [
@@ -411,7 +411,7 @@ export function fetchProductVariants(productId: string): ProductVariant[] {
         clientName: "Alejandra Cruz Martínez",
         address:
           "3ª Privada de La Gloria s/n, Barrio del Peñasco, 68230 Oaxaca, Oax.",
-        deliveryDate: "01/05/2025",
+        deliveryDate: "02/05/2025",
         deliveryVariant: "mail",
         delivered: false,
         products: [
