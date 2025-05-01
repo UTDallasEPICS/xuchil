@@ -6,10 +6,13 @@
 }
   
 .editWrapper {
-    display: flex;
-    justify-content: flex-end;
-    margin-bottom: -50px;
-}
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 50;
+    pointer-events: auto;
+  }
+  
 
 .deliveryType{
     display: flex;
