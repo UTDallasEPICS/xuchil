@@ -1,21 +1,37 @@
 "use client";
-
 import React, { useState } from "react";
+import Image from "next/image";
 import styles from "@/styles/FilterButton.module.css";
 import { LucideIcon, ChevronDown } from "lucide-react";
-
-interface FilterOption {
-  label: string;
-  icon: LucideIcon;
-}
+import type { FilterOption } from "@/types/FilterOption";
 
 interface FilterButtonProps {
   title: string;
   options: FilterOption[];
   onChange?: (selected: FilterOption) => void;
+  variant?: "light" | "dark";
 }
 
-const FilterButton: React.FC<FilterButtonProps> = ({ title, options, onChange }) => {
+const iconSize = (s: number) => ({ width: s, height: s });
+
+const renderGraphic = (opt: FilterOption, size = 20) => {
+  if (opt.icon)        return <opt.icon size={size} />;
+  if (opt.img)         return (
+    <Image
+      src={opt.img}
+      alt={opt.label}
+      {...iconSize(size)}
+    />
+  );
+  return null;
+};
+
+const FilterButton: React.FC<FilterButtonProps> = ({
+  title,
+  options,
+  onChange,
+  variant = "light",
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState<FilterOption>(options[0]);
 
@@ -27,8 +43,14 @@ const FilterButton: React.FC<FilterButtonProps> = ({ title, options, onChange })
 
   return (
     <div>
-      <button className={styles.filterButton} onClick={() => setIsOpen(true)}>
-        <selectedOption.icon size={20} />
+      <button
+        className={`
+          ${styles.filterButton}
+          ${variant === "dark" ? styles.dark : styles.light}
+        `}
+        onClick={() => setIsOpen(true)}
+      >
+        {renderGraphic(selectedOption)}
         <span>{selectedOption.label}</span>
         <ChevronDown size={20} />
       </button>
@@ -40,7 +62,7 @@ const FilterButton: React.FC<FilterButtonProps> = ({ title, options, onChange })
             <ul>
               {options.map((option, index) => (
                 <li key={index} onClick={() => handleSelect(option)}>
-                  <option.icon size={24} />
+                  {renderGraphic(option, 24)}
                   {option.label}
                 </li>
               ))}

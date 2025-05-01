@@ -1,6 +1,7 @@
 import { ProcessStep } from "@/types/ProcessStep";
 import { ProductVariant } from "@/types/ProductVariant";
 import { PendingTask } from "@/types/PendingTask";
+import { Order } from "@/types/Order";
 
 export function fetchProducts() {
     return [
@@ -364,6 +365,53 @@ export function fetchProductVariants(productId: string): ProductVariant[] {
         currentStep: "Transporte",
         currentStepNumber: 4,
         totalSteps: 7,
+      },
+    ];
+  }
+
+  export function fetchOrders(): Order[] {
+    return [
+      {
+        id: 12376,
+        address:
+          "Blvd. Guadalupe Hinojosa de Murat 1100,\n71248 San Raymundo Jalpan, Oax.",
+        deliveryDate: "30/04/2025",
+        deliveryVariant: "personal",
+      },
+      {
+        id: 12832,
+        address:
+          "3ª privada de La Gloria s/n, Barrio del Peñasco, 68230 Oaxaca, Oax.",
+        deliveryDate: "01/05/2025",
+        deliveryVariant: "mail",
+      },
+      {
+        id: 13130,
+        address:
+          "Blvd. Guadalupe Hinojosa de Murat 1100,\n71248 San Raymundo Jalpan, Oax.",
+        deliveryDate: "20/05/2025",
+        deliveryVariant: "consignment",
+      },
+      {
+        id: 12377,
+        address:
+          "Blvd. Guadalupe Hinojosa de Murat 1100,\n71248 San Raymundo Jalpan, Oax.",
+        deliveryDate: "21/05/2025",
+        deliveryVariant: "personal",
+      },
+      {
+        id: 12833,
+        address:
+          "3ª privada de La Gloria s/n, Barrio del Peñasco, 68230 Oaxaca, Oax.",
+        deliveryDate: "20/07/2025",
+        deliveryVariant: "mail",
+      },
+      {
+        id: 13131,
+        address:
+          "Blvd. Guadalupe Hinojosa de Murat 1100,\n71248 San Raymundo Jalpan, Oax.",
+        deliveryDate: "28/07/2025",
+        deliveryVariant: "consignment",
       },
     ];
   }
