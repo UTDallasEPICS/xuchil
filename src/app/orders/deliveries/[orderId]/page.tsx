@@ -14,7 +14,6 @@ import {
 
 import styles from "./OrderDetails.module.css";
 
-/** Convierte 29/03/2025 → 29 de marzo de 2025 */
 const formatMXDateLong = (raw: string) => {
   const [dd, mm, yyyy] = raw.split("/").map(Number);
   const months = [
@@ -25,11 +24,9 @@ const formatMXDateLong = (raw: string) => {
 };
 
 const OrderDetailsPage = () => {
-  /* ---------- hooks ---------- */
   const { orderId } = useParams<{ orderId: string }>();
   const router = useRouter();
 
-  /* ---------- datos ---------- */
   const order = fetchOrders().find((o) => o.id === Number(orderId));
   if (!order) return <p>Pedido no encontrado</p>;
 
@@ -43,21 +40,17 @@ const OrderDetailsPage = () => {
     delivered,
   } = order;
 
-  /* ---------- handlers ---------- */
   const handleEdit = () => {
     console.log("Botón presionado");
-    router.push(`/orders/deliveries/${id}/edit`); // nueva ruta
+    router.push(`/orders/deliveries/${id}/edit`);
   }
 
   const handleDelivered = () => {
     console.log("Marca como entregado", id);
-    // TODO: persiste el cambio de estado
   };
 
-  /* ---------- UI ---------- */
   return (
     <div className={styles.wrapper}>
-      {/* botón de edición (arriba-derecha) */}
       <div className={styles.editWrapper}>
         <Button
           type="button"
