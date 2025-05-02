@@ -61,18 +61,21 @@ const User = () => {
         <br />
         <div>
           <DeliveryType type="icon" variant="personal"/>
+          <DeliveryType type="icon" variant="personal" quantity={2}/>
           <DeliveryType type="badge" variant="personal"/>
           <DeliveryType type="picker" variant="personal"/>
         </div>
         <br />
         <div>
           <DeliveryType type="icon" variant="mail"/>
+          <DeliveryType type="icon" variant="mail" quantity={2}/>
           <DeliveryType type="badge" variant="mail"/>
           <DeliveryType type="picker" variant="mail"/>
         </div>
         <br />
         <div>
           <DeliveryType type="icon" variant="consignment"/>
+          <DeliveryType type="icon" variant="consignment" quantity={2}/>
           <DeliveryType type="badge" variant="consignment"/>
           <DeliveryType type="picker" variant="consignment"/>
         </div>
