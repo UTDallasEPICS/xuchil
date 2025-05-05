@@ -3,14 +3,14 @@
 import React, { useEffect, useState } from "react";
 import ImageCard from "@/components/ImageCard";
 import HeaderXuchil from "@/components/HeaderXuchil";
-import { fetchProducts } from "@/constants/api";
+import { fetchProductCategories } from "@/constants/api";
 import styles from "./NewProduction.module.css";
 
 const NewProductionPage = () => {
   const [products, setProducts] = useState<{ id: string; name: string; imageSrc: string }[]>([]);
 
   useEffect(() => {
-    const data = fetchProducts(); 
+    const data = fetchProductCategories(); 
     setProducts(data);
   }, []);
 
