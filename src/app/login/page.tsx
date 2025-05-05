@@ -3,17 +3,23 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/Button";
 import HeaderXuchil from "@/components/HeaderXuchil";
+import Modal from "@/components/Modal";
 
 const Login = () => {
   const router = useRouter();
+
   const [user, setUser] = useState("");
   const [password, setPassword] = useState("");
+  const [showErrorModal, setShowErrorModal] = useState(false);
 
   const handleLogin = () => {
-    if (user === "prueba" && password === "Prueba123") {
+    const validUser = "prueba";
+    const validPassword = "prueba";
+
+    if (user === validUser && password === validPassword) {
       router.push("/dashboard");
     } else {
-      alert("Usuario o contraseña incorrectos");
+      setShowErrorModal(true);
     }
   };
 
@@ -97,6 +103,16 @@ const Login = () => {
           ¿Perdiste tu contraseña?
         </p>
       </div>
+
+      <Modal
+        open={showErrorModal}
+        title="Error de autenticación"
+        message="Usuario o contraseña incorrectos. Por favor intenta nuevamente."
+        confirmText="Aceptar"
+        onlyConfirm
+        onConfirm={() => setShowErrorModal(false)}
+      />
+
     </div>
   );
 };
