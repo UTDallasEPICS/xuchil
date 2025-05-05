@@ -6,17 +6,24 @@ import Image from "next/image";
 import styles from "@/styles/DeliveryType.module.css";
 import { deliveryVariants, availableVariants } from "@/constants/deliveryConfig";
 
+type Size = "sm" | "md" | "lg";
+
 interface DeliveryTypeProps {
   variant?: keyof typeof deliveryVariants;
   type?: "icon" | "badge" | "picker";
+  size?: Size;
+  quantity?: number;
 }
+
+const iconSizes: Record<Size, number> = { sm: 18, md: 26, lg: 32 };
 
 const DeliveryType: FC<DeliveryTypeProps> = ({
   variant = "personal",
   type = "badge",
+  size = "md",
+  quantity,
 }) => {
   const [currentVariant, setCurrentVariant] = useState(variant);
-
   const { iconSrc, alt, label, containerClass } =
     deliveryVariants[currentVariant];
 
@@ -37,15 +44,21 @@ const DeliveryType: FC<DeliveryTypeProps> = ({
         ${styles.deliveryTypeContainer}
         ${containerClass}
         ${styles[type]}
+        ${styles[size]}
+        ${type === "icon" ? styles.iconVariant : ""}
       `}
     >
       <Image
         src={iconSrc}
         alt={alt}
-        width={40}
-        height={40}
+        width={iconSizes[size]}
+        height={iconSizes[size]}
         className={styles.iconImg}
       />
+
+      {type === "icon" && quantity && quantity > 1 && (
+        <span className={styles.quantity}>{quantity}</span>
+      )}
 
       {(type === "badge" || type === "picker") && (
         <p className={styles.deliveryTypeText}>{label}</p>
@@ -53,7 +66,7 @@ const DeliveryType: FC<DeliveryTypeProps> = ({
 
       {type === "picker" && (
         <div className={styles.chevron}>
-          <ChevronDown />
+          <ChevronDown size={iconSizes[size]} />
         </div>
       )}
     </TagName>

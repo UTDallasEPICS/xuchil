@@ -15,7 +15,7 @@ const ProcessControl = () => {
 
       <div className={styles.container}>  
         <ImageCard imageSrc="/new-process.svg" text="Nueva producción" type="large" route="/process-control/new-production" />
-        <ImageCard imageSrc="/pending-task.svg" text="Tareas pendientes" type="large" route="/process-control/new-production" />
+        <ImageCard imageSrc="/pending-task.svg" text="Tareas pendientes" type="large" route="/process-control/pending-tasks" />
       </div>
     </div>
   );

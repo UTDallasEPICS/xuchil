@@ -1,46 +1,64 @@
 .tableContainer {
-    width: 100%;
-    overflow-x: auto;
-  }
-  
-  .table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  
-  .table th,
-  .table td {
-    border: 1px solid var(--color-gray-light);
-    padding: 10px;
-    text-align: left;
-  }
-  
-  .table th {
-    background-color: var(--color-green-light); 
-    color: var(--color-text-light);
-    font-weight: bold;
-    text-align: center;
-  }
-  
-  .table td {
-    text-align: left;
-    background-color: var(--color-background);
-  }
+  width: 100%;
+  box-sizing: border-box;
+}
 
-  .table td.buttonCell {
-    text-align: center;
+.table {
+  width: 100%;
+  max-width: 95vw;
+  border-collapse: collapse;
+  margin-left: 6%;
+  margin-right: auto;
+  table-layout: auto;
+}
+
+.table th,
+.table td {
+  border: 1px solid var(--color-gray-light);
+  padding: 10px;
+  text-align: left;
+  word-wrap: break-word;
+  white-space: normal;
+}
+
+.table th {
+  background-color: var(--color-green-light);
+  color: var(--color-text-light);
+  font-weight: bold;
+  text-align: center;
+}
+
+.table td {
+  background-color: var(--color-background);
+}
+
+.table td.buttonCell {
+  text-align: center;
+}
+
+.button {
+  background-color: var(--color-gray-light);
+  color: var(--color-text-light);
+  border: none;
+  padding: 5px 20px;
+  border-radius: 50px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.button:hover {
+  background-color: var(--color-gray-dark);
+}
+
+.noResults {
+  text-align: center;
+  color: #444;
+  padding: 20px;
+  font-size: large;
+}
+
+@media (max-width: 600px) {
+  .table{
+    margin-left: 10%;
   }
-  
-  .button {
-    background-color: var(--color-gray-light);
-    color: var(--color-text-light);
-    border: none;
-    padding: 5px 20px;
-    border-radius: 50px;
-    cursor: pointer;
-  }
-  
-  .button:hover {
-    background-color: var(--color-gray-dark);
-  }
-  
+}

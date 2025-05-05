@@ -1,0 +1,19 @@
+.wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+}
+  
+.addBtn {
+    align-self: center;
+    margin-top: 0.3rem;
+    background: transparent;
+    border: 3px solid #6a846e;
+    border-radius: 50%;
+    padding: 0.25rem;
+    line-height: 0;
+    cursor: pointer;
+    color: #6a846e;
+}
+  

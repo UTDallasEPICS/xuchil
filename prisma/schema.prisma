@@ -3,13 +3,86 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
-  url      = "mysql://root:root@localhost:3306/Xuchil"
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
-model product {
-  product_id     Int     @id @default(autoincrement())
-  category       String  @db.VarChar(50)
-  name           String  @db.VarChar(100)
-  is_end_product Boolean
+model User {
+  id           Int     @id @default(autoincrement())
+  username     String  @unique
+  name         String
+  passwordHash String
+  role         Role
+  email        String?
+  phoneNo      String?
+  tasks        Task[]
+}
+
+enum Role {
+  WORKER
+  ADMIN
+}
+
+model Inventory {
+  id        Int     @id @default(autoincrement())
+  quantity  Int
+  threshold Int
+  productId Int     @unique
+  product   Product @relation(fields: [productId], references: [id])
+}
+
+model Product {
+  id           Int              @id @default(autoincrement())
+  name         String           @unique
+  isEndProduct Boolean
+  imageSrc     String
+  inventory    Inventory?
+  categoryId   Int?
+  category     ProductCategory? @relation(fields: [categoryId], references: [id])
+  tasks        Task[]
+
+  processSteps ProcessStep[]
+}
+
+model ProductCategory {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  imageSrc String?
+  products Product[]
+}
+
+model ProcessStep {
+  id            Int     @id @default(autoincrement())
+  productId     Int
+  product       Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  title         String
+  description   String
+  estimatedTime Int
+  hasInput      Boolean
+  unit          String
+  order         Int
+
+  @@unique([productId, order])
+}
+
+enum TaskStatus {
+  PROGRESSING
+  PAUSED
+  DONE
+}
+
+model Task {
+  id             Int        @id @default(autoincrement())
+  activity       String
+  inputWeight    Float?
+  outputWeight   Float?
+  lossWeight     Float?
+  status         TaskStatus
+  startTimestamp DateTime   @default(now())
+  endTimestamp   DateTime?
+  notes          String?
+  workerId       Int
+  worker         User       @relation(fields: [workerId], references: [id])
+  productId      Int
+  product        Product    @relation(fields: [productId], references: [id])
 }
