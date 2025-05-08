@@ -12,6 +12,7 @@ interface DeliveryTypeProps {
   variant?: keyof typeof deliveryVariants;
   type?: "icon" | "badge" | "picker";
   size?: Size;
+  quantity?: number;
 }
 
 const iconSizes: Record<Size, number> = { sm: 18, md: 26, lg: 32 };
@@ -20,6 +21,7 @@ const DeliveryType: FC<DeliveryTypeProps> = ({
   variant = "personal",
   type = "badge",
   size = "md",
+  quantity,
 }) => {
   const [currentVariant, setCurrentVariant] = useState(variant);
   const { iconSrc, alt, label, containerClass } =
@@ -43,6 +45,7 @@ const DeliveryType: FC<DeliveryTypeProps> = ({
         ${containerClass}
         ${styles[type]}
         ${styles[size]}
+        ${type === "icon" ? styles.iconVariant : ""}
       `}
     >
       <Image
@@ -52,6 +55,10 @@ const DeliveryType: FC<DeliveryTypeProps> = ({
         height={iconSizes[size]}
         className={styles.iconImg}
       />
+
+      {type === "icon" && quantity && quantity > 1 && (
+        <span className={styles.quantity}>{quantity}</span>
+      )}
 
       {(type === "badge" || type === "picker") && (
         <p className={styles.deliveryTypeText}>{label}</p>
