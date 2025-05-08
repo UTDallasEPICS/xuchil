@@ -1,9 +1,6 @@
 import prisma from '@/lib/db'
 import {NextRequest, NextResponse} from 'next/server';
 
-// GET - Get all items in inventory
-// POST - Add a new item to the inventory
-
 // returns an array of product ids (related to the product table) and the quantity and threshold of that inventory item
 export async function GET(req: NextRequest) {
   try {

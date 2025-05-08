@@ -6,15 +6,15 @@ export async function GET(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
-  const params = await context.params;
-  const id = parseInt(params.id);
-  if (isNaN(id)) {
-    return NextResponse.json({
-      error: {message: 'Id not a number'}
-    }, {status: 400});
-  }
-
   try {
+    const params = await context.params;
+    const id = parseInt(params.id);
+    if (isNaN(id)) {
+      return NextResponse.json({
+        error: {message: 'Id not a number'}
+      }, {status: 400});
+    }
+
     const task = await prisma.task.findUnique({
       where: {
         id: id,

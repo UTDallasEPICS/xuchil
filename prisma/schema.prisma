@@ -22,15 +22,13 @@ model User {
 }
 
 model Order {
-  id              Int          @id @default(autoincrement())
+  id              Int            @id @default(autoincrement())
   client          String
   deliveryAddress String
   deliveryDate    DateTime
-  deliveryMethod  String
-  deliveryStatus  String       @default("pending")
+  deliveryMethod  DeliveryMethod
+  deliveryStatus  DeliveryStatus @default(PENDING)
   productsOrdered OrderEntry[]
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
 }
 
 model OrderEntry {
@@ -64,6 +62,7 @@ model Product {
   category     ProductCategory? @relation(fields: [categoryId], references: [id])
 
   processSteps ProcessStep[]
+  orderEntries OrderEntry[]
 }
 
 model ProductCategory {
@@ -110,11 +109,11 @@ model Task {
 }
 
 enum DeliveryMethod {
-  personal
-  mail
+  PERSONAL
+  MAIL
 }
 
 enum DeliveryStatus {
-  pending
-  done
+  PENDING
+  DONE
 }

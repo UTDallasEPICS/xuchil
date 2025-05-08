@@ -22,9 +22,11 @@ export async function GET(request: Request) {
         }
       }
     });
-    return NextResponse.json(orders);
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({data: orders}, {status: 200});
+  } catch (error) {
+    return NextResponse.json({
+      error: {message: "Failed to fetch orders", details: error},
+    }, {status: 500});
   }
 }
 
@@ -43,36 +45,10 @@ export async function POST(request: Request) {
       }
     });
 
-    return NextResponse.json(
-      { id: order.id, message: 'Order created successfully' },
-      { status: 201 }
-    );
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 400 });
+    return NextResponse.json({ data: order }, {status: 201})
+  } catch (error) {
+    return NextResponse.json({
+      error: {message: "Failed to create order", details: error},
+    }, {status: 500})
   }
 }
-
-export async function PUT(request: Request) {
-  try {
-    const body = await request.json();
-    const { id, client, deliveryAddress, deliveryDate, deliveryMethod, deliveryStatus } = body;
-
-    const order = await prisma.order.update({
-      where: { id: parseInt(id) },
-      data: {
-        client,
-        deliveryAddress,
-        deliveryDate: new Date(deliveryDate),
-        deliveryMethod: deliveryMethod as any,
-        deliveryStatus: deliveryStatus as any,
-      }
-    });
-
-    return NextResponse.json({ message: 'Order updated successfully' });
-  } catch (err: any) {
-    if (err.code === 'P2025') {
-      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
-    }
-    return NextResponse.json({ error: err.message }, { status: 400 });
-  }
-} 
