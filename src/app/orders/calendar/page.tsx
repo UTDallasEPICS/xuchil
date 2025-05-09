@@ -22,6 +22,12 @@ function getMonthKey(date: Date) {
   return `${date.getFullYear()}-${date.getMonth()}`;
 }
 
+function parseDeliveryDate(d: string) {
+  const [dd, mm, yyyy] = d.split("/").map(Number);
+  return new Date(yyyy, mm - 1, dd);
+}
+
+
 function buildCalendarMatrix(baseDate: Date, monthOrders: Order[]): DayCell[][] {
   const first = new Date(baseDate.getFullYear(), baseDate.getMonth(), 1);
   const last = new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 0);
@@ -44,9 +50,19 @@ function buildCalendarMatrix(baseDate: Date, monthOrders: Order[]): DayCell[][] 
       const cellDate = new Date(cursor);
       const key = cellDate.toLocaleDateString("es-MX");
 
-      const orders = monthOrders.filter(
-        (o) => o.deliveryDate === key
-      );
+      const ordersByDate = useMemo(() => {
+        const map = new Map<string, Order[]>();
+        monthOrders.forEach((o) => {
+          const d = parseDeliveryDate(o.deliveryDate)
+            .toISOString()
+            .slice(0, 10);
+          (map.get(d) ?? map.set(d, []).get(d)!).push(o);
+        });
+        return map;
+      }, [monthOrders]);
+      
+      const keyISO = cellDate.toISOString().slice(0, 10);
+      const orders = ordersByDate.get(keyISO) ?? [];
 
       week.push({
         date: cellDate,
@@ -181,7 +197,7 @@ const Calendar = () => {
                           type="icon"
                           variant={cell.orders[0].deliveryVariant}
                           quantity={orderCount}
-                          size="sm"
+                          size="md"
                         />
                       )}
                     </td>
