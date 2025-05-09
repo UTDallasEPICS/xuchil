@@ -58,6 +58,24 @@ function buildCalendarMatrix(baseDate: Date, monthOrders: Order[]): DayCell[][] 
     }
     matrix.push(week);
   }
+  while (matrix.length < 6) {
+    const week: DayCell[] = [];
+    for (let i = 0; i < 7; i++) {
+      const cellDate = new Date(cursor);
+  
+      const key = cellDate.toLocaleDateString("es-MX");
+      const orders = monthOrders.filter((o) => o.deliveryDate === key);
+  
+      week.push({
+        date: cellDate,
+        isCurrentMonth: false,
+        orders,
+      });
+  
+      cursor.setDate(cursor.getDate() + 1);
+    }
+    matrix.push(week);
+  }
   return matrix;
 }
 
