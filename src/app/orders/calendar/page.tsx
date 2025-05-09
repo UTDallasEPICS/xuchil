@@ -202,7 +202,7 @@ const Calendar = () => {
         </table>
       </div>
 
-      <BottomButton onClick={handleNewOrder}>Nuevo pedido</BottomButton>
+      <BottomButton onClick={handleNewOrder}>Nuevo Pedido</BottomButton>
     </>
   );
 };
