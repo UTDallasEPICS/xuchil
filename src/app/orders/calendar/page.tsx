@@ -7,10 +7,9 @@ import { useRouter } from "next/navigation";
 import DeliveryType from "@/components/DeliveryType";
 import BottomButton from "@/components/BottomButton";
 import { fetchOrders } from "@/constants/api";
-import { Order } from "@/types/Order"
+import { Order } from "@/types/Order";
 
 import styles from "./Calendar.module.css";
-
 
 type DayCell = {
   date: Date;
@@ -27,8 +26,10 @@ function parseDeliveryDate(d: string) {
   return new Date(yyyy, mm - 1, dd);
 }
 
-
-function buildCalendarMatrix(baseDate: Date, monthOrders: Order[]): DayCell[][] {
+function buildCalendarMatrix(
+  baseDate: Date,
+  ordersByDate: Map<string, Order[]>
+): DayCell[][] {
   const first = new Date(baseDate.getFullYear(), baseDate.getMonth(), 1);
   const last = new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 0);
 
@@ -48,19 +49,6 @@ function buildCalendarMatrix(baseDate: Date, monthOrders: Order[]): DayCell[][] 
     const week: DayCell[] = [];
     for (let i = 0; i < 7; i++) {
       const cellDate = new Date(cursor);
-      const key = cellDate.toLocaleDateString("es-MX");
-
-      const ordersByDate = useMemo(() => {
-        const map = new Map<string, Order[]>();
-        monthOrders.forEach((o) => {
-          const d = parseDeliveryDate(o.deliveryDate)
-            .toISOString()
-            .slice(0, 10);
-          (map.get(d) ?? map.set(d, []).get(d)!).push(o);
-        });
-        return map;
-      }, [monthOrders]);
-      
       const keyISO = cellDate.toISOString().slice(0, 10);
       const orders = ordersByDate.get(keyISO) ?? [];
 
@@ -74,27 +62,22 @@ function buildCalendarMatrix(baseDate: Date, monthOrders: Order[]): DayCell[][] 
     }
     matrix.push(week);
   }
+
   while (matrix.length < 6) {
     const week: DayCell[] = [];
     for (let i = 0; i < 7; i++) {
       const cellDate = new Date(cursor);
-  
-      const key = cellDate.toLocaleDateString("es-MX");
-      const orders = monthOrders.filter((o) => o.deliveryDate === key);
-  
-      week.push({
-        date: cellDate,
-        isCurrentMonth: false,
-        orders,
-      });
-  
+      const keyISO = cellDate.toISOString().slice(0, 10);
+      const orders = ordersByDate.get(keyISO) ?? [];
+
+      week.push({ date: cellDate, isCurrentMonth: false, orders });
       cursor.setDate(cursor.getDate() + 1);
     }
     matrix.push(week);
   }
+
   return matrix;
 }
-
 
 const Calendar = () => {
   const router = useRouter();
@@ -108,36 +91,41 @@ const Calendar = () => {
       const allOrders = fetchOrders();
       const filtered = allOrders.filter((o) => {
         const [dd, mm, yyyy] = o.deliveryDate.split("/").map(Number);
-        return yyyy === viewDate.getFullYear() && mm - 1 === viewDate.getMonth();
+        return (
+          yyyy === viewDate.getFullYear() && mm - 1 === viewDate.getMonth()
+        );
       });
       ordersCache.current.set(key, filtered);
     }
     return ordersCache.current.get(key)!;
   }, [viewDate]);
 
+  const ordersByDate = useMemo(() => {
+    const map = new Map<string, Order[]>();
+    monthOrders.forEach((o) => {
+      const d = parseDeliveryDate(o.deliveryDate)
+        .toISOString()
+        .slice(0, 10);
+      (map.get(d) ?? map.set(d, []).get(d)!).push(o);
+    });
+    return map;
+  }, [monthOrders]);
+
   const monthMatrix = useMemo(
-    () => buildCalendarMatrix(viewDate, monthOrders),
-    [viewDate, monthOrders]
+    () => buildCalendarMatrix(viewDate, ordersByDate),
+    [viewDate, ordersByDate]
   );
 
-  const monthName = viewDate.toLocaleDateString("es-MX", {
-    month: "long",
-  });
+  const monthName = viewDate.toLocaleDateString("es-MX", { month: "long" });
 
-  const goPrevMonth = () => {
-    setViewDate(
-      (d) => new Date(d.getFullYear(), d.getMonth() - 1, 1)
-    );
-  };
-  const goNextMonth = () => {
-    setViewDate(
-      (d) => new Date(d.getFullYear(), d.getMonth() + 1, 1)
-    );
-  };
+  const goPrevMonth = () =>
+    setViewDate((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1));
 
-  const handleNewOrder = () => {
+  const goNextMonth = () =>
+    setViewDate((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1));
+
+  const handleNewOrder = () =>
     router.push("/orders/deliveries/new-order");
-  };
 
   return (
     <>
@@ -145,6 +133,7 @@ const Calendar = () => {
         <div className={styles.yearRow}>
           <h1 className={styles.yearTitle}>{viewDate.getFullYear()}</h1>
         </div>
+
         <div className={styles.headerRow}>
           <button
             aria-label="Mes anterior"
@@ -175,19 +164,23 @@ const Calendar = () => {
               ))}
             </tr>
           </thead>
+
           <tbody>
             {monthMatrix.map((week, wi) => (
               <tr key={wi}>
                 {week.map((cell) => {
                   const day = cell.date.getDate();
-                  const dateKey = cell.date.toLocaleDateString("es-MX");
+                  const dateKey = cell.date.toISOString().slice(0, 10);
+
                   const orderCount = cell.orders.length;
 
                   return (
                     <td
                       key={dateKey}
                       className={
-                        cell.isCurrentMonth ? styles.dayCell : styles.adjacentDay
+                        cell.isCurrentMonth
+                          ? styles.dayCell
+                          : styles.adjacentDay
                       }
                     >
                       <span className={styles.dayNumber}>{day}</span>
@@ -197,7 +190,7 @@ const Calendar = () => {
                           type="icon"
                           variant={cell.orders[0].deliveryVariant}
                           quantity={orderCount}
-                          size="md"
+                          size="sm"
                         />
                       )}
                     </td>
