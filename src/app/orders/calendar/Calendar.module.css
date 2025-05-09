@@ -9,15 +9,14 @@
 
 .yearRow {
   width: 100%;
-  background: var(--color-green-light);
+  background: var(--color-green-dark);
   text-align: center;
-  padding: 10px 0;
 }
 
 .yearTitle {
   margin: 0;
-  font-size: 1.8rem;   /* más grande que el mes */
-  font-weight: 800;    /* negritas */
+  font-size: 1.8rem;
+  font-weight: 800;
   color: var(--color-text-light);
   letter-spacing: 1px;
 }
@@ -27,8 +26,6 @@
     max-width: 600px;
     display: flex;
     justify-content: space-between;
-    border-top-left-radius: 20;
-    border-top-right-radius: 20;
     background: var(--color-green-light);
     grid-template-columns: 56px 1fr 56px;
     align-items: center;
@@ -53,8 +50,8 @@
   
 .monthTitle {
     margin: 0;
-    font-size: 1.4rem;
-    font-weight: 700;
+    font-size: 1.2rem;
+    font-weight: 500;
     color: var(--color-text-light);
     letter-spacing: 1px;
 }

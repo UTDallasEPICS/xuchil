@@ -108,6 +108,9 @@ const Calendar = () => {
   return (
     <>
       <div className={styles.calendarWrapper}>
+        <div className={styles.yearRow}>
+          <h1 className={styles.yearTitle}>{viewDate.getFullYear()}</h1>
+        </div>
         <div className={styles.headerRow}>
           <button
             aria-label="Mes anterior"
