@@ -23,6 +23,9 @@ The purpose of Xuchil is to
 - Log time worked
 - Check out batch post completion
 
+## Third Party Integrations
+- N/A ~ this application is for internal use only
+
 ## Prerequisites
 
 In order to run this project, a few technologies are required:
