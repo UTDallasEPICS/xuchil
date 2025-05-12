@@ -86,11 +86,9 @@
 }
   
 .dayNumber {
-    position: absolute;
-    top: 2px;
-    left: 4px;
     font-size: 0.75rem;
     font-weight: 700;
+    width: 100%;
 }
   
 .adjacentDay .dayNumber {
