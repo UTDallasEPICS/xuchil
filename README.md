@@ -26,6 +26,11 @@ The purpose of Xuchil is to
 ## Third Party Integrations
 - N/A ~ this application is for internal use only
 
+## Tech Stack
+- Frontend/Backend - Next.js
+- Database - SQLite and Prisma
+- Backend Testing - Postman
+
 ## Prerequisites
 
 In order to run this project, a few technologies are required:
