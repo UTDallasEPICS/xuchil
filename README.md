@@ -2,7 +2,7 @@
 
 This is a Next.js, Prisma, and Postgres project based on the UTDEpics Next.js template
 
-##Conceptual Overview
+## Conceptual Overview
 The purpose of Xuchil is to
 - Provide a view of the inventory and production activities
 - Add and remove inventory based off of incoming shipments and delivieries
