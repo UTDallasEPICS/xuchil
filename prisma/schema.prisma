@@ -1,3 +1,6 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -16,6 +19,24 @@ model User {
   email        String?
   phoneNo      String?
   tasks        Task[]
+}
+
+model Order {
+  id              Int            @id @default(autoincrement())
+  client          String
+  deliveryAddress String
+  deliveryDate    DateTime
+  deliveryMethod  DeliveryMethod
+  deliveryStatus  DeliveryStatus @default(PENDING)
+  productsOrdered OrderEntry[]
+}
+
+model OrderEntry {
+  id        Int     @id @default(autoincrement())
+  orderId   Int
+  order     Order   @relation(fields: [orderId], references: [id])
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
 }
 
 enum Role {
@@ -39,9 +60,9 @@ model Product {
   inventory    Inventory?
   categoryId   Int?
   category     ProductCategory? @relation(fields: [categoryId], references: [id])
-  tasks        Task[]
 
   processSteps ProcessStep[]
+  orderEntries OrderEntry[]
 }
 
 model ProductCategory {
@@ -55,12 +76,13 @@ model ProcessStep {
   id            Int     @id @default(autoincrement())
   productId     Int
   product       Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  title         String
+  title         String  @unique
   description   String
   estimatedTime Int
   hasInput      Boolean
-  unit          String
+  unit          String?
   order         Int
+  tasks         Task[]
 
   @@unique([productId, order])
 }
@@ -72,17 +94,26 @@ enum TaskStatus {
 }
 
 model Task {
-  id             Int        @id @default(autoincrement())
-  activity       String
+  id             Int         @id @default(autoincrement())
   inputWeight    Float?
   outputWeight   Float?
   lossWeight     Float?
   status         TaskStatus
-  startTimestamp DateTime   @default(now())
+  startTimestamp DateTime    @default(now())
   endTimestamp   DateTime?
   notes          String?
   workerId       Int
-  worker         User       @relation(fields: [workerId], references: [id])
-  productId      Int
-  product        Product    @relation(fields: [productId], references: [id])
+  worker         User        @relation(fields: [workerId], references: [id])
+  processStepId  Int
+  processStep    ProcessStep @relation(fields: [processStepId], references: [id])
+}
+
+enum DeliveryMethod {
+  PERSONAL
+  MAIL
+}
+
+enum DeliveryStatus {
+  PENDING
+  DONE
 }

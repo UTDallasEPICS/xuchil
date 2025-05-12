@@ -96,25 +96,24 @@ export function fetchProductVariants(productId: string): ProductVariant[] {
   export function fetchProcessSteps(productId: string, variantId: string): ProcessStep[] {
     if (productId === "harina" && variantId === "mezquite") {
       return [
-        { 
-          id: 1, 
-          title: "Recepción de materia prima", 
-          estimatedTime: 2, 
-          hasInput: true, 
-          unit: "Kg", 
-          description: "Verificar y pesar la materia prima recibida." 
+        { id: 1,
+          title: "Recepción de materia prima",
+          estimatedTime: 2,
+          hasInput: true,
+          unit: "Kg",
+          description: "Verificar y pesar la materia prima recibida."
         },
-        { 
-          id: 2, 
-          title: "Recepción de ingredientes", 
-          estimatedTime: 2, 
+        {
+          id: 2,
+          title: "Recepción de ingredientes",
+          estimatedTime: 2,
           hasInput: false,
-          description: "Registrar los ingredientes recibidos." 
+          description: "Registrar los ingredientes recibidos."
         },
-        { 
-          id: 3, 
-          title: "Recepción de envase y etiquetas", 
-          estimatedTime: 2, 
+        {
+          id: 3,
+          title: "Recepción de envase y etiquetas",
+          estimatedTime: 2,
           hasInput: false,
           description: "Verificar la calidad y cantidad de envases y etiquetas." 
         },
