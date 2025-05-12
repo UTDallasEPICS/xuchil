@@ -1,129 +1,156 @@
 .container {
-    padding: 24px;
-    width: 100%;
-    max-width: 400px;
-    margin: auto;
-    align-items: center;
-    text-align: center;
-    justify-content: center;
-    align-self: center;
-  }
-  
-  .procesoId{
-    color: var(--color-green-light);
-  }
+  padding: 24px;
+  width: 100%;
+  max-width: 400px;
+  margin: auto;
+  align-items: center;
+  text-align: center;
+  justify-content: center;
+  align-self: center;
+}
 
-  .procesoId span{
-    text-decoration: underline;
-  }
-  
-  .dateRange {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin: 12px 0;
-    justify-content: center;
-    padding-bottom: 30px;
-  }
-  
-  .timelineContainer {
-    display: flex;
-    padding-left: 5%;
-    width: 100%;
-    margin-bottom: 40px;
-  }
-  
-  .timeline {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    position: relative;
-    text-align: left;
-  }
-  
-  .timeline::before {
-    content: "";
-    position: absolute;
-    left: 18px;
-    top: 6px;
-    bottom: 6px; 
-    width: 3px;
-    background-color: var(--color-green-dark);
-    z-index: 0;
-  }
-  
-  .timeline li {
-    position: relative;
-    padding-left: 40px;
-    margin-bottom: 30px;
-    display: flex;
-    gap: 12px;
-    align-items: flex-start;
-  }
-  
-  .timeline li:last-child {
-    margin-bottom: 0;
-  }
-  
-  .dot {
-    position: absolute;
-    left: 14px;
-    top: 6px;
-    width: 10px;
-    height: 10px;
-    background: var(--color-green-dark);
-    border-radius: 50%;
-    z-index: 1;
-  }
-  
-  .fechaHora {
-    display: flex;
-    gap: 12px;
-    margin-top: 4px;
-    font-size: 0.95rem;
-    color: #333;
-  }
-  
-  .usuario {
-    font-size: 0.85rem;
-    color: #444;
-    margin-top: 4px;
-  }
-  
-  .pesos {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  
-  .pesos div {
-    display: flex;
-    justify-content: space-between;
-    padding: 6px 10px;
-    border-radius: 12px;
-    border: 1px solid #000;
-    background-color: #fff;
-    font-weight: bold;
-  }
-  
-  .observaciones {
-    margin-top: 40px;
-    padding-bottom: 60px;
-  }
-  
-  .observaciones h4 {
-    margin-bottom: 4px;
-  }
+.title {
+  color: var(--color-green-dark);
+}
 
-  .provisionalCard{
-    border: 3px solid var(--color-green-dark);
-    border-radius: 20px;
-    padding: 16px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    /* margin: 10px; */
-    width: 90%;
-    min-height: 10vh;
-  }
-  
+.processId {
+  color: var(--color-green-light);
+}
+
+.processId span {
+  text-decoration: underline;
+}
+
+.dateRange {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 12px 0;
+  justify-content: center;
+  padding-bottom: 30px;
+}
+
+.timelineContainer {
+  display: flex;
+  padding-left: 5%;
+  width: 100%;
+  margin-bottom: 40px;
+}
+
+.timeline {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  position: relative;
+  text-align: left;
+}
+
+.timeline::before {
+  content: "";
+  position: absolute;
+  left: 18px;
+  top: 6px;
+  bottom: 6px;
+  width: 3px;
+  background-color: var(--color-green-dark);
+  z-index: 0;
+}
+
+.timeline li {
+  position: relative;
+  padding-left: 40px;
+  margin-bottom: 30px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.timeline li:last-child {
+  margin-bottom: 0;
+}
+
+.dot {
+  position: absolute;
+  left: 14px;
+  top: 6px;
+  width: 10px;
+  height: 10px;
+  background: var(--color-green-dark);
+  border-radius: 50%;
+  z-index: 1;
+}
+
+.dateTime {
+  display: flex;
+  gap: 12px;
+  margin-top: 4px;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+.responsible {
+  font-size: 0.85rem;
+  color: #444;
+  margin-top: 4px;
+}
+
+.observations {
+  margin-top: 40px;
+  padding-bottom: 60px;
+}
+
+.observations h4 {
+  margin-bottom: 4px;
+}
+
+.noteCard {
+  border: 3px solid var(--color-green-dark);
+  border-radius: 20px;
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 90%;
+  min-height: 10vh;
+  margin: auto;
+  text-align: left;
+}
+
+.activityTitle {
+  color: var(--color-green-light);
+  font-size: 1.3rem;
+  margin-top: 12px;
+}
+
+.userBlock {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+.dateTimeBlock {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+  flex-direction: column;
+}
+
+.unitFieldWrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.infoRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 6px 0;
+  font-size: 1rem;
+}

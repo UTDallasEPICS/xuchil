@@ -12,10 +12,9 @@ import {
   userTaskColumns,
   procesos,
 } from "@/constants/tableData";
+import { getSessionInfo } from "@/constants/api";
 
-const currentUserName = "Antonio López";
-
-const isAdminMode = false; 
+const { isAdminMode, currentUser } = getSessionInfo();
 
 const Logbook = () => {
   const [selectedProduct, setSelectedProduct] = useState(productFilterOptions[0]);
@@ -34,7 +33,7 @@ const Logbook = () => {
         .filter((actividad) => {
           const matchUsuario = isAdminMode
             ? selectedUser.label === "Todos" || actividad.usuario === selectedUser.label
-            : actividad.usuario === currentUserName;
+            : actividad.usuario === currentUser;
 
           const matchMes =
             selectedMonth.label === "Cualquiera" ||
@@ -69,8 +68,8 @@ const Logbook = () => {
 
         {!isAdminMode && (
           <div style={{ textAlign: "center", margin: "10px 0" }}>
-            <h2>{currentUserName}</h2>
-          </div>          
+            <h2>{currentUser}</h2>
+          </div>
         )}
 
         <div
@@ -108,6 +107,7 @@ const Logbook = () => {
         <DynamicTable
           columns={isAdminMode ? userTaskColumns : userColumns}
           data={filteredTasks}
+          isAdminMode={isAdminMode}
         />
       </div>
     </>

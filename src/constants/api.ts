@@ -2,6 +2,18 @@ import { ProcessStep } from "@/types/ProcessStep";
 import { ProductVariant } from "@/types/ProductVariant";
 import { PendingTask } from "@/types/PendingTask";
 
+export interface SessionInfo {
+  isAdminMode: boolean;
+  currentUser: string;
+}
+
+export function getSessionInfo(): SessionInfo {
+  return {
+    isAdminMode: false,
+    currentUser: "Antonio López",
+  };
+}
+
 export function fetchProducts() {
     return [
       {
