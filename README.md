@@ -2,6 +2,12 @@
 
 This is a Next.js, Prisma, and Postgres project based on the UTDEpics Next.js template
 
+##Conceptual Overview
+The purpose of Xuchil is to
+- Provide a view of the inventory and production activities
+- Add and remove inventory based off of incoming shipments and delivieries
+- Track and record production times that provide into how much each worker works
+
 ## Prerequisites
 
 In order to run this project, a few technologies are required:
