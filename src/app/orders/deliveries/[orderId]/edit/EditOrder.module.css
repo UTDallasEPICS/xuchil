@@ -1,0 +1,32 @@
+.wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 0 16px 90px;
+}
+  
+.title {
+    margin-top: 4px;
+    text-align: center;
+}
+  
+.deliveryType,
+.fieldContainer {
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: center;
+}
+  
+.deleteWrapper {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+}
+  
+.cancelWrapper {
+    position: absolute;
+    left: 16px;
+    top: 16px;
+    z-index: 10;
+}
+  

@@ -150,6 +150,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  font-weight: bold;
   gap: 8px;
   margin: 6px 0;
   font-size: 1rem;

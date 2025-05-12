@@ -13,12 +13,13 @@ import {
   procesos,
 } from "@/constants/tableData";
 import { getSessionInfo } from "@/constants/api";
+import styles from "./LogbookPage.module.css";
 
 const { isAdminMode, currentUser } = getSessionInfo();
 
 const Logbook = () => {
   const [selectedProduct, setSelectedProduct] = useState(productFilterOptions[0]);
-  const [selectedUser, setSelectedUser] = useState(userFilterOptions[0]);
+  const [selectedUser, setSelectedUser]   = useState(userFilterOptions[0]);
   const [selectedMonth, setSelectedMonth] = useState(monthFilterOptions[0]);
 
   const filteredTasks = useMemo(() => {
@@ -47,24 +48,21 @@ const Logbook = () => {
           tarea: actividad.tarea,
           fecha: actividad.fecha,
           usuario: actividad.usuario,
-          detalles: {
-            text: "Ver",
-            idProceso: proceso.id,
-          },
+          detalles: { text: "Ver", idProceso: proceso.id },
         }));
     });
   }, [selectedProduct, selectedUser, selectedMonth]);
 
   const userColumns = [
-    { key: "tarea", label: "Tarea" },
-    { key: "fecha", label: "Fecha" },
+    { key: "tarea",    label: "Tarea" },
+    { key: "fecha",    label: "Fecha" },
     { key: "detalles", label: "Detalles", isButton: true },
   ];
 
   return (
     <>
-      <div className="page" style={{ maxWidth: "700px" }}>
-        <h1 style={{ textAlign: 'center', paddingTop: "15px" }}>Bitácora</h1>
+      <div className={`${styles.wrapper} page`}>
+        <h1 className={styles.title}>Bitácora</h1>
 
         {!isAdminMode && (
           <div style={{ textAlign: "center", margin: "10px 0" }}>
@@ -72,17 +70,7 @@ const Logbook = () => {
           </div>
         )}
 
-        <div
-          style={{
-            width: "100vw",
-            maxWidth: "700px",
-            display: "flex",
-            overflowX: "auto",
-            gap: "10px",
-            padding: "10px",
-            marginLeft: "30px"
-          }}
-        >
+        <div className={styles.filters}>
           <FilterButton
             title="Filtrar por producto"
             options={productFilterOptions}
@@ -103,7 +91,7 @@ const Logbook = () => {
         </div>
       </div>
 
-      <div style={{ paddingBottom: "90px" }}>
+      <div className={styles.tableWrapper}>
         <DynamicTable
           columns={isAdminMode ? userTaskColumns : userColumns}
           data={filteredTasks}
