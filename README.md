@@ -1,39 +1,5 @@
 # Xuchil
 
-## Conceptual Overview
-The purpose of Xuchil is to
-- Provide a view of the inventory and production activities
-- Add and remove inventory based off of incoming shipments and delivieries
-- Track and record production times that provide into how much each worker works
-
-### Users/Roles
-
-#### Worker
-- Manage inventory
-- Log products worked on
-- Log time worked
-- Check out batch post completion
-
-#### Manager
-- Can check how much time each worker worked
-- Admin privledges ~ add/remove workers
-- Calculate pay for each worker
-- Manage inventory
-- Log products worked on
-- Log time worked
-- Check out batch post completion
-
-## Third Party Integrations
-- N/A ~ this application is for internal use only
-
-## Tech Stack
-- Frontend/Backend - Next.js
-- Database - SQLite and Prisma
-- Backend Testing - Postman
-
-## Deployment Notes 
-- When this project is ready to be deployed it will be deployed on Xuchil's local server
-
 ## Prerequisites
 
 In order to run this project, a few technologies are required:
