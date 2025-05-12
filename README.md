@@ -31,6 +31,9 @@ The purpose of Xuchil is to
 - Database - SQLite and Prisma
 - Backend Testing - Postman
 
+## Deployment Notes 
+- When this project is ready to be deployed it will be deployed on Xuchil's local server
+
 ## Prerequisites
 
 In order to run this project, a few technologies are required:
