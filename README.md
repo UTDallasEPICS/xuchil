@@ -1,12 +1,27 @@
 # Xuchil
 
-This is a Next.js, Prisma, and Postgres project based on the UTDEpics Next.js template
-
 ## Conceptual Overview
 The purpose of Xuchil is to
 - Provide a view of the inventory and production activities
 - Add and remove inventory based off of incoming shipments and delivieries
 - Track and record production times that provide into how much each worker works
+
+### Users/Roles
+
+#### Worker
+- Manage inventory
+- Log products worked on
+- Log time worked
+- Check out batch post completion
+
+#### Manager
+- Can check how much time each worker worked
+- Admin privledges ~ add/remove workers
+- Calculate pay for each worker
+- Manage inventory
+- Log products worked on
+- Log time worked
+- Check out batch post completion
 
 ## Prerequisites
 
@@ -104,3 +119,6 @@ To learn more about Prisma, take a look at the following resources:
 - [Prisma Documentation](https://www.prisma.io/docs)
 - [Learn Prisma](https://www.prisma.io/learn)
 - [Official Prisma Examples](https://github.com/prisma/prisma-examples)
+
+
+This is a Next.js, Prisma, and Postgres project based on the UTDEpics Next.js template
