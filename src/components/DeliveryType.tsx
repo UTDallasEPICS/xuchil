@@ -13,6 +13,7 @@ interface DeliveryTypeProps {
   type?: "icon" | "badge" | "picker";
   size?: Size;
   quantity?: number;
+  onClick?: () => void;
 }
 
 const iconSizes: Record<Size, number> = { sm: 18, md: 26, lg: 32 };
@@ -22,6 +23,7 @@ const DeliveryType: FC<DeliveryTypeProps> = ({
   type = "badge",
   size = "md",
   quantity,
+  onClick,
 }) => {
   const [currentVariant, setCurrentVariant] = useState(variant);
   const { iconSrc, alt, label, containerClass } =
@@ -34,11 +36,12 @@ const DeliveryType: FC<DeliveryTypeProps> = ({
     setCurrentVariant(availableVariants[nextIndex]);
   };
 
-  const TagName = type === "picker" ? "button" : "div";
+  const TagName = 
+    type === "picker" || (type === "icon" && onClick) ? "button" : "div";
 
   return (
     <TagName
-      onClick={type === "picker" ? handlePickerClick : undefined}
+      onClick={type === "picker" ? handlePickerClick : onClick}
       type={type === "picker" ? "button" : undefined}
       className={`
         ${styles.deliveryTypeContainer}
