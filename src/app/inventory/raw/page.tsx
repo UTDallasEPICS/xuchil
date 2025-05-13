@@ -6,9 +6,11 @@ import ProductCard from "@/components/ProductCard";
 import styles from "../InventoryPage.module.css";
 import { fetchRawMaterials } from "@/constants/api";
 import { Search, SlidersHorizontal } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function RawInventoryPage() {
     const [search, setSearch] = useState("");
+    const router = useRouter();
     const products = fetchRawMaterials();
 
     const filtered = products.filter((item) =>
@@ -33,7 +35,7 @@ export default function RawInventoryPage() {
 
             <div className={styles.cardList}>
                 {filtered.map((item) => (
-                    <ProductCard photo={item.image} key={item.id} {...item} />
+                    <ProductCard photo={item.image} key={item.id} {...item} onClick={() => router.push(`/inventory/details/${item.id}`)}/>
                 ))}
             </div>
 
