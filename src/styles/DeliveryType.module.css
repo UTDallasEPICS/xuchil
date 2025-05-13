@@ -80,20 +80,21 @@
 }
 
 .iconVariant {
-    width: 48px;
-    height: 48px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     padding: 0;
     flex-direction: column;
     justify-content: center;
+    justify-self: center;
     gap: 0px;
 }
   
 .quantity {
-    font-size: .75rem;
+    font-size: .6rem;
     font-weight: 700;
     line-height: 1;
-    margin: 0;
+    margin: -4;
 }
   
 .iconImg {

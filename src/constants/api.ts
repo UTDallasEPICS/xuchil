@@ -4,6 +4,18 @@ import { PendingTask } from "@/types/PendingTask";
 import { Order } from "@/types/Order";
 import { Product } from "@/types/Product";
 
+export interface SessionInfo {
+  isAdminMode: boolean;
+  currentUser: string;
+}
+
+export function getSessionInfo(): SessionInfo {
+  return {
+    isAdminMode: true,
+    currentUser: "Antonio López",
+  };
+}
+
 export function fetchProductCategories() {
     return [
       {
@@ -28,7 +40,6 @@ export function fetchProductCategories() {
       },
     ];
   }
-  
 export function fetchProductVariants(productId: string): ProductVariant[] {
     switch (productId) {
       case "harina":
@@ -480,6 +491,114 @@ export function fetchProductVariants(productId: string): ProductVariant[] {
         ],
       },
       {
+        id: 12378,
+        clientName: "José Hernández Canseco",
+        address:
+          "Blvd. Guadalupe Hinojosa de Murat 1100,\n71248 San Raymundo Jalpan, Oax.",
+        deliveryDate: "21/05/2025",
+        deliveryVariant: "personal",
+        delivered: false,
+        products: [
+          {
+            id: "amaranto-1kg",
+            photo: "/amaranth.webp",
+            name: "Harina De Amaranto",
+            presentation: "5 kg",
+            quantity: 15,
+            units: "Unidades",
+          },
+          {
+            id: "sustituto-1kg",
+            photo: "/coffee.webp",
+            name: "Sustituto De Café",
+            presentation: "1 kg",
+            quantity: 12,
+            units: "Unidades",
+          },
+        ],
+      },
+      {
+        id: 12379,
+        clientName: "José Segundo Castillo",
+        address:
+          "Blvd. Guadalupe Hinojosa de Murat 1100,\n71248 San Raymundo Jalpan, Oax.",
+        deliveryDate: "21/05/2025",
+        deliveryVariant: "personal",
+        delivered: false,
+        products: [
+          {
+            id: "amaranto-1kg",
+            photo: "/amaranth.webp",
+            name: "Harina De Amaranto",
+            presentation: "5 kg",
+            quantity: 15,
+            units: "Unidades",
+          },
+          {
+            id: "sustituto-1kg",
+            photo: "/coffee.webp",
+            name: "Sustituto De Café",
+            presentation: "1 kg",
+            quantity: 12,
+            units: "Unidades",
+          },
+        ],
+      },
+      {
+        id: 12380,
+        clientName: "Adonai Escobedo Sánchez",
+        address:
+          "Blvd. Guadalupe Hinojosa de Murat 1100,\n71248 San Raymundo Jalpan, Oax.",
+        deliveryDate: "21/05/2025",
+        deliveryVariant: "personal",
+        delivered: false,
+        products: [
+          {
+            id: "amaranto-1kg",
+            photo: "/amaranth.webp",
+            name: "Harina De Amaranto",
+            presentation: "5 kg",
+            quantity: 15,
+            units: "Unidades",
+          },
+          {
+            id: "sustituto-1kg",
+            photo: "/coffee.webp",
+            name: "Sustituto De Café",
+            presentation: "1 kg",
+            quantity: 12,
+            units: "Unidades",
+          },
+        ],
+      },
+      {
+        id: 12381,
+        clientName: "Vicente Sánchez Enríquez",
+        address:
+          "Blvd. Guadalupe Hinojosa de Murat 1100,\n71248 San Raymundo Jalpan, Oax.",
+        deliveryDate: "21/05/2025",
+        deliveryVariant: "personal",
+        delivered: false,
+        products: [
+          {
+            id: "amaranto-1kg",
+            photo: "/amaranth.webp",
+            name: "Harina De Amaranto",
+            presentation: "5 kg",
+            quantity: 15,
+            units: "Unidades",
+          },
+          {
+            id: "sustituto-1kg",
+            photo: "/coffee.webp",
+            name: "Sustituto De Café",
+            presentation: "1 kg",
+            quantity: 12,
+            units: "Unidades",
+          },
+        ],
+      },
+      {
         id: 12833,
         clientName: "José Armando Pérez Peña",
         address:
@@ -572,3 +691,48 @@ export function fetchProductVariants(productId: string): ProductVariant[] {
       },
     ];
   }
+
+  export function fetchRawMaterials(): Product[] {
+  return [
+    {
+      id: "harina-mezquite",
+      image: "/raw/harina-mezquite.jpg",
+      name: "Harina de Mezquite",
+      presentation: "500kg",
+      quantity: 500,
+      units: "kg",
+    },
+    {
+      id: "vaina-mezquite",
+      image: "/raw/vaina-mezquite.webp",
+      name: "Vaina de Mezquite",
+      presentation: "1000kg",
+      quantity: 1000,
+      units: "kg",
+    },
+    {
+      id: "maiz-negro",
+      image: "/raw/maiz-negro.jpg",
+      name: "Maíz Negro",
+      presentation: "100kg",
+      quantity: 100,
+      units: "kg",
+    },
+    {
+      id: "maiz-amarillo",
+      image: "/raw/maiz-amarillo.jpg",
+      name: "Maíz Amarillo",
+      presentation: "200kg",
+      quantity: 200,
+      units: "kg",
+    },
+    {
+      id: "frijol-negro",
+      image: "/raw/frijol-negro.jpg",
+      name: "Frijol Negro",
+      presentation: "150kg",
+      quantity: 150,
+      units: "kg",
+    },
+  ];
+}

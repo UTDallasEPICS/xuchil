@@ -8,11 +8,14 @@ import {
   productFilterOptions,
   userFilterOptions,
 } from "@/constants/filterOptions";
-import { userTaskColumns, procesos } from "@/constants/tableData";
+import {
+  userTaskColumns,
+  procesos,
+} from "@/constants/tableData";
+import { getSessionInfo } from "@/constants/api";
 import styles from "./LogbookPage.module.css";
 
-const currentUserName = "Antonio López";
-const isAdminMode = false;
+const { isAdminMode, currentUser } = getSessionInfo();
 
 const Logbook = () => {
   const [selectedProduct, setSelectedProduct] = useState(productFilterOptions[0]);
@@ -31,7 +34,7 @@ const Logbook = () => {
         .filter((actividad) => {
           const matchUsuario = isAdminMode
             ? selectedUser.label === "Todos" || actividad.usuario === selectedUser.label
-            : actividad.usuario === currentUserName;
+            : actividad.usuario === currentUser;
 
           const matchMes =
             selectedMonth.label === "Cualquiera" ||
@@ -62,8 +65,8 @@ const Logbook = () => {
         <h1 className={styles.title}>Bitácora</h1>
 
         {!isAdminMode && (
-          <div className={styles.username}>
-            <h2>{currentUserName}</h2>
+          <div style={{ textAlign: "center", margin: "10px 0" }}>
+            <h2>{currentUser}</h2>
           </div>
         )}
 
@@ -92,6 +95,7 @@ const Logbook = () => {
         <DynamicTable
           columns={isAdminMode ? userTaskColumns : userColumns}
           data={filteredTasks}
+          isAdminMode={isAdminMode}
         />
       </div>
     </>

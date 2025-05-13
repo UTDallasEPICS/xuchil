@@ -24,7 +24,7 @@ export default function RootLayout({
       </head>
 
       <body>
-        <div className="pb-16">{children}</div>
+        <div style={{paddingBottom: 65}}>{children}</div>
         <BottomTabBar />
       </body>
     </html>
