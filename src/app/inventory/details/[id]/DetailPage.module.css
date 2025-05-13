@@ -1,0 +1,17 @@
+.wrapper {
+  padding: 20px;
+  text-align: center;
+}
+
+.title {
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: var(--color-green-dark);
+  margin-top: 10px;
+}
+
+.subtitle {
+  font-size: 1.1rem;
+  color: #333;
+  margin-bottom: 20px;
+}
