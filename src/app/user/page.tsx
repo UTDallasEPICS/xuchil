@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/Button";
 import HeaderXuchil from "@/components/HeaderXuchil";
@@ -8,12 +8,30 @@ import Modal from "@/components/Modal";
 const UserProfile = () => {
   const router = useRouter();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [role, setRole] = useState<"user" | "admin" | null>(null);
+  const [userData, setUserData] = useState<any>(null);
+
+  useEffect(() => {
+    const storedRole = localStorage.getItem("role") as "user" | "admin" | null;
+    const storedUserData = localStorage.getItem("userData");
+    
+    if (!storedRole || !storedUserData) {
+      router.push("/login");
+    } else {
+      setRole(storedRole);
+      setUserData(JSON.parse(storedUserData));
+    }
+  }, []);
 
   const confirmLogout = () => {
+    // Solo eliminamos los datos de sesión, no los datos del perfil
+    localStorage.removeItem("currentUser");
+    localStorage.removeItem("role");
     localStorage.removeItem("userData");
-    sessionStorage.removeItem("authToken");
     router.push("/login");
   };
+  
+  if (!role || !userData) return null;
 
   return (
     <div
@@ -29,7 +47,7 @@ const UserProfile = () => {
     >
       <HeaderXuchil />
 
-      {/* Botón Editar en la esquina superior derecha */}
+      {/* Botón editar */}
       <div
         style={{
           position: "absolute",
@@ -47,6 +65,26 @@ const UserProfile = () => {
         </Button>
       </div>
 
+      {/* Botón crear usuario solo para admin */}
+      {role === "admin" && (
+        <div
+          style={{
+            position: "absolute",
+            top: "1rem",
+            left: "1rem",
+            zIndex: 10,
+          }}
+        >
+          <Button
+            size="small"
+            action="primary"
+            onClick={() => router.push("/create_user")}
+          >
+            Crear usuario
+          </Button>
+        </div>
+      )}
+
       <div
         style={{
           backgroundColor: "var(--color-background)",
@@ -58,7 +96,7 @@ const UserProfile = () => {
         }}
       >
         <img
-          src="/globe.svg"
+          src={userData.avatar || "/globe.svg"}
           alt="Avatar"
           style={{
             width: "140px",
@@ -66,48 +104,52 @@ const UserProfile = () => {
             borderRadius: "50%",
             backgroundColor: "#ccc",
             margin: "0 auto 1rem",
+            objectFit: "cover",
           }}
         />
 
         <h2 style={{ color: "var(--color-green-dark)", margin: 0 }}>
-          Antonio López
+          {userData.name}
         </h2>
         <p style={{ color: "var(--color-green-light)", margin: "4px 0 12px" }}>
-          Operador
+          {userData.position}
         </p>
-        <p style={{ fontSize: "0.9rem", margin: "0 0 1rem" }}>
-          15.4hrs trabajadas
-        </p>
-
-        <p
-          style={{
-            fontWeight: 600,
-            color: "var(--color-green-dark)",
-            marginBottom: "4px",
-          }}
-        >
-          Correo Electrónico:
-        </p>
-        <p style={{ marginBottom: "1rem" }}>
-          antonio.lopez@xuchilnatural.com
+        <p style={{ fontSize: "0.95rem", margin: "0 0 1.5rem" }}>
+          {userData.hours}
         </p>
 
-        <p
-          style={{
-            fontWeight: 600,
-            color: "var(--color-green-dark)",
-            marginBottom: "4px",
-          }}
-        >
-          Teléfono:
-        </p>
-        <p>
-          <strong style={{ color: "var(--color-green-dark)" }}>+52 951</strong>{" "}
-          123 56 78
-        </p>
+        <div style={{ textAlign: "left" }}>
+          <p
+            style={{
+              fontWeight: 600,
+              color: "var(--color-green-dark)",
+              marginBottom: "4px",
+              fontSize: "1.1rem",
+            }}
+          >
+            Correo Electrónico:
+          </p>
+          <p style={{ marginBottom: "1rem", fontSize: "1rem" }}>
+            {userData.email}
+          </p>
+
+          <p
+            style={{
+              fontWeight: 600,
+              color: "var(--color-green-dark)",
+              marginBottom: "4px",
+              fontSize: "1.1rem",
+            }}
+          >
+            Teléfono:
+          </p>
+          <p style={{ fontSize: "1rem" }}>
+            {userData.phone}
+          </p>
+        </div>
       </div>
 
-      <div style={{ marginTop: "0.5rem" }}>
+      <div style={{ marginTop: "0.5rem", marginBottom: "5rem" }}>
         <Button
           size="regular"
           action="negative"
