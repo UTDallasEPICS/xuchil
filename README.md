@@ -1,7 +1,5 @@
 # Xuchil
 
-This is a Next.js, Prisma, and Postgres project based on the UTDEpics Next.js template
-
 ## Prerequisites
 
 In order to run this project, a few technologies are required:
@@ -98,3 +96,6 @@ To learn more about Prisma, take a look at the following resources:
 - [Prisma Documentation](https://www.prisma.io/docs)
 - [Learn Prisma](https://www.prisma.io/learn)
 - [Official Prisma Examples](https://github.com/prisma/prisma-examples)
+
+
+This is a Next.js, Prisma, and Postgres project based on the UTDEpics Next.js template

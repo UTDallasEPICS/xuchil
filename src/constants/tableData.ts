@@ -174,12 +174,40 @@ export const userTaskColumns = [
   ];
   
   export const movementData = [
-    { movimiento: "Embolsado de 5kg", fecha: "11/02/2025" },
-    { movimiento: "Embolsado de 5kg", fecha: "11/02/2025" },
-    { movimiento: "Embolsado de 1kg", fecha: "10/02/2025" },
-    { movimiento: "Embolsado de 5kg", fecha: "10/02/2025" },
-    { movimiento: "Embolsado de 1kg", fecha: "09/02/2025" },
-    { movimiento: "Embolsado de 1kg", fecha: "09/02/2025" },
-    { movimiento: "Embolsado de 1kg", fecha: "09/02/2025" },
-  ];
+  { movimiento: "Entrega de 5 bolsas", fecha: "08/02/2025", productId: "maiz-negro" },
+  { movimiento: "Entrega de 5 bolsas", fecha: "09/02/2025", productId: "maiz-negro" },
+  { movimiento: "Entrega de 4 bolsas", fecha: "10/02/2025", productId: "maiz-negro" },
+  { movimiento: "Entrega de 2 bolsas", fecha: "10/02/2025", productId: "maiz-negro" },
+  { movimiento: "Entrega de 2 bolsas", fecha: "11/02/2025", productId: "maiz-negro" },
+  { movimiento: "Entrega de 2 bolsas", fecha: "11/02/2025", productId: "maiz-negro" },
+  { movimiento: "Entrega de 2 bolsas", fecha: "11/02/2025", productId: "maiz-negro" },
+
+  { movimiento: "Salida de 1 lote", fecha: "12/02/2025", productId: "mezquite-5kg" },
+  { movimiento: "Salida de 1 lote", fecha: "13/02/2025", productId: "mezquite-5kg" },
+  { movimiento: "Salida de 1 lote", fecha: "14/02/2025", productId: "mezquite-5kg" },
+  { productId: "mezquite-5kg", movimiento: "Producción de 10 bolsas", fecha: "08/02/2025" },
+  { productId: "mezquite-5kg", movimiento: "Entrega de 5 bolsas", fecha: "10/02/2025" },
+
+  { productId: "amaranto-1kg", movimiento: "Producción de 20 bolsas", fecha: "09/02/2025" },
+  { productId: "amaranto-1kg", movimiento: "Venta de 4 bolsas", fecha: "11/02/2025" },
+
+  { productId: "sustituto-1kg", movimiento: "Producción de 12 frascos", fecha: "07/02/2025" },
+  { productId: "sustituto-1kg", movimiento: "Entrega de 6 frascos", fecha: "09/02/2025" },
+
+  { productId: "harina-mezquite", movimiento: "Recepción de 500kg", fecha: "05/02/2025" },
+  { productId: "harina-mezquite", movimiento: "Consumo de 100kg", fecha: "10/02/2025" },
+
+  { productId: "vaina-mezquite", movimiento: "Compra de 1000kg", fecha: "04/02/2025" },
+  { productId: "vaina-mezquite", movimiento: "Consumo de 200kg", fecha: "08/02/2025" },
+
+  { productId: "maiz-negro", movimiento: "Compra de 100kg", fecha: "06/02/2025" },
+  { productId: "maiz-negro", movimiento: "Consumo de 50kg", fecha: "10/02/2025" },
+
+  { productId: "maiz-amarillo", movimiento: "Compra de 200kg", fecha: "06/02/2025" },
+  { productId: "maiz-amarillo", movimiento: "Consumo de 80kg", fecha: "09/02/2025" },
+
+  { productId: "frijol-negro", movimiento: "Recepción de 150kg", fecha: "05/02/2025" },
+  { productId: "frijol-negro", movimiento: "Consumo de 20kg", fecha: "11/02/2025" },
+];
+
   

@@ -6,15 +6,15 @@ export async function GET(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
-  const params = await context.params;
-  const id = parseInt(params.id);
-  if (isNaN(id)) {
-    return NextResponse.json({
-      error: {message: 'Id not a number'}
-    }, {status: 400});
-  }
-
   try {
+    const params = await context.params;
+    const id = parseInt(params.id);
+    if (isNaN(id)) {
+      return NextResponse.json({
+        error: {message: 'Id not a number'}
+      }, {status: 400});
+    }
+
     const task = await prisma.task.findUnique({
       where: {
         id: id,
@@ -25,15 +25,21 @@ export async function GET(
             passwordHash: true
           }
         },
-        product: true
+        processStep: {
+          include: {
+            product: true,
+          }
+        }
       }
     });
 
     if (!task) {
-      return NextResponse.json({error: "Task not found"}, {status: 404});
+      return NextResponse.json({
+        error: {message: "Task not found"}
+      }, {status: 404});
     }
 
-    return NextResponse.json(task, {status: 200});
+    return NextResponse.json({data: task}, {status: 200});
   } catch (error) {
     return NextResponse.json({
       error: {message: "Failed to fetch task", details: error}
@@ -62,8 +68,7 @@ export async function PUT(
       },
       data: {
         workerId: body.workerId,
-        productId: body.productId,
-        activity: body.activity,
+        processStepId: body.processStepId,
         inputWeight: body.inputWeight,
         outputWeight: body.outputWeight,
         lossWeight: body.lossWeight,
@@ -76,11 +81,15 @@ export async function PUT(
             passwordHash: true
           }
         },
-        product: true
+        processStep: {
+          include: {
+            product: true,
+          }
+        }
       }
     });
 
-    return NextResponse.json(updatedTask, {status: 200});
+    return NextResponse.json({data: updatedTask}, {status: 200});
   } catch (error) {
     return NextResponse.json({
       error: {message: "Failed to update task", details: error}

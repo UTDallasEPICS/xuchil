@@ -5,9 +5,9 @@
 
 .table {
   width: 100%;
+  min-width: 60vw;
   max-width: 95vw;
   border-collapse: collapse;
-  margin-left: 6%;
   margin-right: auto;
   table-layout: auto;
 }
@@ -55,10 +55,4 @@
   color: #444;
   padding: 20px;
   font-size: large;
-}
-
-@media (max-width: 600px) {
-  .table{
-    margin-left: 10%;
-  }
 }

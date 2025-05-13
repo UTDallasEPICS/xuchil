@@ -12,7 +12,7 @@
     font-family: "Lato", sans-serif;
     font-weight: 700;
     white-space: nowrap;     
-    flex-shrink: 0;           
+    flex-shrink: 0;    
 }
 
 .light {
@@ -24,7 +24,7 @@
 }
 
 .filterButton:hover {
-    background-color: var(--color-gray-dark);
+  background-color: var(--color-gray-dark);
 }
   
 .overlay {

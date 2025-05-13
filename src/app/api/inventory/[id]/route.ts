@@ -1,5 +1,5 @@
 import prisma from '@/lib/db'
-import { NextRequest, NextResponse } from 'next/server';
+import {NextRequest, NextResponse} from 'next/server';
 
 // GET - Get a specific inventory item by id
 // PUT - Update an existing inventory item
@@ -9,21 +9,32 @@ import { NextRequest, NextResponse } from 'next/server';
 // returns: a single product item
 export async function GET(
   _req: Request,
-  { params }: { params: { id: string } } ) {
+  context: { params: Promise<{ id: string }> }
+) {
   try {
-    const product = await prisma.inventory.findUnique({
-      where: { id: parseInt(params.id) },
-    });
-
-
-    if (!product) {
-      return NextResponse.json({ message: 'Item not found' }, { status: 404 });
+    const params = await context.params;
+    const id = parseInt(params.id);
+    if (isNaN(id)) {
+      return NextResponse.json({
+        error: {message: 'Id not a number'}
+      }, {status: 400});
     }
 
+    const product = await prisma.inventory.findUnique({
+      where: {id: id},
+    });
 
-    return NextResponse.json(product, { status: 200 });
+    if (!product) {
+      return NextResponse.json({
+        error: {message: 'Item not found'}
+      }, {status: 404});
+    }
+
+    return NextResponse.json({data: product}, {status: 200});
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to fetch inventory item' }, { status: 500 });
+    return NextResponse.json({
+      error: {message: 'Failed to fetch inventory item', details: error}
+    }, {status: 500});
   }
 }
 
@@ -31,29 +42,33 @@ export async function GET(
 // returns: the updated inventory item
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } } ) {
+  context: { params: Promise<{ id: string }> }
+) {
   try {
-    const body = await req.json();
-    const { quantity, threshold } = body;
-
-    // Allows the user to enter only quantity, or only threshold, or both
-    const dataToUpdate: any = {};
-    if (quantity !== undefined) {
-      dataToUpdate.quantity = quantity;
-    }   
-    if (threshold !== undefined) {
-      dataToUpdate.threshold = threshold;
+    const params = await context.params;
+    const id = parseInt(params.id);
+    if (isNaN(id)) {
+      return NextResponse.json({
+        error: {message: 'Id not a number'}
+      }, {status: 400});
     }
 
+    const body = await req.json();
+
     const updatedInventoryItem = await prisma.inventory.update({
-      where: { id: parseInt(params.id) },
-      data: dataToUpdate,
+      where: {id: id},
+      data: {
+        quantity: body.quantity,
+        threshold: body.threshold,
+      },
     });
 
 
-    return NextResponse.json(updatedInventoryItem, { status: 200 })
+    return NextResponse.json({data: updatedInventoryItem}, {status: 200})
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to update inventory' }, { status: 500 })
+    return NextResponse.json({
+      error: {message: 'Failed to update inventory', details: error}
+    }, {status: 500})
   }
 }
 
@@ -61,15 +76,22 @@ export async function PUT(
 // returns: string
 export async function DELETE(
   req: Request,
-  { params }: {params: {id: string}} ) {
+  context: { params: Promise<{ id: string }> }
+) {
   try {
-    await prisma.inventory.delete({
-      where: { id: parseInt(params.id) },
-    });
+    const params = await context.params;
+    const id = parseInt(params.id);
+    if (isNaN(id)) {
+      return NextResponse.json({
+        error: {message: 'Id not a number'}
+      }, {status: 400});
+    }
 
-    return NextResponse.json({ message: 'Inventory Item deleted (NOT item itself)' }, { status: 200 });
+    return new NextResponse(null, {status: 204})
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to delete inventory item' }, { status: 500 });
+    return NextResponse.json({
+      error: {message: 'Failed to delete inventory item', details: error}
+    }, {status: 500});
   }
 }
 

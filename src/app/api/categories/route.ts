@@ -8,7 +8,7 @@ export async function GET() {
         products: true
       }
     });
-    return NextResponse.json(categories, {status: 200});
+    return NextResponse.json({data: categories}, {status: 200});
   } catch (error) {
     return NextResponse.json({
       error: {message: 'Failed to fetch categories', details: error}
@@ -29,7 +29,7 @@ export async function POST(req: Request) {
         products: true
       }
     });
-    return NextResponse.json(category, {status: 201});
+    return NextResponse.json({data: category}, {status: 201});
   } catch (error) {
     return NextResponse.json({
       error: {message: 'Failed to create category', details: error}
