@@ -21,11 +21,13 @@ const BottomTabBar = ({ className }: { className?: string }) => {
           key={tab.name}
           href={tab.path}
           className={
-            (pathname == tab.path) ? `${styles.tab} ${styles.tabActive}` : styles.tab
+            pathname.startsWith(tab.path)
+              ? `${styles.tab} ${styles.tabActive}`
+              : styles.tab
           }
         >
           <div className={styles.tabIcon}>{tab.icon}</div>
-          <span className={styles.tabText}>{tab.name}</span> 
+          <span className={styles.tabText}>{tab.name}</span>
         </Link>
       ))}
     </nav>
