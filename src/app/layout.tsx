@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import BottomTabBar from "@/components/BottomTabBar";
+import ClientLayout from "./ClientLayout";
 
 export const metadata: Metadata = {
   title: "Xuchil",
@@ -22,10 +22,8 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-
       <body>
-        <div style={{paddingBottom: 65}}>{children}</div>
-        <BottomTabBar />
+        <ClientLayout>{children}</ClientLayout>
       </body>
     </html>
   );

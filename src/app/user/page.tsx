@@ -1,87 +1,176 @@
 "use client";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Button from "@/components/Button";
-import Chronometer from "@/components/Chronometer";
-import DeliveryType from "@/components/DeliveryType";
 import HeaderXuchil from "@/components/HeaderXuchil";
+import Modal from "@/components/Modal";
 
-const User = () => {
-    return (
-      <div className="page">
-        <h1>Usuario</h1>
-        <p>Contenido de la sección Usuario.</p>
-        <HeaderXuchil/>
-        <br />
-        <div>
-          <Chronometer estimatedTime={1} />
-        </div>
-        <div>
-          <Button size="regular" action="primary" onClick={() => alert("Presionado")}>
-            Botón 1
-          </Button>
-          <Button size="small" action="primary" onClick={() => alert("Presionado")}>
-            Botón 2
-          </Button>
-          <Button size="mini" action="primary" onClick={() => alert("Presionado")}>
-            Botón 3
-          </Button>
-        </div>
-        <div>
-          <Button size="regular" action="secondary" onClick={() => alert("Presionado")}>
-            Botón 4
-          </Button>
-          <Button size="small" action="secondary" onClick={() => alert("Presionado")}>
-            Botón 5
-          </Button>
-          <Button size="mini" action="secondary" onClick={() => alert("Presionado")}>
-            Botón 6
-          </Button>
-        </div>
-        <div>
-          <Button size="regular" action="negative" onClick={() => alert("Presionado")}>
-            Botón 7
-          </Button>
-          <Button size="small" action="negative" onClick={() => alert("Presionado")}>
-            Botón 8
-          </Button>
-          <Button size="mini" action="negative" onClick={() => alert("Presionado")}>
-            Botón 9
-          </Button>
-        </div>
-        <div>
-          <Button size="regular" action="inverted" onClick={() => alert("Presionado")}>
-            Botón 10
-          </Button>
-          <Button size="small" action="inverted" onClick={() => alert("Presionado")}>
-            Botón 11
-          </Button>
-          <Button size="mini" action="inverted" onClick={() => alert("Presionado")}>
-            Botón 12
-          </Button>
-        </div>
-        <br />
-        <div>
-          <DeliveryType type="icon" variant="personal"/>
-          <DeliveryType type="icon" variant="personal" quantity={2}/>
-          <DeliveryType type="badge" variant="personal"/>
-          <DeliveryType type="picker" variant="personal"/>
-        </div>
-        <br />
-        <div>
-          <DeliveryType type="icon" variant="mail"/>
-          <DeliveryType type="icon" variant="mail" quantity={2}/>
-          <DeliveryType type="badge" variant="mail"/>
-          <DeliveryType type="picker" variant="mail"/>
-        </div>
-        <br />
-        <div>
-          <DeliveryType type="icon" variant="consignment"/>
-          <DeliveryType type="icon" variant="consignment" quantity={2}/>
-          <DeliveryType type="badge" variant="consignment"/>
-          <DeliveryType type="picker" variant="consignment"/>
-        </div>
-      </div>
-    );
+const UserProfile = () => {
+  const router = useRouter();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [role, setRole] = useState<"user" | "admin" | null>(null);
+  const [userData, setUserData] = useState<any>(null);
+
+  useEffect(() => {
+    const storedRole = localStorage.getItem("role") as "user" | "admin" | null;
+    const storedUserData = localStorage.getItem("userData");
+    
+    if (!storedRole || !storedUserData) {
+      router.push("/login");
+    } else {
+      setRole(storedRole);
+      setUserData(JSON.parse(storedUserData));
+    }
+  }, []);
+
+  const confirmLogout = () => {
+    // Solo eliminamos los datos de sesión, no los datos del perfil
+    localStorage.removeItem("currentUser");
+    localStorage.removeItem("role");
+    localStorage.removeItem("userData");
+    router.push("/login");
   };
   
-  export default User;
-  
+  if (!role || !userData) return null;
+
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        backgroundColor: "var(--color-background)",
+        paddingTop: "1rem",
+        position: "relative",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+      }}
+    >
+      <HeaderXuchil />
+
+      {/* Botón editar */}
+      <div
+        style={{
+          position: "absolute",
+          top: "1rem",
+          right: "1rem",
+          zIndex: 10,
+        }}
+      >
+        <Button
+          size="small"
+          action="secondary"
+          onClick={() => router.push("/edit_user")}
+        >
+          Editar
+        </Button>
+      </div>
+
+      {/* Botón crear usuario solo para admin */}
+      {role === "admin" && (
+        <div
+          style={{
+            position: "absolute",
+            top: "1rem",
+            left: "1rem",
+            zIndex: 10,
+          }}
+        >
+          <Button
+            size="small"
+            action="primary"
+            onClick={() => router.push("/create_user")}
+          >
+            Crear usuario
+          </Button>
+        </div>
+      )}
+
+      <div
+        style={{
+          backgroundColor: "var(--color-background)",
+          padding: "1.5rem",
+          borderRadius: "20px",
+          width: "90%",
+          maxWidth: "360px",
+          textAlign: "center",
+        }}
+      >
+        <img
+          src={userData.avatar || "/globe.svg"}
+          alt="Avatar"
+          style={{
+            width: "140px",
+            height: "140px",
+            borderRadius: "50%",
+            backgroundColor: "#ccc",
+            margin: "0 auto 1rem",
+            objectFit: "cover",
+          }}
+        />
+
+        <h2 style={{ color: "var(--color-green-dark)", margin: 0 }}>
+          {userData.name}
+        </h2>
+        <p style={{ color: "var(--color-green-light)", margin: "4px 0 12px" }}>
+          {userData.position}
+        </p>
+        <p style={{ fontSize: "0.95rem", margin: "0 0 1.5rem" }}>
+          {userData.hours}
+        </p>
+
+        <div style={{ textAlign: "left" }}>
+          <p
+            style={{
+              fontWeight: 600,
+              color: "var(--color-green-dark)",
+              marginBottom: "4px",
+              fontSize: "1.1rem",
+            }}
+          >
+            Correo Electrónico:
+          </p>
+          <p style={{ marginBottom: "1rem", fontSize: "1rem" }}>
+            {userData.email}
+          </p>
+
+          <p
+            style={{
+              fontWeight: 600,
+              color: "var(--color-green-dark)",
+              marginBottom: "4px",
+              fontSize: "1.1rem",
+            }}
+          >
+            Teléfono:
+          </p>
+          <p style={{ fontSize: "1rem" }}>
+            {userData.phone}
+          </p>
+        </div>
+      </div>
+
+      <div style={{ marginTop: "0.5rem", marginBottom: "5rem" }}>
+        <Button
+          size="regular"
+          action="negative"
+          onClick={() => setShowLogoutModal(true)}
+        >
+          Cerrar sesión
+        </Button>
+      </div>
+
+      <Modal
+        open={showLogoutModal}
+        title="¿Cerrar sesión?"
+        message="Esto cerrará tu sesión actual. ¿Deseas continuar?"
+        confirmText="Cerrar sesión"
+        cancelText="Cancelar"
+        onCancel={() => setShowLogoutModal(false)}
+        onConfirm={confirmLogout}
+        danger
+      />
+    </div>
+  );
+};
+
+export default UserProfile;

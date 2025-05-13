@@ -12,10 +12,10 @@ const tabs = [
   { name: "Usuario", path: "/user", icon: <User /> },
 ];
 
-const BottomTabBar = () => {
+const BottomTabBar = ({ className }: { className?: string }) => {
   const pathname = usePathname();
   return (
-    <nav className={styles.bottomTabBar}>
+    <nav className={`${styles.bottomTabBar} ${className || ''}`}>
       {tabs.map((tab) => (
         <Link
           key={tab.name}
