@@ -88,6 +88,11 @@ const Calendar = () => {
   const [selectedDate,   setSelectedDate]   = useState<Date | null>(null);
   const hasOrders = !!(selectedOrders && selectedOrders.length);
 
+  const clearSelectedOrders = () => {
+    setSelectedOrders(null);
+    setSelectedDate(null);
+  }
+
   const monthOrders = useMemo(() => {
     const key = getMonthKey(viewDate);
 
@@ -122,11 +127,15 @@ const Calendar = () => {
 
   const monthName = viewDate.toLocaleDateString("es-MX", { month: "long" });
 
-  const goPrevMonth = () =>
+  const goPrevMonth = () => {
     setViewDate((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1));
+    clearSelectedOrders();
+  }
 
-  const goNextMonth = () =>
+  const goNextMonth = () => {
     setViewDate((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1));
+    clearSelectedOrders();
+  }
 
   const handleNewOrder = () =>
     router.push("/orders/deliveries/new-order");
@@ -202,8 +211,7 @@ const Calendar = () => {
                             size="sm"
                             onClick={() => {
                               if (selectedDate?.getTime() === cell.date.getTime()) {
-                                setSelectedOrders(null);
-                                setSelectedDate(null);
+                                clearSelectedOrders();
                               } else {
                                 setSelectedOrders(cell.orders);
                                 setSelectedDate(cell.date);
