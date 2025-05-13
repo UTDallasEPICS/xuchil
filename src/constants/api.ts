@@ -481,6 +481,114 @@ export function fetchProductVariants(productId: string): ProductVariant[] {
         ],
       },
       {
+        id: 12378,
+        clientName: "José Hernández Canseco",
+        address:
+          "Blvd. Guadalupe Hinojosa de Murat 1100,\n71248 San Raymundo Jalpan, Oax.",
+        deliveryDate: "21/05/2025",
+        deliveryVariant: "personal",
+        delivered: false,
+        products: [
+          {
+            id: "amaranto-1kg",
+            photo: "/amaranth.webp",
+            name: "Harina De Amaranto",
+            presentation: "5 kg",
+            quantity: 15,
+            units: "Unidades",
+          },
+          {
+            id: "sustituto-1kg",
+            photo: "/coffee.webp",
+            name: "Sustituto De Café",
+            presentation: "1 kg",
+            quantity: 12,
+            units: "Unidades",
+          },
+        ],
+      },
+      {
+        id: 12379,
+        clientName: "José Segundo Castillo",
+        address:
+          "Blvd. Guadalupe Hinojosa de Murat 1100,\n71248 San Raymundo Jalpan, Oax.",
+        deliveryDate: "21/05/2025",
+        deliveryVariant: "personal",
+        delivered: false,
+        products: [
+          {
+            id: "amaranto-1kg",
+            photo: "/amaranth.webp",
+            name: "Harina De Amaranto",
+            presentation: "5 kg",
+            quantity: 15,
+            units: "Unidades",
+          },
+          {
+            id: "sustituto-1kg",
+            photo: "/coffee.webp",
+            name: "Sustituto De Café",
+            presentation: "1 kg",
+            quantity: 12,
+            units: "Unidades",
+          },
+        ],
+      },
+      {
+        id: 12380,
+        clientName: "Adonai Escobedo Sánchez",
+        address:
+          "Blvd. Guadalupe Hinojosa de Murat 1100,\n71248 San Raymundo Jalpan, Oax.",
+        deliveryDate: "21/05/2025",
+        deliveryVariant: "personal",
+        delivered: false,
+        products: [
+          {
+            id: "amaranto-1kg",
+            photo: "/amaranth.webp",
+            name: "Harina De Amaranto",
+            presentation: "5 kg",
+            quantity: 15,
+            units: "Unidades",
+          },
+          {
+            id: "sustituto-1kg",
+            photo: "/coffee.webp",
+            name: "Sustituto De Café",
+            presentation: "1 kg",
+            quantity: 12,
+            units: "Unidades",
+          },
+        ],
+      },
+      {
+        id: 12381,
+        clientName: "Vicente Sánchez Enríquez",
+        address:
+          "Blvd. Guadalupe Hinojosa de Murat 1100,\n71248 San Raymundo Jalpan, Oax.",
+        deliveryDate: "21/05/2025",
+        deliveryVariant: "personal",
+        delivered: false,
+        products: [
+          {
+            id: "amaranto-1kg",
+            photo: "/amaranth.webp",
+            name: "Harina De Amaranto",
+            presentation: "5 kg",
+            quantity: 15,
+            units: "Unidades",
+          },
+          {
+            id: "sustituto-1kg",
+            photo: "/coffee.webp",
+            name: "Sustituto De Café",
+            presentation: "1 kg",
+            quantity: 12,
+            units: "Unidades",
+          },
+        ],
+      },
+      {
         id: 12833,
         clientName: "José Armando Pérez Peña",
         address:
