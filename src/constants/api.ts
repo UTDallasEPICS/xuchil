@@ -11,7 +11,7 @@ export interface SessionInfo {
 
 export function getSessionInfo(): SessionInfo {
   return {
-    isAdminMode: false,
+    isAdminMode: true,
     currentUser: "Antonio López",
   };
 }
