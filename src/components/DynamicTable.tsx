@@ -17,13 +17,28 @@ interface TableRow {
 interface DynamicTableProps {
   columns: TableColumn[];
   data: TableRow[];
+  isAdminMode?: boolean;
 }
 
-const DynamicTable: React.FC<DynamicTableProps> = ({ columns, data }) => {
+const DynamicTable: React.FC<DynamicTableProps> = ({
+  columns,
+  data,
+  isAdminMode = true
+}) => {
   const router = useRouter();
 
-  const handleVerClick = (idProceso: string) => {
-    router.push(`/detail-process?id=${idProceso}`);
+  const handleVerClick = (
+    idProceso: string,
+    tarea?: string,
+    isAdmin = true
+  ) => {
+    if (isAdmin) {
+      router.push(`/detail-process?id=${idProceso}`);
+    } else if (tarea) {
+      router.push(`/detail-process?id=${idProceso}&actividad=${encodeURIComponent(tarea)}`);
+    } else {
+      console.warn("No se proporcionó la tarea para vista de usuario.");
+    }
   };
 
   return (
@@ -41,13 +56,19 @@ const DynamicTable: React.FC<DynamicTableProps> = ({ columns, data }) => {
             {data.map((row, rowIndex) => (
               <tr key={rowIndex}>
                 {columns.map((col) => (
-                  <td key={col.key} className={col.isButton ? styles.buttonCell : ""}>
+                  <td
+                    key={col.key}
+                    className={col.isButton ? styles.buttonCell : ""}
+                  >
                     {col.isButton && typeof row[col.key] === "object" ? (
                       <button
                         className={styles.button}
-                        onClick={() =>
-                          handleVerClick((row[col.key] as { idProceso: string }).idProceso)
-                        }
+                        onClick={() => {
+                          const id = (row[col.key] as { idProceso: string }).idProceso;
+                          const tarea =
+                            typeof row["tarea"] === "string" ? row["tarea"] : undefined;
+                          handleVerClick(id, tarea, isAdminMode);
+                        }}
                       >
                         {(row[col.key] as { text: string }).text}
                       </button>
@@ -61,8 +82,10 @@ const DynamicTable: React.FC<DynamicTableProps> = ({ columns, data }) => {
           </tbody>
         </table>
       ) : (
-        <div style={{width:"100%",justifyContent:"center"}}>
-          <p className={styles.noResults}>No se encontraron resultados que coincidan con los filtros seleccionados.</p>
+        <div style={{ width: "100%", justifyContent: "center" }}>
+          <p className={styles.noResults}>
+            No se encontraron resultados que coincidan con los filtros seleccionados.
+          </p>
         </div>
       )}
     </div>

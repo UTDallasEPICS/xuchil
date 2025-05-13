@@ -4,6 +4,18 @@ import { PendingTask } from "@/types/PendingTask";
 import { Order } from "@/types/Order";
 import { Product } from "@/types/Product";
 
+export interface SessionInfo {
+  isAdminMode: boolean;
+  currentUser: string;
+}
+
+export function getSessionInfo(): SessionInfo {
+  return {
+    isAdminMode: false,
+    currentUser: "Antonio López",
+  };
+}
+
 export function fetchProductCategories() {
     return [
       {
