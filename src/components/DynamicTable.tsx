@@ -32,10 +32,11 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
     tarea?: string,
     isAdmin = true
   ) => {
+    const basePath = `/logbook/detail-process`;
     if (isAdmin) {
-      router.push(`/detail-process?id=${idProceso}`);
+      router.push(`${basePath}?id=${idProceso}`);
     } else if (tarea) {
-      router.push(`/detail-process?id=${idProceso}&actividad=${encodeURIComponent(tarea)}`);
+      router.push(`${basePath}?id=${idProceso}&actividad=${encodeURIComponent(tarea)}`);
     } else {
       console.warn("No se proporcionó la tarea para vista de usuario.");
     }
