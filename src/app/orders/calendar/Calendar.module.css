@@ -173,6 +173,10 @@
   max-width: 600px;
 }
 
+.orderList > * + * {
+  margin-top: 4px;
+}
+
 .ordersHeading {
   font-size: 1.1rem;
   font-weight: 600;
