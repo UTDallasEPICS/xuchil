@@ -40,7 +40,6 @@ export function fetchProductCategories() {
       },
     ];
   }
-  
 export function fetchProductVariants(productId: string): ProductVariant[] {
     switch (productId) {
       case "harina":
@@ -584,3 +583,48 @@ export function fetchProductVariants(productId: string): ProductVariant[] {
       },
     ];
   }
+
+  export function fetchRawMaterials(): Product[] {
+  return [
+    {
+      id: "harina-mezquite",
+      image: "/raw/harina-mezquite.jpg",
+      name: "Harina de Mezquite",
+      presentation: "500kg",
+      quantity: 500,
+      units: "kg",
+    },
+    {
+      id: "vaina-mezquite",
+      image: "/raw/vaina-mezquite.webp",
+      name: "Vaina de Mezquite",
+      presentation: "1000kg",
+      quantity: 1000,
+      units: "kg",
+    },
+    {
+      id: "maiz-negro",
+      image: "/raw/maiz-negro.jpg",
+      name: "Maíz Negro",
+      presentation: "100kg",
+      quantity: 100,
+      units: "kg",
+    },
+    {
+      id: "maiz-amarillo",
+      image: "/raw/maiz-amarillo.jpg",
+      name: "Maíz Amarillo",
+      presentation: "200kg",
+      quantity: 200,
+      units: "kg",
+    },
+    {
+      id: "frijol-negro",
+      image: "/raw/frijol-negro.jpg",
+      name: "Frijol Negro",
+      presentation: "150kg",
+      quantity: 150,
+      units: "kg",
+    },
+  ];
+}
