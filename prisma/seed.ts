@@ -7,13 +7,16 @@ async function main() {
   await seedTasks();
 }
 
-
 async function lookupCategory(name: string) {
   return await prisma.productCategory.findUnique({ where: { name } });
 }
 
 async function lookupProduct(name: string) {
   return await prisma.product.findUnique({ where: { name } });
+}
+
+async function lookupProcessStep(title: string) {
+  return await prisma.processStep.findUnique({ where: { title } });
 }
 
 async function seedProductCategories() {
