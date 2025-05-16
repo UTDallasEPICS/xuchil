@@ -12,14 +12,14 @@ One potential way to make it easy to track all of these tasks is to create issue
 
 These requirements must be met (in the main branch of your project) by the time your final report is due.
 
-- [ ] The most up to date version of all frontend and backend code
-- [ ] Database Files
-  - [ ] If using docker: `docker-compose.yml` at top level for project database.
-  - [ ] Database Schema
+- [X] The most up to date version of all frontend and backend code
+- [X] Database Files
+  - [X] If using docker: `docker-compose.yml` at top level for project database.
+  - [X] Database Schema
     - If using Prisma: `schema.prisma` in a top level `prisma` folder
     - If using other database: A file with a descriptive name used to create your database schema (e.g. `schema.sql`)
 - [ ] `.env.example` file containing NON-SENSITIVE environment variables (Auth0 Issuer, dev database url, etc). Sensitive environment variables should be replaced with example data such as `CLIENT_SECRET='EXAMPLE_CLIENT_SECRET'` so that future groups know that the environment variable is required.
-- [ ] Figma design files in a top level folder named `figma`.
+- [X] Figma design files in a top level folder named `figma`.
 - [ ] Any migration scripts, dev scripts, etc. (if any exist) belong in a top level `scripts` folder. If the project has separate frontend/backend folders, the `scripts` folder should be in the backend folder.
 - [ ] Any other important files should be included in an appropriately named folder (such as `docs`, `documentation`, `notes`, etc.).
 
@@ -50,11 +50,11 @@ A README.md file at the top level containing the following:
 
 In the repo's GitHub wiki, include the following:
 
-- [ ] List of user workflows (each different type of user)
-- [ ] Each workflow should have a corresponding wiki page, linked in the list, that either contains the workflow information or a TODO.
-- [ ] Each workflow should list the pages involved
-- [ ] List of user roles and what each role is able to do
-- [ ] Every third party integration should have its own page describing what parts of that service are used, how, and why
+- [X] List of user workflows (each different type of user)
+- [X] Each workflow should have a corresponding wiki page, linked in the list, that either contains the workflow information or a TODO.
+- [X] Each workflow should list the pages involved
+- [X] List of user roles and what each role is able to do
+- [X] Every third party integration should have its own page describing what parts of that service are used, how, and why
 
 These should be high level - you should not be explaining every line of code.
 
