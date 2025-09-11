@@ -1,4 +1,5 @@
-import prisma from '@/lib/db';
+import { PrismaClient } from '@prisma/client';
+const prisma = new PrismaClient();
 
 async function main() {
   await seedProductCategories();
@@ -13,10 +14,6 @@ async function lookupCategory(name: string) {
 
 async function lookupProduct(name: string) {
   return await prisma.product.findUnique({ where: { name } });
-}
-
-async function lookupProcessStep(title: string) {
-  return await prisma.processStep.findUnique({ where: { title } });
 }
 
 async function seedProductCategories() {
