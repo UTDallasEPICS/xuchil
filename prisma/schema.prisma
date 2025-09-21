@@ -9,3 +9,42 @@ datasource db {
   provider = "sqlite"
   url      = "file:./dev.db"
 }
+
+
+model process_template {
+  id                  Int     @id @default(autoincrement())
+  product_variant_id  Int
+  version             Int
+  name                String  @db.VarChar(200)
+  is_active           Boolean @default(true)
+  notes               String? @db.Text
+
+  product_variant     product_variant @relation(fields: [product_variant_id], references: [id])
+
+  @@unique([product_variant_id, version])
+}
+
+model template_step {
+  id                    Int     @id @default(autoincrement())
+  process_template_id   Int
+  position              Int
+  name                  String  @db.VarChar(200)
+  ideal_duration_min    Int?
+  requires_input        Boolean @default(false)
+  instructions          String? @db.Text
+
+  process_template process_template @relation(fields: [process_template_id], references: [id])
+
+  @@unique([process_template_id, position])
+}
+
+model step_required_material {
+  id Int @id @default(autoincrement())
+  template_step_id Int
+  raw_material_id Int
+  qty_per_unit_output Decimal @db.Decimal(12, 4)
+  unit_id Int
+
+  template_step template_step @relation(fields: [template_step_id], references: [id])
+  raw_material raw_material @realtion(fields: [raw_material_id], references: [id])
+}
