@@ -9,3 +9,71 @@ datasource db {
   provider = "sqlite"
   url      = "file:./dev.db"
 }
+
+enum ProcessRunStatus {
+  PLANNED
+  STARTED
+  FINISHED
+}
+
+enum StepExecutionStatus {
+  PENDING
+  IN_PROGRESS
+  DONE
+}
+
+model process_run {
+  id                  Int              @id @default(autoincrement())
+  product_variant_id  Int
+  process_template_id Int
+  batch_code          String           @unique
+  created_by_worker_id Int?
+  planned_qty         Decimal?
+  planned_unit_id     Int?
+  status              ProcessRunStatus @default(PLANNED)
+  started_at          DateTime?
+  finished_at         DateTime?
+  good_output_qty     Decimal?
+  scrap_qty           Decimal?
+  output_unit_id      Int?
+  notes               String?
+
+  pauses              process_pause[]
+  step_executions     step_execution[]
+}
+
+model process_pause {
+  id             Int         @id @default(autoincrement())
+  process_run_id Int
+  started_at     DateTime
+  ended_at       DateTime?
+  reason         String?
+
+  process_run    process_run @relation(fields: [process_run_id], references: [id])
+}
+
+model step_execution {
+  id                  Int                 @id @default(autoincrement())
+  process_run_id      Int
+  template_step_id    Int
+  worker_id           Int?
+  status              StepExecutionStatus @default(PENDING)
+  started_at          DateTime?
+  finished_at         DateTime?
+  actual_duration_min Int?
+  input_qty           Decimal?
+  input_unit_id       Int?
+  notes               String?
+
+  process_run         process_run         @relation(fields: [process_run_id], references: [id])
+  participants        step_participant[]
+}
+
+model step_participant {
+  id                Int            @id @default(autoincrement())
+  step_execution_id Int
+  worker_id         Int?
+  guest_id          Int?
+
+  step_execution    step_execution @relation(fields: [step_execution_id], references: [id])
+}
