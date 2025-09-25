@@ -10,110 +10,41 @@ datasource db {
   url      = "file:./dev.db"
 }
 
-model User {
-  id           Int     @id @default(autoincrement())
-  username     String  @unique
-  name         String
-  passwordHash String
-  role         Role
-  email        String?
-  phoneNo      String?
-  tasks        Task[]
+model AuthUser {
+  id            Int        @id @default(autoincrement())
+  workerId      Int?
+  email         String     @unique
+  password_hash String
+  is_admin      Boolean    @default(false)
+  is_active     Boolean    @default(true)
+  last_login_at DateTime?
+
+  worker    Worker?    @relation(fields: [workerId], references: [id])
+  userRoles UserRole[]
 }
 
-model Order {
-  id              Int            @id @default(autoincrement())
-  client          String
-  deliveryAddress String
-  deliveryDate    DateTime
-  deliveryMethod  DeliveryMethod
-  deliveryStatus  DeliveryStatus @default(PENDING)
-  productsOrdered OrderEntry[]
+model Role {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  userRoles UserRole[]
 }
 
-model OrderEntry {
-  id        Int     @id @default(autoincrement())
-  orderId   Int
-  order     Order   @relation(fields: [orderId], references: [id])
-  productId Int
-  product   Product @relation(fields: [productId], references: [id])
+model UserRole {
+  id     Int      @id @default(autoincrement())
+  userId Int
+  roleId Int
+
+  user AuthUser @relation(fields: [userId], references: [id])
+  role Role     @relation(fields: [roleId], references: [id])
 }
 
-enum Role {
-  WORKER
-  ADMIN
-}
+model Worker {
+  id                Int      @id @default(autoincrement())
+  full_name         String
+  phone             String?
+  profile_photo_url String?
+  is_active         Boolean  @default(true)
 
-model Inventory {
-  id        Int     @id @default(autoincrement())
-  quantity  Int
-  threshold Int
-  productId Int     @unique
-  product   Product @relation(fields: [productId], references: [id])
-}
-
-model Product {
-  id           Int              @id @default(autoincrement())
-  name         String           @unique
-  isEndProduct Boolean
-  imageSrc     String
-  inventory    Inventory?
-  categoryId   Int?
-  category     ProductCategory? @relation(fields: [categoryId], references: [id])
-
-  processSteps ProcessStep[]
-  orderEntries OrderEntry[]
-}
-
-model ProductCategory {
-  id       Int       @id @default(autoincrement())
-  name     String    @unique
-  imageSrc String?
-  products Product[]
-}
-
-model ProcessStep {
-  id            Int     @id @default(autoincrement())
-  productId     Int
-  product       Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  title         String
-  description   String
-  estimatedTime Int
-  hasInput      Boolean
-  unit          String?
-  order         Int
-  tasks         Task[]
-
-  @@unique([productId, order])
-}
-
-enum TaskStatus {
-  PROGRESSING
-  PAUSED
-  DONE
-}
-
-model Task {
-  id             Int         @id @default(autoincrement())
-  inputWeight    Float?
-  outputWeight   Float?
-  lossWeight     Float?
-  status         TaskStatus
-  startTimestamp DateTime    @default(now())
-  endTimestamp   DateTime?
-  notes          String?
-  workerId       Int
-  worker         User        @relation(fields: [workerId], references: [id])
-  processStepId  Int
-  processStep    ProcessStep @relation(fields: [processStepId], references: [id])
-}
-
-enum DeliveryMethod {
-  PERSONAL
-  MAIL
-}
-
-enum DeliveryStatus {
-  PENDING
-  DONE
+  authUser AuthUser?
 }
