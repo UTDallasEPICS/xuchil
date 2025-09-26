@@ -11,79 +11,65 @@ datasource db {
 }
 
 model AuthUser {
-  id            Int        @id @default(autoincrement())
-  workerId      Int?
-  email         String     @unique
-  password_hash String
-  is_admin      Boolean    @default(false)
-  is_active     Boolean    @default(true)
-  last_login_at DateTime?
+  id           Int       @id @default(autoincrement())
+  workerId     Int?
+  worker       Worker?   @relation(fields: [workerId], references: [id])
+  email        String    @unique
+  passwordHash String
+  isAdmin      Boolean   @default(false)
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
 
-  worker    Worker?    @relation(fields: [workerId], references: [id])
-  userRoles UserRole[]
+  @@index([workerId])
 }
 
 model Role {
   id   Int    @id @default(autoincrement())
   name String @unique
-
-  userRoles UserRole[]
-}
-
-model UserRole {
-  id     Int      @id @default(autoincrement())
-  userId Int
-  roleId Int
-
-  user AuthUser @relation(fields: [userId], references: [id])
-  role Role     @relation(fields: [roleId], references: [id])
 }
 
 model Worker {
-  id                Int      @id @default(autoincrement())
-  full_name         String
-  phone             String?
-  profile_photo_url String?
-  is_active         Boolean  @default(true)
-
-  authUser AuthUser?
+  id              Int     @id @default(autoincrement())
+  fullName        String
+  roleId          Int?
+  role            Role?   @relation(fields: [roleId], references: [id])
+  phone           String?
+  profilePhotoUrl String?
+  isActive        Boolean @default(true)
 }
 
+model ProcessTemplate {
+  id               Int     @id @default(autoincrement())
+  productVariantId Int
+  version          Int
+  name             String
+  isActive         Boolean @default(true)
+  notes            String?
 
-model process_template {
-  id                  Int     @id @default(autoincrement())
-  product_variant_id  Int
-  version             Int
-  name                String  @db.VarChar(200)
-  is_active           Boolean @default(true)
-  notes               String? @db.Text
+  productVariant ProductVariant @relation(fields: [productVariantId], references: [id])
 
-  product_variant     product_variant @relation(fields: [product_variant_id], references: [id])
-
-  @@unique([product_variant_id, version])
+  @@unique([productVariantId, version])
 }
 
-model template_step {
-  id                    Int     @id @default(autoincrement())
-  process_template_id   Int
-  position              Int
-  name                  String  @db.VarChar(200)
-  ideal_duration_min    Int?
-  requires_input        Boolean @default(false)
-  instructions          String? @db.Text
+model TemplateStep {
+  id                Int             @id @default(autoincrement())
+  processTemplateId Int
+  processTemplate   ProcessTemplate @relation(fields: [processTemplateId], references: [id])
+  position          Int
+  name              String
+  idealDurationMin  Int?
+  requiresInput     Boolean         @default(false)
+  instructions      String?
 
-  process_template process_template @relation(fields: [process_template_id], references: [id])
-
-  @@unique([process_template_id, position])
+  @@unique([processTemplateId, position])
 }
 
-model step_required_material {
-  id Int @id @default(autoincrement())
-  template_step_id Int
-  raw_material_id Int
-  qty_per_unit_output Decimal @db.Decimal(12, 4)
-  unit_id Int
-
-  template_step template_step @relation(fields: [template_step_id], references: [id])
-  raw_material raw_material @realtion(fields: [raw_material_id], references: [id])
+model StepRequiredMaterial {
+  id               Int          @id @default(autoincrement())
+  templateStepId   Int
+  templateStep     TemplateStep @relation(fields: [templateStepId], references: [id])
+  rawMaterialId    Int
+  rawMaterial      RawMaterial  @relation(fields: [rawMaterialId], references: [id])
+  qtyPerUnitOutput Decimal
+  unitId           Int
 }
