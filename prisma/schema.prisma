@@ -9,3 +9,76 @@ datasource db {
   provider = "sqlite"
   url      = "file:./dev.db"
 }
+
+model Unit {
+  id              Int              @id @default(autoincrement())
+  name            String           @unique          
+  factor_to_base  Decimal?         @default("1") 
+
+  products_default    Product[]        @relation("ProductDefaultUnit")
+  variants_default    ProductVariant[] @relation("ProductVariantDefaultUnit")
+  variants_content    ProductVariant[] @relation("ProductVariantContentUnit")
+  raw_materials       RawMaterial[]
+}
+
+//Product categories 
+model ProductCategory {
+  id         Int      @id @default(autoincrement())
+  name       String   @unique        
+  image_url  String?
+  is_active  Boolean  @default(true)
+
+  products   Product[]
+}
+
+//Product families
+model Product {
+  id               Int      @id @default(autoincrement())
+  category_id      Int
+  sku              String   @unique
+  name             String
+  default_unit_id  Int?
+  image_url        String?
+  is_active        Boolean  @default(true)
+
+  category    ProductCategory @relation(fields: [category_id], references: [id])
+  defaultUnit Unit?           @relation("ProductDefaultUnit", fields: [default_unit_id], references: [id])
+
+  variants    ProductVariant[]
+
+  @@index([category_id, name], map: "idx_product_category_name")
+}
+
+//Specific sellable variants
+model ProductVariant {
+  id                Int      @id @default(autoincrement())
+  product_id        Int
+  name              String
+  presentation      String?
+  net_content       Decimal?             
+  content_unit_id   Int?                 
+  default_unit_id   Int?                 
+  image_url         String?
+  is_active         Boolean  @default(true)
+
+  
+  product      Product @relation(fields: [product_id], references: [id])
+  contentUnit  Unit?   @relation("ProductVariantContentUnit", fields: [content_unit_id], references: [id])
+  defaultUnit  Unit?   @relation("ProductVariantDefaultUnit", fields: [default_unit_id], references: [id])
+
+  
+  @@unique([product_id, name])
+}
+
+// Raw materials (inputs)
+model RawMaterial {
+  id               Int      @id @default(autoincrement())
+  code             String   @unique       
+  name             String
+  default_unit_id  Int?
+  image_url        String?
+  is_active        Boolean  @default(true)
+
+
+  defaultUnit Unit? @relation(fields: [default_unit_id], references: [id])
+}
