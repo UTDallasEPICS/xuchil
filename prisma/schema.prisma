@@ -68,6 +68,12 @@ model Unit {
   rawMaterials          RawMaterial[]
   plannedUnitRuns       ProcessRun[]           @relation("PlannedUnitRun")
   outputUnitRuns        ProcessRun[]           @relation("OutputUnitRun")
+  stepExecutions        StepExecution[]
+  stepMaterialUsages    StepMaterialUsage[]
+  inventoryItems        InventoryItem[]
+  inventoryLots         InventoryLot[]
+  inventoryMovements    InventoryMovement[]
+  OrderItem             OrderItem[]
 }
 
 model ProductCategory {
@@ -110,7 +116,9 @@ model ProductVariant {
   contentUnit      Unit?             @relation("ContentUnitVariant", fields: [contentUnitId], references: [id])
   defaultUnit      Unit?             @relation("DefaultUnitVariant", fields: [defaultUnitId], references: [id])
   processTemplates ProcessTemplate[]
-  ProcessRun       ProcessRun[]
+  processRuns      ProcessRun[]
+  inventoryItems   InventoryItem[]
+  orderItems       OrderItem[]
 
   @@unique([productId, name])
 }
@@ -125,6 +133,8 @@ model RawMaterial {
 
   defaultUnit           Unit?                  @relation(fields: [defaultUnitId], references: [id])
   stepRequiredMaterials StepRequiredMaterial[]
+  stepMaterialUsages    StepMaterialUsage[]
+  inventoryItems        InventoryItem[]
 }
 
 model Role {
@@ -142,9 +152,11 @@ model Worker {
   profilePhotoUrl String?
   isActive        Boolean @default(true)
 
-  role       Role?        @relation(fields: [roleId], references: [id])
-  authUsers  AuthUser[]
-  ProcessRun ProcessRun[]
+  role             Role?             @relation(fields: [roleId], references: [id])
+  authUsers        AuthUser[]
+  processRuns      ProcessRun[]
+  stepExecutions   StepExecution[]
+  stepParticipants StepParticipant[]
 }
 
 model AuthUser {
@@ -171,7 +183,7 @@ model ProcessTemplate {
 
   productVariant ProductVariant @relation(fields: [productVariantId], references: [id])
   templateSteps  TemplateStep[]
-  ProcessRun     ProcessRun[]
+  processRuns    ProcessRun[]
 
   @@unique([productVariantId, version])
 }
@@ -187,6 +199,7 @@ model TemplateStep {
 
   processTemplate       ProcessTemplate        @relation(fields: [processTemplateId], references: [id])
   stepRequiredMaterials StepRequiredMaterial[]
+  stepExecutions        StepExecution[]
 
   @@unique([processTemplateId, position])
 }
@@ -219,12 +232,14 @@ model ProcessRun {
   outputUnitId      Int?
   notes             String?
 
-  productVariant  ProductVariant  @relation(fields: [productVariantId], references: [id])
-  processTemplate ProcessTemplate @relation(fields: [processTemplateId], references: [id])
-  creator         Worker?         @relation(fields: [createdByWorkerId], references: [id])
-  plannedUnit     Unit?           @relation("PlannedUnitRun", fields: [plannedUnitId], references: [id])
-  outputUnit      Unit?           @relation("OutputUnitRun", fields: [outputUnitId], references: [id])
-  processPauses   ProcessPause[]
+  productVariant     ProductVariant      @relation(fields: [productVariantId], references: [id])
+  processTemplate    ProcessTemplate     @relation(fields: [processTemplateId], references: [id])
+  creator            Worker?             @relation(fields: [createdByWorkerId], references: [id])
+  plannedUnit        Unit?               @relation("PlannedUnitRun", fields: [plannedUnitId], references: [id])
+  outputUnit         Unit?               @relation("OutputUnitRun", fields: [outputUnitId], references: [id])
+  processPauses      ProcessPause[]
+  stepExecutions     StepExecution[]
+  inventoryMovements InventoryMovement[]
 
   @@index([productVariantId])
   @@index([processTemplateId])
@@ -256,10 +271,13 @@ model StepExecution {
   inputUnitId       Int?
   notes             String?
 
-  processRun   ProcessRun   @relation(fields: [processRunId], references: [id])
-  templateStep TemplateStep @relation(fields: [templateStepId], references: [id])
-  worker       Worker?      @relation(fields: [workerId], references: [id])
-  inputUnit    Unit?        @relation(fields: [inputUnitId], references: [id])
+  processRun         ProcessRun          @relation(fields: [processRunId], references: [id])
+  templateStep       TemplateStep        @relation(fields: [templateStepId], references: [id])
+  worker             Worker?             @relation(fields: [workerId], references: [id])
+  inputUnit          Unit?               @relation(fields: [inputUnitId], references: [id])
+  stepMaterialUsages StepMaterialUsage[]
+  stepParticipants   StepParticipant[]
+  inventoryMovements InventoryMovement[]
 }
 
 model StepMaterialUsage {
@@ -280,10 +298,11 @@ model StepMaterialUsage {
 }
 
 model GuestCollaborator {
-  id          Int     @id @default(autoincrement())
-  displayName String
-  contactInfo String?
-  isActive    Boolean @default(true)
+  id               Int               @id @default(autoincrement())
+  displayName      String
+  contactInfo      String?
+  isActive         Boolean           @default(true)
+  stepParticipants StepParticipant[]
 }
 
 model StepParticipant {
@@ -303,69 +322,82 @@ model StepParticipant {
   @@index([stepExecutionId, guestId])
 }
 
-model Order {
-  id              Int            @id @default(autoincrement())
-  client          String
-  deliveryAddress String
-  deliveryDate    DateTime
-  deliveryMethod  DeliveryMethod
-  deliveryStatus  DeliveryStatus @default(PENDING)
-  productsOrdered OrderEntry[]
-}
+model InventoryItem {
+  id               Int      @id @default(autoincrement())
+  itemType         ItemType
+  rawMaterialId    Int?
+  productVariantId Int?
+  defaultUnitId    Int?
 
-model OrderEntry {
-  id        Int     @id @default(autoincrement())
-  orderId   Int
-  order     Order   @relation(fields: [orderId], references: [id])
-  productId Int
-  product   Product @relation(fields: [productId], references: [id])
-}
-
-model Inventory {
-  id        Int     @id @default(autoincrement())
-  quantity  Int
-  threshold Int
-  productId Int     @unique
-  product   Product @relation(fields: [productId], references: [id])
-}
-
-model InventoryMovement {
-  id                  Int       @id @default(autoincrement())
-  inventoryLotId      Int
-  inventoryLot        InventoryLot @relation(fields: [inventoryLotId], references: [id])
-  direction           MovementDirection
-  qty                 Decimal   @db.Decimal(12, 4)
-  unitId              Int
-  unit                Unit      @relation(fields: [unitId], references: [id])
-  reason              MovementReason
-  relatedStepExecutionId Int?
-  relatedProcessRunId   Int?
-  relatedOrderId        Int?
-  note                String?
-  movedAt             DateTime
+  rawMaterial    RawMaterial?    @relation(fields: [rawMaterialId], references: [id])
+  productVariant ProductVariant? @relation(fields: [productVariantId], references: [id])
+  defaultUnit    Unit?           @relation(fields: [defaultUnitId], references: [id])
+  iinventoryLots InventoryLot[]
 }
 
 model InventoryLot {
-  id             Int       @id @default(autoincrement())
+  id              Int       @id @default(autoincrement())
   inventoryItemId Int
-  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
-  lotCode        String    @db.VarChar(100)
-  qtyOnHand      Decimal   @db.Decimal(12, 4)
-  unitId         Int
-  unit           Unit      @relation(fields: [unitId], references: [id])
-  receivedAt     DateTime
-  expiryAt       DateTime?
-  movements      InventoryMovement[]
-  stepUsages     StepMaterialUsage[]
+  lotCode         String?
+  qtyOnHand       Decimal?
+  unitId          Int?
+  receivedAt      DateTime
+  expiryAt        DateTime?
+
+  inventoryItem      InventoryItem?      @relation(fields: [inventoryItemId], references: [id])
+  unit               Unit?               @relation(fields: [unitId], references: [id])
+  stepMaterialUsages StepMaterialUsage[]
+  inventoryMovements InventoryMovement[]
 }
 
-model InventoryItem {
-  id          Int       @id @default(autoincrement())
-  itemType ItemType
-  rawMaterialId Int?
-  rawMaterial   RawMaterial? @relation(fields: [rawMaterialId], references: [id])
-  productVariantId Int?
-  productVariant   ProductVariant? @relation(fields: [productVariantId], references: [id])
-  defaultUnitId Int
-  defaultUnit   Unit       @relation(fields: [defaultUnitId], references: [id])
+model InventoryMovement {
+  id                     Int               @id @default(autoincrement())
+  inventoryLotId         Int
+  direction              MovementDirection
+  qty                    Decimal
+  unitId                 Int
+  reason                 MovementReason
+  relatedStepExecutionId Int?
+  relatedProcessRunId    Int?
+  relatedOrderId         Int?
+  note                   String?
+  movedAt                DateTime
+
+  inventoryLot         InventoryLot   @relation(fields: [inventoryLotId], references: [id])
+  unit                 Unit           @relation(fields: [unitId], references: [id])
+  relatedStepExecution StepExecution? @relation(fields: [relatedStepExecutionId], references: [id])
+  relatedProcessRun    ProcessRun?    @relation(fields: [relatedProcessRunId], references: [id])
+  relatedOrder         Order?         @relation(fields: [relatedOrderId], references: [id])
+}
+
+model Order {
+  id                 Int                 @id @default(autoincrement())
+  clientName         String
+  addressText        String?
+  deliveryDate       DateTime
+  deliveryVariant    DeliveryVariant     @default(MAIL)
+  status             OrderStatus         @default(SCHEDULED)
+  deliveredAt        DateTime?
+  consignmentPartner String?
+  createdByUserId    Int?
+  notes              String?
+  inventoryMovements InventoryMovement[]
+  orderItems         OrderItem[]
+
+  @@index([deliveryDate])
+  @@index([status])
+  @@index([deliveryVariant])
+}
+
+model OrderItem {
+  id               Int     @id @default(autoincrement())
+  orderId          Int
+  productVariantId Int
+  quantity         Decimal
+  unitId           Int?
+  notes            String?
+
+  order          Order          @relation(fields: [orderId], references: [id])
+  productVariant ProductVariant @relation(fields: [productVariantId], references: [id])
+  unit           Unit?          @relation(fields: [unitId], references: [id])
 }
