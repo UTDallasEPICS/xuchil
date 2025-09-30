@@ -302,3 +302,70 @@ model StepParticipant {
   @@index([stepExecutionId, workerId])
   @@index([stepExecutionId, guestId])
 }
+
+model Order {
+  id              Int            @id @default(autoincrement())
+  client          String
+  deliveryAddress String
+  deliveryDate    DateTime
+  deliveryMethod  DeliveryMethod
+  deliveryStatus  DeliveryStatus @default(PENDING)
+  productsOrdered OrderEntry[]
+}
+
+model OrderEntry {
+  id        Int     @id @default(autoincrement())
+  orderId   Int
+  order     Order   @relation(fields: [orderId], references: [id])
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+}
+
+model Inventory {
+  id        Int     @id @default(autoincrement())
+  quantity  Int
+  threshold Int
+  productId Int     @unique
+  product   Product @relation(fields: [productId], references: [id])
+}
+
+model InventoryMovement {
+  id                  Int       @id @default(autoincrement())
+  inventoryLotId      Int
+  inventoryLot        InventoryLot @relation(fields: [inventoryLotId], references: [id])
+  direction           MovementDirection
+  qty                 Decimal   @db.Decimal(12, 4)
+  unitId              Int
+  unit                Unit      @relation(fields: [unitId], references: [id])
+  reason              MovementReason
+  relatedStepExecutionId Int?
+  relatedProcessRunId   Int?
+  relatedOrderId        Int?
+  note                String?
+  movedAt             DateTime
+}
+
+model InventoryLot {
+  id             Int       @id @default(autoincrement())
+  inventoryItemId Int
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
+  lotCode        String    @db.VarChar(100)
+  qtyOnHand      Decimal   @db.Decimal(12, 4)
+  unitId         Int
+  unit           Unit      @relation(fields: [unitId], references: [id])
+  receivedAt     DateTime
+  expiryAt       DateTime?
+  movements      InventoryMovement[]
+  stepUsages     StepMaterialUsage[]
+}
+
+model InventoryItem {
+  id          Int       @id @default(autoincrement())
+  itemType ItemType
+  rawMaterialId Int?
+  rawMaterial   RawMaterial? @relation(fields: [rawMaterialId], references: [id])
+  productVariantId Int?
+  productVariant   ProductVariant? @relation(fields: [productVariantId], references: [id])
+  defaultUnitId Int
+  defaultUnit   Unit       @relation(fields: [defaultUnitId], references: [id])
+}
