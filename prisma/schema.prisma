@@ -10,78 +10,50 @@ datasource db {
   url      = "file:./dev.db"
 }
 
-model AuthUser {
-  id           Int       @id @default(autoincrement())
-  workerId     Int?
-  email        String    @unique
-  passwordHash String
-  isAdmin      Boolean   @default(false)
-  isActive     Boolean   @default(true)
-  lastLoginAt  DateTime?
-
-  worker Worker? @relation(fields: [workerId], references: [id])
-
-  @@index([workerId])
+enum ProcessStatus {
+  PLANNED
+  IN_PROGRESS
+  PAUSED
+  COMPLETED
+  CANCELLED
 }
 
-model Role {
-  id   Int    @id @default(autoincrement())
-  name String @unique
-
-  workers Worker[]
+enum StepStatus {
+  PENDING
+  IN_PROGRESS
+  DONE
+  BLOCKED
+  SKIPPED
 }
 
-model Worker {
-  id              Int     @id @default(autoincrement())
-  fullName        String
-  roleId          Int?
-  phone           String?
-  profilePhotoUrl String?
-  isActive        Boolean @default(true)
-
-  role      Role?      @relation(fields: [roleId], references: [id])
-  authUsers AuthUser[]
+enum DeliveryVariant {
+  MAIL
+  PERSONAL
+  CONSIGNMENT
 }
 
-model ProcessTemplate {
-  id               Int     @id @default(autoincrement())
-  productVariantId Int
-  version          Int
-  name             String
-  isActive         Boolean @default(true)
-  notes            String?
-
-  productVariant ProductVariant @relation(fields: [productVariantId], references: [id])
-  templateSteps  TemplateStep[]
-
-  @@unique([productVariantId, version])
+enum OrderStatus {
+  SCHEDULED
+  DELIVERED
+  CANCELLED
 }
 
-model TemplateStep {
-  id                Int     @id @default(autoincrement())
-  processTemplateId Int
-  position          Int
-  name              String
-  idealDurationMin  Int?
-  requiresInput     Boolean @default(false)
-  instructions      String?
-
-  processTemplate       ProcessTemplate        @relation(fields: [processTemplateId], references: [id])
-  stepRequiredMaterials StepRequiredMaterial[]
-
-  @@unique([processTemplateId, position])
+enum ItemType {
+  RAW
+  PRODUCT
 }
 
-model StepRequiredMaterial {
-  id               Int     @id @default(autoincrement())
-  templateStepId   Int
-  rawMaterialId    Int
-  qtyPerUnitOutput Decimal
-  unitId           Int
+enum MovementDirection {
+  IN
+  OUT
+}
 
-  templateStep TemplateStep @relation(fields: [templateStepId], references: [id])
-  rawMaterial  RawMaterial  @relation(fields: [rawMaterialId], references: [id])
-  unit         Unit         @relation(fields: [unitId], references: [id])
+enum MovementReason {
+  PURCHASE
+  CONSUMPTION_STEP
+  ADJUSTMENT
+  COMPLETION_RUN
+  OUTBOUND_ORDER
 }
 
 model Unit {
@@ -94,6 +66,8 @@ model Unit {
   contentUnitVariants   ProductVariant[]       @relation("ContentUnitVariant")
   defaultUnitVariants   ProductVariant[]       @relation("DefaultUnitVariant")
   rawMaterials          RawMaterial[]
+  plannedUnitRuns       ProcessRun[]           @relation("PlannedUnitRun")
+  outputUnitRuns        ProcessRun[]           @relation("OutputUnitRun")
 }
 
 model ProductCategory {
@@ -136,6 +110,7 @@ model ProductVariant {
   contentUnit      Unit?             @relation("ContentUnitVariant", fields: [contentUnitId], references: [id])
   defaultUnit      Unit?             @relation("DefaultUnitVariant", fields: [defaultUnitId], references: [id])
   processTemplates ProcessTemplate[]
+  ProcessRun       ProcessRun[]
 
   @@unique([productId, name])
 }
@@ -152,70 +127,178 @@ model RawMaterial {
   stepRequiredMaterials StepRequiredMaterial[]
 }
 
-enum ProcessRunStatus {
-  PLANNED
-  STARTED
-  FINISHED
+model Role {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  workers Worker[]
 }
 
-enum StepExecutionStatus {
-  PENDING
-  IN_PROGRESS
-  DONE
+model Worker {
+  id              Int     @id @default(autoincrement())
+  fullName        String
+  roleId          Int?
+  phone           String?
+  profilePhotoUrl String?
+  isActive        Boolean @default(true)
+
+  role       Role?        @relation(fields: [roleId], references: [id])
+  authUsers  AuthUser[]
+  ProcessRun ProcessRun[]
 }
 
-model process_run {
-  id                  Int              @id @default(autoincrement())
-  product_variant_id  Int
-  process_template_id Int
-  batch_code          String           @unique
-  created_by_worker_id Int?
-  planned_qty         Decimal?
-  planned_unit_id     Int?
-  status              ProcessRunStatus @default(PLANNED)
-  started_at          DateTime?
-  finished_at         DateTime?
-  good_output_qty     Decimal?
-  scrap_qty           Decimal?
-  output_unit_id      Int?
-  notes               String?
+model AuthUser {
+  id           Int       @id @default(autoincrement())
+  workerId     Int?
+  email        String    @unique
+  passwordHash String
+  isAdmin      Boolean   @default(false)
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
 
-  pauses              process_pause[]
-  step_executions     step_execution[]
+  worker Worker? @relation(fields: [workerId], references: [id])
+
+  @@index([workerId])
 }
 
-model process_pause {
-  id             Int         @id @default(autoincrement())
-  process_run_id Int
-  started_at     DateTime
-  ended_at       DateTime?
-  reason         String?
+model ProcessTemplate {
+  id               Int     @id @default(autoincrement())
+  productVariantId Int
+  version          Int
+  name             String
+  isActive         Boolean @default(true)
+  notes            String?
 
-  process_run    process_run @relation(fields: [process_run_id], references: [id])
+  productVariant ProductVariant @relation(fields: [productVariantId], references: [id])
+  templateSteps  TemplateStep[]
+  ProcessRun     ProcessRun[]
+
+  @@unique([productVariantId, version])
 }
 
-model step_execution {
-  id                  Int                 @id @default(autoincrement())
-  process_run_id      Int
-  template_step_id    Int
-  worker_id           Int?
-  status              StepExecutionStatus @default(PENDING)
-  started_at          DateTime?
-  finished_at         DateTime?
-  actual_duration_min Int?
-  input_qty           Decimal?
-  input_unit_id       Int?
-  notes               String?
+model TemplateStep {
+  id                Int     @id @default(autoincrement())
+  processTemplateId Int
+  position          Int
+  name              String
+  idealDurationMin  Int?
+  requiresInput     Boolean @default(false)
+  instructions      String?
 
-  process_run         process_run         @relation(fields: [process_run_id], references: [id])
-  participants        step_participant[]
+  processTemplate       ProcessTemplate        @relation(fields: [processTemplateId], references: [id])
+  stepRequiredMaterials StepRequiredMaterial[]
+
+  @@unique([processTemplateId, position])
 }
 
-model step_participant {
-  id                Int            @id @default(autoincrement())
-  step_execution_id Int
-  worker_id         Int?
-  guest_id          Int?
+model StepRequiredMaterial {
+  id               Int     @id @default(autoincrement())
+  templateStepId   Int
+  rawMaterialId    Int
+  qtyPerUnitOutput Decimal
+  unitId           Int
 
-  step_execution    step_execution @relation(fields: [step_execution_id], references: [id])
+  templateStep TemplateStep @relation(fields: [templateStepId], references: [id])
+  rawMaterial  RawMaterial  @relation(fields: [rawMaterialId], references: [id])
+  unit         Unit         @relation(fields: [unitId], references: [id])
+}
+
+model ProcessRun {
+  id                Int           @id @default(autoincrement())
+  productVariantId  Int
+  processTemplateId Int
+  batchCode         String        @unique
+  createdByWorkerId Int?
+  plannedQty        Decimal?
+  plannedUnitId     Int?
+  status            ProcessStatus @default(PLANNED)
+  startedAt         DateTime?
+  finishedAt        DateTime?
+  goodOutputQty     Decimal?
+  scrapQty          Decimal?
+  outputUnitId      Int?
+  notes             String?
+
+  productVariant  ProductVariant  @relation(fields: [productVariantId], references: [id])
+  processTemplate ProcessTemplate @relation(fields: [processTemplateId], references: [id])
+  creator         Worker?         @relation(fields: [createdByWorkerId], references: [id])
+  plannedUnit     Unit?           @relation("PlannedUnitRun", fields: [plannedUnitId], references: [id])
+  outputUnit      Unit?           @relation("OutputUnitRun", fields: [outputUnitId], references: [id])
+  processPauses   ProcessPause[]
+
+  @@index([productVariantId])
+  @@index([processTemplateId])
+  @@index([createdByWorkerId])
+}
+
+model ProcessPause {
+  id           Int       @id @default(autoincrement())
+  processRunId Int
+  startedAt    DateTime
+  endedAt      DateTime?
+  reason       String?
+
+  processRun ProcessRun @relation(fields: [processRunId], references: [id])
+
+  @@index([processRunId])
+}
+
+model StepExecution {
+  id                Int        @id @default(autoincrement())
+  processRunId      Int
+  templateStepId    Int
+  workerId          Int?
+  status            StepStatus @default(PENDING)
+  startedAt         DateTime?
+  finishedAt        DateTime?
+  actualDurationMin Int?
+  inputQty          Decimal?
+  inputUnitId       Int?
+  notes             String?
+
+  processRun   ProcessRun   @relation(fields: [processRunId], references: [id])
+  templateStep TemplateStep @relation(fields: [templateStepId], references: [id])
+  worker       Worker?      @relation(fields: [workerId], references: [id])
+  inputUnit    Unit?        @relation(fields: [inputUnitId], references: [id])
+}
+
+model StepMaterialUsage {
+  id              Int     @id @default(autoincrement())
+  stepExecutionId Int
+  rawMaterialId   Int
+  inventoryLotId  Int?
+  qtyUsed         Decimal
+  unitId          Int
+  notes           String?
+
+  stepExecution StepExecution @relation(fields: [stepExecutionId], references: [id])
+  rawMaterial   RawMaterial   @relation(fields: [rawMaterialId], references: [id])
+  inventoryLot  InventoryLot? @relation(fields: [inventoryLotId], references: [id])
+  unit          Unit          @relation(fields: [unitId], references: [id])
+
+  @@index([stepExecutionId])
+}
+
+model GuestCollaborator {
+  id          Int     @id @default(autoincrement())
+  displayName String
+  contactInfo String?
+  isActive    Boolean @default(true)
+}
+
+model StepParticipant {
+  id              Int       @id @default(autoincrement())
+  stepExecutionId Int
+  workerId        Int?
+  guestId         Int?
+  roleInStep      String?
+  startedAt       DateTime?
+  finishedAt      DateTime?
+
+  stepExecution StepExecution      @relation(fields: [stepExecutionId], references: [id])
+  worker        Worker?            @relation(fields: [workerId], references: [id])
+  guest         GuestCollaborator? @relation(fields: [guestId], references: [id])
+
+  @@index([stepExecutionId, workerId])
+  @@index([stepExecutionId, guestId])
 }
