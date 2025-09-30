@@ -73,7 +73,7 @@ model Unit {
   inventoryItems        InventoryItem[]
   inventoryLots         InventoryLot[]
   inventoryMovements    InventoryMovement[]
-  OrderItem             OrderItem[]
+  orderItems            OrderItem[]
 }
 
 model ProductCategory {
@@ -332,7 +332,7 @@ model InventoryItem {
   rawMaterial    RawMaterial?    @relation(fields: [rawMaterialId], references: [id])
   productVariant ProductVariant? @relation(fields: [productVariantId], references: [id])
   defaultUnit    Unit?           @relation(fields: [defaultUnitId], references: [id])
-  iinventoryLots InventoryLot[]
+  inventoryLots  InventoryLot[]
 }
 
 model InventoryLot {
