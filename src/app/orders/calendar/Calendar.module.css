@@ -155,6 +155,29 @@
   gap: 8px;
 }
 
+.ordersHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+
+.ordersHeading {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.closeBtn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  line-height: 0;
+  color: var(--color-text-dark);
+}
+
 .orderList {
   display: flex;
   flex-direction: column;

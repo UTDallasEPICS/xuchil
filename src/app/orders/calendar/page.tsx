@@ -1,9 +1,8 @@
 "use client";
 
 import { useMemo, useState, useRef } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, X as CloseIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-
 import DeliveryType from "@/components/DeliveryType";
 import BottomButton from "@/components/BottomButton";
 import { fetchOrders } from "@/constants/api";
@@ -273,14 +272,25 @@ const Calendar = () => {
         </div>
           {hasOrders && selectedDate && (
             <div className={styles.ordersWrapper}>
-              <h3>
-                Pedidos&nbsp;
-                {selectedDate.toLocaleDateString("es-MX", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                })}
-              </h3>
+              <div className={styles.ordersHeader}>
+                <h3 className={styles.ordersHeading}>
+                  Pedidos&nbsp;
+                  {selectedDate.toLocaleDateString("es-MX", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                  })}
+                </h3>
+                <button
+                  type="button"
+                  aria-label="Cerrar panel de pedidos"
+                  title="Cerrar"
+                  className={styles.closeBtn}
+                  onClick={clearSelectedOrders}
+                >
+                  <CloseIcon size={18} strokeWidth={2.5} />
+                </button>
+              </div>
               <div className={styles.orderList}>
                 {selectedOrders.map((o) => (
                   <OrderCard key={o.id} {...o} />
