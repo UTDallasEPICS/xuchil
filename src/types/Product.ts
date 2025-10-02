@@ -1,3 +1,5 @@
+import { ProcessStep } from "./ProcessStep";
+
 export interface Product {
     id: string;
     name: string;
@@ -5,5 +7,11 @@ export interface Product {
     image: string;
     quantity: number;
     units: string;
+
+    categoryId?: string;
+    variantId?: string;
+
+    //billOfMaterials: BillOfMaterialsItem[];
+    processSteps?: ProcessStep[];
   }
   
