@@ -40,7 +40,6 @@ const EditProfile = () => {
   }, []);
 
   const handleImageUploadClick = () => {
-    // Simular click en el input file oculto
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }
@@ -49,13 +48,11 @@ const EditProfile = () => {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validar tipo de archivo
       if (!file.type.match('image.*')) {
         alert('Por favor selecciona una imagen (JPEG, PNG, etc.)');
         return;
       }
 
-      // Validar tamaño (ejemplo: máximo 2MB)
       if (file.size > 2 * 1024 * 1024) {
         alert('La imagen es demasiado grande (máximo 2MB)');
         return;
@@ -65,7 +62,6 @@ const EditProfile = () => {
       reader.onloadend = () => {
         const result = reader.result as string;
         setAvatarPreview(result);
-        // Guardamos el base64 completo (incluyendo el prefijo data:image/...)
         setAvatar(result);
       };
       reader.readAsDataURL(file);
@@ -87,10 +83,8 @@ const EditProfile = () => {
       avatar: avatar || avatarPreview,
     };
 
-    // Guardar datos temporalmente para la sesión
     localStorage.setItem("userData", JSON.stringify(updatedUserData));
     
-    // Guardar datos permanentemente asociados al usuario
     localStorage.setItem(`userProfile_${username}`, JSON.stringify({
       name: `${name} ${lastName}`.trim(),
       email,
@@ -134,7 +128,6 @@ const EditProfile = () => {
           boxSizing: "border-box",
         }}
       >
-        {/* Imagen y botón subir */}
         <img
           src={avatarPreview}
           alt="Foto de perfil"
@@ -149,7 +142,6 @@ const EditProfile = () => {
           }}
         />
 
-        {/* Input file oculto */}
         <input
           type="file"
           id="avatar-upload"
@@ -159,7 +151,6 @@ const EditProfile = () => {
           style={{ display: "none" }}
         />
         
-        {/* Botón personalizado que activa el input file */}
         <Button
           size="small"
           action="secondary"
@@ -169,7 +160,6 @@ const EditProfile = () => {
           Subir Foto
         </Button>
 
-        {/* Formulario */}
         <div
           style={{
             width: "100%",

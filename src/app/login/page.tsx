@@ -13,10 +13,8 @@ const Login = () => {
   const [showErrorModal, setShowErrorModal] = useState(false);
   
   const handleLogin = () => {
-    // Obtener usuarios registrados (si existen)
     const registeredUsers = JSON.parse(localStorage.getItem("registeredUsers") || "[]");
     
-    // Usuarios base
     const baseUsers = [
       {
         username: "admin",
@@ -42,19 +40,16 @@ const Login = () => {
       }
     ];
 
-    // Combinar usuarios base con registrados
     const allUsers = [...baseUsers, ...registeredUsers];
     
     const foundUser = allUsers.find(u => u.username === user && u.password === password);
 
     if (foundUser) {
-      // Buscar si hay datos guardados previamente para este usuario
       const userProfileData = JSON.parse(localStorage.getItem(`userProfile_${foundUser.username}`) || "{}");
       
       localStorage.setItem("currentUser", foundUser.username);
       localStorage.setItem("role", foundUser.role);
       
-      // Combinar datos base con los guardados (incluyendo avatar)
       const userData = {
         ...foundUser,
         ...userProfileData

@@ -195,7 +195,6 @@ const CreateUser = () => {
           </div>
         ))}
 
-        {/* Contraseña */}
         <div style={{ marginBottom: "12px" }}>
           <label>Contraseña:</label>
           <input
@@ -228,7 +227,6 @@ const CreateUser = () => {
           </button>
         </div>
 
-        {/* Confirmar Contraseña */}
         <div style={{ marginBottom: "20px" }}>
           <label>Confirmar Contraseña:</label>
           <input

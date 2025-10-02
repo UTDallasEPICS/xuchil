@@ -24,7 +24,6 @@ const UserProfile = () => {
   }, []);
 
   const confirmLogout = () => {
-    // Solo eliminamos los datos de sesión, no los datos del perfil
     localStorage.removeItem("currentUser");
     localStorage.removeItem("role");
     localStorage.removeItem("userData");
@@ -47,7 +46,6 @@ const UserProfile = () => {
     >
       <HeaderXuchil />
 
-      {/* Botón editar */}
       <div
         style={{
           position: "absolute",
@@ -65,7 +63,6 @@ const UserProfile = () => {
         </Button>
       </div>
 
-      {/* Botón crear usuario solo para admin */}
       {role === "admin" && (
         <div
           style={{
