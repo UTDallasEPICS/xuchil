@@ -61,7 +61,7 @@ const Login = () => {
       };
       
       localStorage.setItem("userData", JSON.stringify(userData));
-      router.push("/user");
+      router.push("/process-control");
     } else {
       setShowErrorModal(true);
     }
