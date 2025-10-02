@@ -78,6 +78,8 @@
     height: 56px;
     border: 1px solid var(--color-text-dark);
     vertical-align: top;
+    padding: 2px;
+    overflow: visible;
 }
   
 .adjacentDay {
@@ -86,21 +88,15 @@
 }
   
 .dayNumber {
+    display: block;
     font-size: 0.75rem;
     font-weight: 700;
     width: 100%;
+    margin-bottom: 2px;
 }
   
 .adjacentDay .dayNumber {
     font-weight: 400;
-}
-  
-.dayCell :global(.iconVariant),
-.adjacentDay :global(.iconVariant) {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
 }
 
 .calendarLayout {
@@ -181,4 +177,87 @@
   font-size: 1.1rem;
   font-weight: 600;
   margin: 0 0 8px 10px;
+}
+
+.pileAnchor {
+  position: absolute;
+  left: 50%;
+  bottom: 10px;
+  top: auto;
+  transform: translateX(-50%);
+  max-width: calc(100% - 8px);
+  pointer-events: none;
+}
+
+.pileRow {
+  --pile-item: 22px;
+  --pile-scale: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  height: calc(var(--pile-item) * var(--pile-scale));
+  max-width: 100%;
+  padding: 0 2px;
+  overflow: visible;
+  pointer-events: auto;  
+}
+
+.pileRow :global(.iconVariant) { position: relative; transform: none; }
+
+.pileItem {
+  position: relative;
+  margin-left: -8px;
+  width: var(--pile-item);
+  height: var(--pile-item);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transform: scale(var(--pile-scale));
+  transform-origin: center center;
+}
+
+.pileItem:first-child {
+  margin-left: 0;
+}
+
+.pileItem :global(.iconVariant) {
+  box-shadow: 0 0 0 2px var(--color-bg, #fff);
+  border-radius: 999px;
+}
+
+.pileItem :global(.quantity) {
+  display: none;
+}
+
+.pileMore {
+  margin-left: -8px;
+  width: var(--pile-item);
+  height: var(--pile-item);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--color-green-light, #6fbf73);
+  color: var(--color-text-light, #fff);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 0 0 2px var(--color-bg, #fff);
+  border: none;
+  transform: scale(var(--pile-scale));
+}
+
+.pileMore:hover {
+  filter: brightness(0.95);
+}
+
+@media (max-width: 420px) {
+  .pileAnchor { max-width: calc(100% - 6px); bottom: 8px; }
+  .pileRow { padding: 0 2px; }
+  .pileItem { margin-left: -10px; }
+}
+
+@media (max-width: 360px) {
+  .pileRow { --pile-scale: 0.8; }
 }

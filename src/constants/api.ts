@@ -387,7 +387,7 @@ export function fetchProductVariants(productId: string): ProductVariant[] {
         clientName: "Adán Yair Jiménez Santiago",
         address:
           "Blvd. Guadalupe Hinojosa de Murat 1100,\n71248 San Raymundo Jalpan, Oax.",
-        deliveryDate: "01/05/2025",
+        deliveryDate: "01/11/2025",
         deliveryVariant: "personal",
         delivered: false,
         products: [
@@ -422,7 +422,7 @@ export function fetchProductVariants(productId: string): ProductVariant[] {
         clientName: "Alejandra Cruz Martínez",
         address:
           "3ª Privada de La Gloria s/n, Barrio del Peñasco, 68230 Oaxaca, Oax.",
-        deliveryDate: "02/05/2025",
+        deliveryDate: "02/11/2025",
         deliveryVariant: "mail",
         delivered: false,
         products: [
@@ -441,7 +441,7 @@ export function fetchProductVariants(productId: string): ProductVariant[] {
         clientName: "Luis Fernando Vázquez Ríos",
         address:
           "Blvd. Guadalupe Hinojosa de Murat 1100,\n71248 San Raymundo Jalpan, Oax.",
-        deliveryDate: "20/05/2025",
+        deliveryDate: "20/11/2025",
         deliveryVariant: "consignment",
         delivered: true,
         products: [
@@ -468,7 +468,7 @@ export function fetchProductVariants(productId: string): ProductVariant[] {
         clientName: "Patricia López Ramos",
         address:
           "Blvd. Guadalupe Hinojosa de Murat 1100,\n71248 San Raymundo Jalpan, Oax.",
-        deliveryDate: "21/05/2025",
+        deliveryDate: "21/11/2025",
         deliveryVariant: "personal",
         delivered: false,
         products: [
@@ -495,8 +495,8 @@ export function fetchProductVariants(productId: string): ProductVariant[] {
         clientName: "José Hernández Canseco",
         address:
           "Blvd. Guadalupe Hinojosa de Murat 1100,\n71248 San Raymundo Jalpan, Oax.",
-        deliveryDate: "21/05/2025",
-        deliveryVariant: "personal",
+        deliveryDate: "21/11/2025",
+        deliveryVariant: "consignment",
         delivered: false,
         products: [
           {
@@ -522,7 +522,7 @@ export function fetchProductVariants(productId: string): ProductVariant[] {
         clientName: "José Segundo Castillo",
         address:
           "Blvd. Guadalupe Hinojosa de Murat 1100,\n71248 San Raymundo Jalpan, Oax.",
-        deliveryDate: "21/05/2025",
+        deliveryDate: "21/11/2025",
         deliveryVariant: "personal",
         delivered: false,
         products: [
@@ -549,8 +549,8 @@ export function fetchProductVariants(productId: string): ProductVariant[] {
         clientName: "Adonai Escobedo Sánchez",
         address:
           "Blvd. Guadalupe Hinojosa de Murat 1100,\n71248 San Raymundo Jalpan, Oax.",
-        deliveryDate: "21/05/2025",
-        deliveryVariant: "personal",
+        deliveryDate: "21/11/2025",
+        deliveryVariant: "mail",
         delivered: false,
         products: [
           {
@@ -576,8 +576,8 @@ export function fetchProductVariants(productId: string): ProductVariant[] {
         clientName: "Vicente Sánchez Enríquez",
         address:
           "Blvd. Guadalupe Hinojosa de Murat 1100,\n71248 San Raymundo Jalpan, Oax.",
-        deliveryDate: "21/05/2025",
-        deliveryVariant: "personal",
+        deliveryDate: "21/11/2025",
+        deliveryVariant: "mail",
         delivered: false,
         products: [
           {
@@ -603,7 +603,7 @@ export function fetchProductVariants(productId: string): ProductVariant[] {
         clientName: "José Armando Pérez Peña",
         address:
           "3ª Privada de La Gloria s/n, Barrio del Peñasco, 68230 Oaxaca, Oax.",
-        deliveryDate: "20/07/2025",
+        deliveryDate: "20/12/2025",
         deliveryVariant: "mail",
         delivered: false,
         products: [
@@ -630,7 +630,7 @@ export function fetchProductVariants(productId: string): ProductVariant[] {
         clientName: "María Teresa Gómez Vargas",
         address:
           "Blvd. Guadalupe Hinojosa de Murat 1100,\n71248 San Raymundo Jalpan, Oax.",
-        deliveryDate: "28/07/2025",
+        deliveryDate: "28/12/2025",
         deliveryVariant: "consignment",
         delivered: true,
         products: [
