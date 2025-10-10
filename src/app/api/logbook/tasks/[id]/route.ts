@@ -1,17 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/db';
-import {getUser, getRole} from '@/lib/session';
 
 export async function GET(request: NextRequest, {params}: { params: Promise<{id: string}>}) {
     const stepExecutionId = parseInt((await params).id)
-    // const user = await getUser();
-
-    // if(!user || user.workerID === null){
-    //     return NextResponse.json({message: 'Access Denied. Must be a worker.'}, {status: 403});
-    // }
-    // if(isNaN(stepExecutionId)){
-    //     return NextResponse.json({message: 'Invalid Step Execution ID.'}, {status: 400})
-    // }
 
     try {
         const stepExecution = await prisma.stepExecution.findUnique({
@@ -33,7 +24,7 @@ export async function GET(request: NextRequest, {params}: { params: Promise<{id:
         if(!stepExecution){
             return NextResponse.json({ message: 'Step Execution not found' }, {status: 404});
         }
-        return NextResponse.json({ status: 200 });
+        return NextResponse.json({ stepExecution, status: 200 });
     }
     catch(e) {
         console.error('Error fetching Step Execution details: ', e);
