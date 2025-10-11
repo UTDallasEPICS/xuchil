@@ -1,14 +1,14 @@
 "use client";
 
 import { useMemo, useState, useRef } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, X as CloseIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-
 import DeliveryType from "@/components/DeliveryType";
 import BottomButton from "@/components/BottomButton";
 import { fetchOrders } from "@/constants/api";
 import { Order } from "@/types/Order";
 import OrderCard from "@/components/OrderCard";
+import { keyFromLocalDate, parseMXDateLocal } from "@/utils/date";
 
 import styles from "./Calendar.module.css";
 
@@ -22,11 +22,6 @@ function getMonthKey(date: Date) {
   return `${date.getFullYear()}-${date.getMonth()}`;
 }
 
-function parseDeliveryDate(d: string) {
-  const [dd, mm, yyyy] = d.split("/").map(Number);
-  return new Date(yyyy, mm - 1, dd);
-}
-
 function buildCalendarMatrix(
   baseDate: Date,
   ordersByDate: Map<string, Order[]>
@@ -34,14 +29,10 @@ function buildCalendarMatrix(
   const first = new Date(baseDate.getFullYear(), baseDate.getMonth(), 1);
   const last = new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 0);
 
-  const firstWeekday = first.getDay();
-  const lastWeekday = last.getDay();
-
   const start = new Date(first);
-  start.setDate(first.getDate() - firstWeekday);
-
+  start.setDate(1 - first.getDay());
   const end = new Date(last);
-  end.setDate(last.getDate() + (6 - lastWeekday));
+  end.setDate(last.getDate() + (6 - last.getDay()));
 
   const matrix: DayCell[][] = [];
   let cursor = new Date(start);
@@ -50,8 +41,8 @@ function buildCalendarMatrix(
     const week: DayCell[] = [];
     for (let i = 0; i < 7; i++) {
       const cellDate = new Date(cursor);
-      const keyISO = cellDate.toISOString().slice(0, 10);
-      const orders = ordersByDate.get(keyISO) ?? [];
+      const k = keyFromLocalDate(cellDate);
+      const orders = ordersByDate.get(k) ?? [];
 
       week.push({
         date: cellDate,
@@ -68,8 +59,8 @@ function buildCalendarMatrix(
     const week: DayCell[] = [];
     for (let i = 0; i < 7; i++) {
       const cellDate = new Date(cursor);
-      const keyISO = cellDate.toISOString().slice(0, 10);
-      const orders = ordersByDate.get(keyISO) ?? [];
+      const k = keyFromLocalDate(cellDate);
+      const orders = ordersByDate.get(k) ?? [];
 
       week.push({ date: cellDate, isCurrentMonth: false, orders });
       cursor.setDate(cursor.getDate() + 1);
@@ -78,6 +69,14 @@ function buildCalendarMatrix(
   }
 
   return matrix;
+}
+
+type VariantCount = Record<Order["deliveryVariant"], number>;
+function groupByVariant(orders: Order[]): VariantCount {
+  return orders.reduce<VariantCount>((acc, o) => {
+    acc[o.deliveryVariant] = (acc[o.deliveryVariant] ?? 0) + 1;
+    return acc;
+  }, {} as VariantCount);
 }
 
 const Calendar = () => {
@@ -112,10 +111,9 @@ const Calendar = () => {
   const ordersByDate = useMemo(() => {
     const map = new Map<string, Order[]>();
     monthOrders.forEach((o) => {
-      const d = parseDeliveryDate(o.deliveryDate)
-        .toISOString()
-        .slice(0, 10);
-      (map.get(d) ?? map.set(d, []).get(d)!).push(o);
+      const d = parseMXDateLocal(o.deliveryDate);
+      const k = keyFromLocalDate(d);
+      (map.get(k) ?? map.set(k, []).get(k)!).push(o);
     });
     return map;
   }, [monthOrders]);
@@ -188,13 +186,12 @@ const Calendar = () => {
                 <tr key={wi}>
                   {week.map((cell) => {
                     const day = cell.date.getDate();
-                    const dateKey = cell.date.toISOString().slice(0, 10);
-
+                    const k = keyFromLocalDate(cell.date);
                     const orderCount = cell.orders.length;
 
                     return (
                       <td
-                        key={dateKey}
+                        key={k}
                         className={
                           cell.isCurrentMonth
                             ? styles.dayCell
@@ -202,23 +199,69 @@ const Calendar = () => {
                         }
                       >
                         <span className={styles.dayNumber}>{day}</span>
-
-                        {orderCount > 0 && (
-                          <DeliveryType
-                            type="icon"
-                            variant={cell.orders[0].deliveryVariant}
-                            quantity={orderCount}
-                            size="sm"
-                            onClick={() => {
-                              if (selectedDate?.getTime() === cell.date.getTime()) {
-                                clearSelectedOrders();
-                              } else {
-                                setSelectedOrders(cell.orders);
-                                setSelectedDate(cell.date);
-                              }
-                            }}
-                          />
-                        )}
+                        {orderCount > 0 && (() => {
+                          const variantCounts = groupByVariant(cell.orders);
+                          const sorted = Object.entries(variantCounts)
+                            .sort((a, b) => b[1] - a[1]);
+                          const visible = sorted.slice(0, 3);
+                          const hiddenCount = sorted.slice(3).reduce((s, [, n]) => s + n, 0);
+                          const sameDay =
+                            selectedDate &&
+                            keyFromLocalDate(selectedDate) === k;
+                          const pileClassNames = styles.pileRow;
+                          const scale =
+                            visible.length === 1 ? 1 :
+                            visible.length === 2 ? 0.82 : 0.68;
+                          return (
+                            <div className={styles.pileAnchor}>
+                              <div
+                                className={styles.pileRow}
+                                style={{ ["--pile-scale" as any]: scale }}
+                              >
+                                {visible.map(([variant, qty], idx) => (
+                                  <span
+                                    key={variant}
+                                    className={styles.pileItem}
+                                    style={{ zIndex: 100 - idx }}
+                                  >
+                                    <DeliveryType
+                                      type="icon"
+                                      variant={variant as Order["deliveryVariant"]}
+                                      quantity={qty}
+                                      size="sm"
+                                      onClick={() => {
+                                        if (sameDay) {
+                                          clearSelectedOrders();
+                                        } else {
+                                          setSelectedOrders(cell.orders);
+                                          setSelectedDate(cell.date);
+                                        }
+                                      }}
+                                    />
+                                  </span>
+                                ))}
+                                {hiddenCount > 0 && (
+                                  <button
+                                    className={styles.pileMore}
+                                    onClick={() => {
+                                      if (sameDay) {
+                                        clearSelectedOrders();
+                                      } else {
+                                        setSelectedOrders(cell.orders);
+                                        setSelectedDate(cell.date);
+                                      }
+                                    }}
+                                    aria-label={`Ver ${hiddenCount} pedido(s) más`}
+                                    title={`Ver ${hiddenCount} pedido(s) más`}
+                                    style={{ zIndex: 0 }}
+                                  >
+                                    +{hiddenCount}
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </td>
                     );
                   })}
@@ -227,16 +270,27 @@ const Calendar = () => {
             </tbody>
           </table>
         </div>
-          {hasOrders && (
+          {hasOrders && selectedDate && (
             <div className={styles.ordersWrapper}>
-              <h3>
-                Pedidos&nbsp;
-                {selectedDate!.toLocaleDateString("es-MX", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                })}
-              </h3>
+              <div className={styles.ordersHeader}>
+                <h3 className={styles.ordersHeading}>
+                  Pedidos&nbsp;
+                  {selectedDate.toLocaleDateString("es-MX", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                  })}
+                </h3>
+                <button
+                  type="button"
+                  aria-label="Cerrar panel de pedidos"
+                  title="Cerrar"
+                  className={styles.closeBtn}
+                  onClick={clearSelectedOrders}
+                >
+                  <CloseIcon size={18} strokeWidth={2.5} />
+                </button>
+              </div>
               <div className={styles.orderList}>
                 {selectedOrders.map((o) => (
                   <OrderCard key={o.id} {...o} />

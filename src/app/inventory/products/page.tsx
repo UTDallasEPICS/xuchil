@@ -39,7 +39,7 @@ export default function ProductsInventoryPage() {
                 ))}
             </div>
 
-            <BottomButton onClick={() => alert("Registrar nuevo producto")}>
+            <BottomButton onClick={() => router.push(`/inventory/new-product`)}>
                 Añadir Registro
             </BottomButton>
         </div>
