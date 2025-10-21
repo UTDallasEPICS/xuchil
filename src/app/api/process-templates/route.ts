@@ -5,7 +5,7 @@ import prisma from "@/lib/db";
 // GET /api/process-templates?product_variant_id=123
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
+    const searchParams = request.nextUrl.searchParams;
     const pv = searchParams.get("product_variant_id");
     const where = pv ? { productVariantId: Number(pv) } : {};
 
