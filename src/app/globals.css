@@ -145,3 +145,26 @@ button:focus,
 button:focus-visible {
   outline: 4px auto var(--color-green-dark);
 }
+
+.main-content {
+  flex: 1;
+  padding-bottom: 5rem; /* Espacio para la bottom bar */
+}
+
+.bottom-tab-bar {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  z-index: 100;
+  transition: transform 0.3s ease;
+}
+
+/* Ocultar BottomTabBar en login */
+.login-page {
+  padding-bottom: 0 !important;
+}
+
+.login-page ~ .bottom-tab-bar,
+.login-page + .bottom-tab-bar {
+  display: none !important;
+}
