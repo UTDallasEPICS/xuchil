@@ -39,7 +39,7 @@ export default function RawInventoryPage() {
                 ))}
             </div>
 
-            <BottomButton onClick={() => alert("Registrar nueva materia prima")}>
+            <BottomButton onClick={() => router.push(`/inventory/new-raw-material`)}>
                 Añadir Registro
             </BottomButton>
         </div>
