@@ -1,0 +1,20 @@
+### Create a new order
+POST http://localhost:3000/api/orders
+Content-Type: application/json
+
+{
+  "clientName": "Tabi Test",
+  "addressText": "123 Main Street",
+  "deliveryDate": "2025-10-16T12:00:00.000Z",
+  "deliveryVariant": "MAIL",
+  "orderItems": [
+    {
+      "productVariantId": 1,
+      "quantity": 5,
+      "unitId": 1
+    }
+  ]
+}
+
+### Get all orders
+GET http://localhost:3000/api/orders
