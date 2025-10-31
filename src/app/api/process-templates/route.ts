@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { processTemplateSchema } from "@/lib/schemas";
-import { z } from "zod"
+import { z } from "zod";
 
 // GET /api/process-templates?product_variant_id=123
 export async function GET(request: NextRequest) {
