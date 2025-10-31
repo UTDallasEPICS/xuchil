@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 
+import {inventoryMovementSchema} from "@/lib/schemas";
+import { safeParse } from "zod";
+
 export async function POST(request: NextRequest) {
+  const data = await request.json();
+  // const result = inventoryMovementSchema.safeParse(data);
+
+  // if(!result.success){
+  //   return NextResponse.json({error: "Invalid request body"}, {status: 400});
+  // }
   try {
-    const data = await request.json();
     const { lotId, qty, unitId, note } = data;
 
     // ✅ Validate required fields
