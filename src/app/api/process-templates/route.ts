@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { processTemplateSchema } from "@/lib/schemas";
+import { z } from "zod"
 
 // GET /api/process-templates?product_variant_id=123
 export async function GET(request: NextRequest) {
@@ -42,7 +43,8 @@ export async function POST(request: NextRequest) {
   const result = processTemplateSchema.safeParse(body);
 
   if(!result.success){
-    return NextResponse.json({ error: "Invalid request body", details: result.error }, { status: 400 });
+    const formattedErr = z.flattenError(result.error);
+    return NextResponse.json({ error: "Invalid request body", details: formattedErr }, { status: 400 });
   }
 
   // try {
