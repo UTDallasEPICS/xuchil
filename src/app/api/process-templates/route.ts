@@ -1,6 +1,7 @@
 // src/app/api/process-templates/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
+import { processTemplateSchema } from "@/lib/schemas";
 
 // GET /api/process-templates?product_variant_id=123
 export async function GET(request: NextRequest) {
@@ -29,38 +30,63 @@ export async function GET(request: NextRequest) {
 // POST /api/process-templates
 // body: { productVariantId:number, name:string, version?:number, isActive?:boolean, notes?:string }
 export async function POST(request: NextRequest) {
-  let body: any;
+
+  let body: unknown;
   try {
     body = await request.json();
-  } catch {
+  }
+  catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  if (!body?.productVariantId || !body?.name) {
-    return NextResponse.json(
-      { error: "productVariantId and name are required" },
-      { status: 400 }
-    );
+  const result = processTemplateSchema.safeParse(body);
+
+  if(!result.success){
+    return NextResponse.json({ error: "Invalid request body", details: result.error }, { status: 400 });
   }
 
-  try {
-    // auto-pick next version if missing
-    const last = await prisma.processTemplate.findFirst({
-      where: { productVariantId: Number(body.productVariantId) },
-      orderBy: { version: "desc" },
-      select: { version: true },
-    });
-    const version = body.version ?? (last?.version ?? 0) + 1;
+  // try {
+  //   body = await request.json();
+  // } catch {
+  //   return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  // }
 
+  // if (!result?.productVariantId || !body?.name) {
+  //   return NextResponse.json(
+  //     { error: "productVariantId and name are required" },
+  //     { status: 400 }
+  //   );
+  // }
+
+  try {
+    // // auto-pick next version if missing
+    // const last = await prisma.processTemplate.findFirst({
+    //   where: { productVariantId: Number(body.productVariantId) },
+    //   orderBy: { version: "desc" },
+    //   select: { version: true },
+    // });
+
+    // const version = body.version ?? (last?.version ?? 0) + 1;
+
+    // const created = await prisma.processTemplate.create({
+    //   data: {
+    //     productVariantId: Number(body.productVariantId),
+    //     name: String(body.name),
+    //     version,
+    //     isActive: body.isActive ?? true,
+    //     notes: body.notes ?? null,
+    //   },
+    // });
+    const validBody = result.data;
     const created = await prisma.processTemplate.create({
       data: {
-        productVariantId: Number(body.productVariantId),
-        name: String(body.name),
-        version,
-        isActive: body.isActive ?? true,
-        notes: body.notes ?? null,
-      },
-    });
+        productVariantId: validBody.productVariantId,
+        name: validBody.name,
+        version: validBody.version,
+        isActive: validBody.isActive,
+        notes: validBody.notes
+      }
+    })
 
     return NextResponse.json(created, { status: 201 });
   } catch (err: any) {
