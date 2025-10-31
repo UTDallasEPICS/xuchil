@@ -57,7 +57,7 @@ export const MovmementReasonEnum = z.enum([
 
 export const processTemplateSchema = z.strictObject({
     productVariantId: z.number(requiredError("productVariantId")).int(typeError("productVariantId", "int")),
-    name: z.string(requiredError("name")),
+    name: z.string(requiredError("name")).min(1, "name cannot be empty."),
     version: z.number(requiredError("version")).int(typeError("version", "int")),
     isActive: z.boolean(typeError("isActive", "boolean")).optional(),
     notes: z.string(typeError("notes", "string")).optional().nullable()
@@ -65,7 +65,7 @@ export const processTemplateSchema = z.strictObject({
 
 export const templateStepSchema = z.strictObject({
     processTemplateId: z.number(requiredError("processTemplateId")).int(typeError("processTemplate", "int")),
-    name: z.string(requiredError("name")),
+    name: z.string(requiredError("name")).min(1, "name cannot be empty."),
     position: z.number(requiredError("position")).int(typeError("position", "int")),
     idealDurationMin: z.number().int(typeError("idealDurationMin", "int")).optional().nullable(),
     requiresInput: z.boolean(typeError("requiresInput", "boolean")).optional(),
@@ -88,7 +88,7 @@ export const stepExecutionSchema = z.strictObject({
 export const processRunSchema = z.strictObject({
     productVariantId: z.number(requiredError("productVariantId")).int(typeError("productVariantId", "int")),
     processTemplateId: z.number(requiredError("processTemplateId")).int(typeError("processTemplateId", "int")),
-    batchCode: z.string(requiredError("batchCode")),
+    batchCode: z.string(requiredError("batchCode")).min(1, "batchCode cannot be empty."),
     createdByWorkerId: z.number(typeError("createdByWorkerId", "int")).int(typeError("createdByWorkerId", "int")).optional().nullable(),
     plannedQty: z.number(typeError("plannedQty", "number")).optional().nullable(),
     plannedUnitId : z.number(typeError("plannedUnitId", "int")).int(typeError("plannedUnitId", "int")).optional().nullable(),
@@ -115,8 +115,8 @@ export const inventoryMovementSchema = z.strictObject({
 })
 
 export const rawMaterialSchema = z.strictObject({
-    code: z.string(requiredError("code")),
-    name: z.string(requiredError("name")),
+    code: z.string(requiredError("code")).min(1, "code cannot be empty."),
+    name: z.string(requiredError("name")).min(1, "name cannot be empty."),
     defaultUnitId: z.number().int(typeError("defaultUnitId", "int")).optional().nullable(),
     imageUrl: z.string(typeError("imageUrl", "string")).optional().nullable(),
     isActive: z.boolean(typeError("isActive", "boolean")).optional()
@@ -124,7 +124,7 @@ export const rawMaterialSchema = z.strictObject({
 
 export const productVariantSchema = z.strictObject({
     productId: z.number(requiredError("productId")).int(typeError("productId", "int")),
-    name: z.string(requiredError("name")),
+    name: z.string(requiredError("name")).min(1, "name cannot be empty."),
     presentation: z.string(typeError("presentation", "string")).optional().nullable(),
     netContent: z.number("netContent must be a number").optional().nullable(),
     contentUnitId: z.number(typeError("contentUnitId", "int")).int(typeError("contentUnitId", "int")).optional().nullable(),
@@ -142,11 +142,11 @@ export const orderItemSchema = z.strictObject({
 })
 
 export const orderSchema = z.strictObject({
-    clientName: z.string(requiredError("clientName")),
-    addressText: z.string(requiredError("addressText")),
+    clientName: z.string(requiredError("clientName")).min(1, "clientName cannot be empty."),
+    addressText: z.string(requiredError("addressText")).min(1, "addressText cannot be empty."),
     deliveryDate: z.date(requiredError("date")),
     deliveryVariant: DeliveryVariantEnum.optional(),
-    orderItems: z.array(orderItemSchema).min(1), // must contain at least 1 item
+    orderItems: z.array(orderItemSchema).min(1, "order must contain at least one item."), // must contain at least 1 item
     status: OrderStatusEnum.optional(),
     deliveredAt: z.date(typeError("deliveredAt", "date")).optional().nullable(),
     consignmentPartner: z.string(typeError("consignmentPartner", "string")).optional().nullable(),
@@ -155,8 +155,8 @@ export const orderSchema = z.strictObject({
 
 export const authUserSchema = z.strictObject({
     workerId: z.number(typeError("workerId", "int")).int(typeError("workerId", "int")).optional().nullable(),
-    email: z.string(requiredError("email")),
-    passwordHash: z.string(requiredError("passwordHash")),
+    email: z.string(requiredError("email")).min(1, "email cannot be empty."),
+    passwordHash: z.string(requiredError("passwordHash")).min(1, "passwordHash cannot be empty."),
     isAdmin: z.boolean(typeError("isAdmin", "boolean")).optional(),
     isActive: z.boolean(typeError("isActive", "boolean")).optional(),
     lastLoginAt: z.date(typeError("lastLoginAt", "boolean")).optional().nullable()
