@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
+import { orderSchema } from "@/lib/schemas";
+import { z } from "zod";
 
 
 export async function GET() {
@@ -21,27 +23,47 @@ export async function GET() {
 }
 
 
-export async function POST(req: NextRequest) {
+export async function POST(request: NextRequest) {
+  let body: unknown;
   try {
-    const body = await req.json();
-    const { clientName, addressText, deliveryDate, deliveryVariant, orderItems } = body;
+    // 1. Parse JSON body
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
 
-    // Create the order first
+  const result = orderSchema.safeParse(body);
+
+if (!result.success) {
+    const formattedErr = z.flattenError(result.error);
+    return NextResponse.json(
+      { error: "Invalid request body", details: formattedErr },
+      { status: 400 }
+    );
+  }
+  try {
+    const validBody = result.data
     const newOrder = await prisma.order.create({
       data: {
-        clientName,
-        addressText,
-        deliveryDate: new Date(deliveryDate),
-        deliveryVariant,
+        clientName: validBody.clientName,
+        addressText: validBody.addressText,
+        deliveryDate: validBody.deliveryDate,
+        deliveryVariant: validBody.deliveryVariant,
         orderItems: {
           createMany: {
-            data: orderItems.map((item: { productVariantId: number; quantity: number; unitId?: number }) => ({
+            // Map the validated orderItems array for nested creation
+            data: validBody.orderItems.map(item => ({
               productVariantId: item.productVariantId,
               quantity: item.quantity,
               unitId: item.unitId,
+              notes: item.notes,
             })),
           },
         },
+        status: validBody.status,
+        deliveredAt: validBody.deliveredAt,
+        consignmentPartner: validBody.consignmentPartner,
+        notes: validBody.notes,
       },
       include: {
         orderItems: true,
