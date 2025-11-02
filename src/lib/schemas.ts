@@ -77,8 +77,8 @@ export const stepExecutionSchema = z.strictObject({
     templateStepId: z.number(requiredError("templateStepId")).int(typeError("templateStepId", "int")),
     workerId: z.number(typeError("workerId", "int")).int(typeError("workerId", "int")).optional().nullable(),
     status: StepStatusEnum.optional(),
-    startedAt: z.date(typeError("startedAt", "date")).optional().nullable(),
-    finishedAt: z.date(typeError("finishedAt", "date")).optional().nullable(),
+    startedAt: z.iso.datetime(typeError("startedAt", "date")).optional().nullable(),
+    finishedAt: z.iso.datetime(typeError("finishedAt", "date")).optional().nullable(),
     actualDurationMin: z.number(typeError("actualDurationMin", "int")).int(typeError("actualDurationMin", "int")).optional().nullable(),
     inputQty: z.number(typeError("inputQty", "number")).optional().nullable(),
     inputUnitId: z.number(typeError("inputUnitId", "int")).int(typeError("inputUnitId", "int")).optional().nullable(),
@@ -93,8 +93,8 @@ export const processRunSchema = z.strictObject({
     plannedQty: z.number(typeError("plannedQty", "number")).optional().nullable(),
     plannedUnitId : z.number(typeError("plannedUnitId", "int")).int(typeError("plannedUnitId", "int")).optional().nullable(),
     status: ProcessStatusEnum.optional(),
-    startedAt: z.date(typeError("startedAt", "date")).optional().nullable(),
-    finishedAt: z.date(typeError("finishedAt", "date")).optional().nullable(),
+    startedAt: z.iso.datetime(typeError("startedAt", "date")).optional().nullable(),
+    finishedAt: z.iso.datetime(typeError("finishedAt", "date")).optional().nullable(),
     goodOutputQty: z.number(typeError("goodOutputQty", "number")).optional().nullable(),
     scrapQty: z.number(typeError("scrapQty", "number")).optional().nullable(),
     outputUnitId: z.number(typeError("outputUnitId", "int")).int(typeError("outputUnitId", "int")).optional().nullable(),
@@ -111,7 +111,7 @@ export const inventoryMovementSchema = z.strictObject({
     relatedProcessRunId: z.number().int(typeError("relatedProcessRunId", "int")).optional(),
     relatedOrderId: z.number().int(typeError("requiredOrderId", "int")).optional(),
     note: z.string(typeError("note", "string")).optional().nullable(),
-    movedAt: z.date(typeError("movedAt", "date"))
+    movedAt: z.iso.datetime(typeError("movedAt", "date"))
 })
 
 export const rawMaterialSchema = z.strictObject({
@@ -144,11 +144,11 @@ export const orderItemSchema = z.strictObject({
 export const orderSchema = z.strictObject({
     clientName: z.string(requiredError("clientName")).min(1, "clientName cannot be empty."),
     addressText: z.string(requiredError("addressText")).min(1, "addressText cannot be empty."),
-    deliveryDate: z.date(requiredError("date")),
+    deliveryDate: z.iso.datetime(requiredError("date")),
     deliveryVariant: DeliveryVariantEnum.optional(),
     orderItems: z.array(orderItemSchema).min(1, "order must contain at least one item."), // must contain at least 1 item
     status: OrderStatusEnum.optional(),
-    deliveredAt: z.date(typeError("deliveredAt", "date")).optional().nullable(),
+    deliveredAt: z.iso.datetime(typeError("deliveredAt", "date")).optional().nullable(),
     consignmentPartner: z.string(typeError("consignmentPartner", "string")).optional().nullable(),
     notes: z.string(typeError("notes", "string")).optional().nullable(),
 })
@@ -159,7 +159,7 @@ export const authUserSchema = z.strictObject({
     passwordHash: z.string(requiredError("passwordHash")).min(1, "passwordHash cannot be empty."),
     isAdmin: z.boolean(typeError("isAdmin", "boolean")).optional(),
     isActive: z.boolean(typeError("isActive", "boolean")).optional(),
-    lastLoginAt: z.date(typeError("lastLoginAt", "boolean")).optional().nullable()
+    lastLoginAt: z.iso.datetime(typeError("lastLoginAt", "boolean")).optional().nullable()
 })
 
 export const loginSchema = z.strictObject({
