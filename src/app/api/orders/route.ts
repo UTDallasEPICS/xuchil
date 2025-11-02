@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
 
   const result = orderSchema.safeParse(body);
 
-if (!result.success) {
+  if (!result.success) {
     const formattedErr = z.flattenError(result.error);
     return NextResponse.json(
       { error: "Invalid request body", details: formattedErr },
