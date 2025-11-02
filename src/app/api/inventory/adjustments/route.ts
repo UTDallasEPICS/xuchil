@@ -1,42 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
-
 import {inventoryMovementSchema} from "@/lib/schemas";
-import { safeParse } from "zod";
+import { z } from "zod";
 
 export async function POST(request: NextRequest) {
-  const data = await request.json();
-  // const result = inventoryMovementSchema.safeParse(data);
 
-  // if(!result.success){
-  //   return NextResponse.json({error: "Invalid request body"}, {status: 400});
-  // }
+  let body: unknown;
   try {
-    const { lotId, qty, unitId, note } = data;
+    body = await request.json();
+  }
+  catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
 
-    // ✅ Validate required fields
-    if (!lotId || !qty || !unitId) {
-      return NextResponse.json(
-        { error: "Missing required fields: lotId, qty, or unitId" },
-        { status: 400 }
-      );
-    }
+  const result = inventoryMovementSchema.safeParse(body);
 
-    // ✅ Create adjustment movement
-    const adjustment = await prisma.inventoryMovement.create({
-      data: {
-        inventoryLotId: Number(lotId),
-        direction: qty >= 0 ? "IN" : "OUT", // assuming your schema has "direction"
-        qty: Math.abs(qty),
-        unitId: Number(unitId),
-        reason: "ADJUSTMENT",
-        note: note ?? null,
-        movedAt: new Date(),
-      },
-    });
+  if(!result.success){
+    const formattedErr = z.flattenError(result.error);
+    return NextResponse.json({ error: "Invalid request body", details: formattedErr }, { status: 400 });
+  }
 
-    return NextResponse.json(adjustment, { status: 201 });
-  } catch (error: any) {
+    // Create adjustment movement
+    try{
+      const adjustment = await prisma.inventoryMovement.create({
+        data: result.data
+      });
+      return NextResponse.json(adjustment, { status: 201 });
+    } catch (error: any) {
     console.error("Error creating adjustment:", error);
 
     if (error.code === "P2003") {
