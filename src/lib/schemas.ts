@@ -15,7 +15,9 @@ export const ProcessStatusEnum = z.enum([
     'PAUSED',
     'COMPLETED',
     'CANCELLED'
-], "processStatus must be \"PLANNED\", \"IN_PROGRESS\", \"PAUSED\", \"COMPLETED\", or \"CANCELLED\"");
+    ], {
+    error: (iss): string => `Expected ${Object.values(ProcessStatusEnum.def.entries)}, received ${iss.input}`,
+});
 
 export const StepStatusEnum = z.enum([
     'PENDING',
@@ -23,24 +25,32 @@ export const StepStatusEnum = z.enum([
     'DONE',
     'BLOCKED',
     'SKIPPED'
-], "stepStatus must be \"PENDING\", \"IN_PROGRESS\", \"DONE\", \"BLOCKED\", or \"SKIPPED\"");
+    ], {
+    error: (iss): string => `Expected ${Object.values(StepStatusEnum.def.entries)}, received ${iss.input}`,
+});
 
 export const DeliveryVariantEnum = z.enum([
     'MAIL',
     'PERSONAL',
     'CONSIGNMENT'
-], "deliveryVariant must be \"MAIL\", \"PERSONAL\", or \"CONSIGNMENT\"");
+    ], {
+    error: (iss): string => `Expected ${Object.values(DeliveryVariantEnum.def.entries)}, received ${iss.input}`,
+});
 
 export const OrderStatusEnum = z.enum([
     'SCHEDULED',
     'DELIVERED',
     'CANCELLED'
-], "orderStatus must be \"SCHEDULED\", \"DELIVERED\", or \"CANCELLED\"");
+    ], {
+    error: (iss): string => `Expected ${Object.values(OrderStatusEnum.def.entries)}, received ${iss.input}`,
+});
 
 export const ItemTypeEnum = z.enum([
     'RAW',
     'PRODUCT'
-], "itemType must be \"RAW\" or \"PRODUCT\"");
+    ], {
+    error: (iss): string => `Expected ${Object.values(ItemTypeEnum.def.entries)}, received ${iss.input}`,
+});
 
 export const MovementDirectionEnum = z.enum([
     'IN',
