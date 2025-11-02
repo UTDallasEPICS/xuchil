@@ -68,7 +68,7 @@ export const MovmementReasonEnum = z.enum([
 export const processTemplateSchema = z.strictObject({
     productVariantId: z.number(requiredError("productVariantId")).int(typeError("productVariantId", "int")),
     name: z.string(requiredError("name")).min(1, "name cannot be empty."),
-    version: z.number(requiredError("version")).int(typeError("version", "int")),
+    version: z.number(typeError("version", "number")).int(typeError("version", "int")).optional(),
     isActive: z.boolean(typeError("isActive", "boolean")).optional(),
     notes: z.string(typeError("notes", "string")).optional().nullable()
 })
@@ -76,7 +76,7 @@ export const processTemplateSchema = z.strictObject({
 export const templateStepSchema = z.strictObject({
     processTemplateId: z.number(requiredError("processTemplateId")).int(typeError("processTemplate", "int")),
     name: z.string(requiredError("name")).min(1, "name cannot be empty."),
-    position: z.number(requiredError("position")).int(typeError("position", "int")),
+    position: z.number(typeError("position", "number")).int(typeError("position", "int")).optional(),
     idealDurationMin: z.number().int(typeError("idealDurationMin", "int")).optional().nullable(),
     requiresInput: z.boolean(typeError("requiresInput", "boolean")).optional(),
     instructions: z.string(typeError("instructions", "string")).optional().nullable()
