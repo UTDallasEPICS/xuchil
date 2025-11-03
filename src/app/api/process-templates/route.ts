@@ -47,44 +47,30 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid request body", details: formattedErr }, { status: 400 });
   }
 
-  // try {
-  //   body = await request.json();
-  // } catch {
-  //   return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
-  // }
-
-  // if (!result?.productVariantId || !body?.name) {
-  //   return NextResponse.json(
-  //     { error: "productVariantId and name are required" },
-  //     { status: 400 }
-  //   );
-  // }
+  const validBody = result.data;
 
   try {
-    // // auto-pick next version if missing
-    // const last = await prisma.processTemplate.findFirst({
-    //   where: { productVariantId: Number(body.productVariantId) },
-    //   orderBy: { version: "desc" },
-    //   select: { version: true },
-    // });
+    let newVersion = validBody.version;
 
-    // const version = body.version ?? (last?.version ?? 0) + 1;
+    if (newVersion === undefined) {
+      // If version is NOT provided, calculate the next auto-incremented version.
 
-    // const created = await prisma.processTemplate.create({
-    //   data: {
-    //     productVariantId: Number(body.productVariantId),
-    //     name: String(body.name),
-    //     version,
-    //     isActive: body.isActive ?? true,
-    //     notes: body.notes ?? null,
-    //   },
-    // });
-    const validBody = result.data;
+      // Find the template with the highest version for this productVariantId
+      const lastTemplate = await prisma.processTemplate.findFirst({
+        where: { productVariantId: validBody.productVariantId },
+        orderBy: { version: "desc" },
+        select: { version: true },
+      });
+
+      // Calculate the next version: (last version + 1) or 1 if no templates exist
+      newVersion = (lastTemplate?.version ?? 0) + 1;
+    }
+
     const created = await prisma.processTemplate.create({
       data: {
         productVariantId: validBody.productVariantId,
         name: validBody.name,
-        version: validBody.version,
+        version: newVersion,
         isActive: validBody.isActive,
         notes: validBody.notes
       }
