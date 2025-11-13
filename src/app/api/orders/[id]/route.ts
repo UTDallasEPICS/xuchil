@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
+import {checkId} from "@/utils/responses";
 
 export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
-  const { id } = await context.params;
+  const [orderId, orderIdError] = checkId('order', (await context.params).id);
+  if (orderIdError !== null) {
+    return orderIdError;
+  }
   try {
     const order = await prisma.order.findUnique({
-      where: { id: Number(id) },
+      where: { id: orderId },
       include: {
         orderItems: {
           include: { productVariant: true, unit: true },
@@ -25,13 +29,16 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
 }
 
 export async function PUT(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const [orderId, orderIdError] = checkId('order', (await context.params).id);
+  if (orderIdError !== null) {
+    return orderIdError;
+  }
   try {
-    const { id } = await context.params;
     const body = await req.json();
     const { clientName, addressText, deliveryDate, deliveryVariant, status } = body;
 
     const order = await prisma.order.update({
-      where: { id: Number(id) },
+      where: { id: orderId},
       data: {
         clientName,
         addressText,
@@ -49,11 +56,13 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
 }
 
 export async function DELETE(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const [orderId, orderIdError] = checkId('order', (await context.params).id);
+  if (orderIdError !== null) {
+    return orderIdError;
+  }
   try {
-    const { id } = await context.params;
-
     await prisma.order.update({
-      where: { id: Number(id) },
+      where: { id: orderId },
       data: { status: "CANCELLED" },
     });
 

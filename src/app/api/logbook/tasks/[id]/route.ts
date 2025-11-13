@@ -1,9 +1,12 @@
 import {NextRequest, NextResponse} from 'next/server';
 import prisma from '@/lib/db';
+import {checkId} from "@/utils/responses";
 
-export async function GET(request: NextRequest, {params}: { params: Promise<{ id: string }> }) {
-  const stepExecutionId = parseInt((await params).id)
-
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const [stepExecutionId, stepExecutionIdError] = checkId('task', (await context.params).id);
+  if (stepExecutionIdError !== null) {
+    return stepExecutionIdError;
+  }
   try {
     const stepExecution = await prisma.stepExecution.findUnique({
       where: {id: stepExecutionId},

@@ -5,17 +5,15 @@ import {
   MovementReason,
   MovementDirection,
 } from "@prisma/client";
+import {checkId} from "@/utils/responses";
 
-// POST /api/process-worker/process-runs/:id/finish
 export async function POST(
   _req: Request,
   context: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await context.params;
-  const runId = Number(id);
-
-  if (Number.isNaN(runId)) {
-    return NextResponse.json({ error: "Invalid run ID" }, { status: 400 });
+  const [runId, runIdError] = checkId('run', (await context.params).id)
+  if (runIdError !== null) {
+    return runIdError;
   }
 
   try {

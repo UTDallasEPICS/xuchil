@@ -1,16 +1,14 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/db';
+import {checkId} from "@/utils/responses";
 
-// POST /api/template-steps/:id/steps  (id = processTemplateId)
-// body: { name, position?, idealDurationMin?, requiresInput?, instructions? }
 export async function POST(
   req: Request,
-  ctx: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await ctx.params;        
-  const processTemplateId = Number(id);
-  if (Number.isNaN(processTemplateId)) {
-    return NextResponse.json({ error: 'Invalid templateId' }, { status: 400 });
+  const [processTemplateId, processTemplateIdError] = checkId('process-template', (await context.params).id)
+  if (processTemplateIdError !== null) {
+    return processTemplateIdError;
   }
 
   const body = await req.json();

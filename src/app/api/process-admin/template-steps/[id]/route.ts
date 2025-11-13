@@ -1,14 +1,15 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/db';
+import {checkId} from "@/utils/responses";
 
-// PUT /api/template-steps/:id  (id = stepId)
 export async function PUT(
   req: Request,
-  ctx: { params: Promise<{ id: string }> }  
+  context: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await ctx.params;          
-  const stepId = Number(id);
-  if (Number.isNaN(stepId)) return NextResponse.json({ error: 'Invalid stepId' }, { status: 400 });
+  const [stepId, stepIdError] = checkId('step', (await context.params).id)
+  if (stepIdError !== null) {
+    return stepIdError;
+  }
 
   const body = await req.json();
   try {
@@ -28,15 +29,14 @@ export async function PUT(
   }
 }
 
-// DELETE /api/template-steps/:id  (id = stepId)
 export async function DELETE(
   _req: Request,
-  ctx: { params: Promise<{ id: string }> }   // 👈 async params
+  context: { params: Promise<{ id: string }> }  // 👈 async params
 ) {
-  const { id } = await ctx.params;           // 👈 await it
-  const stepId = Number(id);
-  if (Number.isNaN(stepId)) return NextResponse.json({ error: 'Invalid stepId' }, { status: 400 });
-
+  const [stepId, stepIdError] = checkId('step', (await context.params).id)
+  if (stepIdError !== null) {
+    return stepIdError;
+  }
   await prisma.templateStep.delete({ where: { id: stepId } });
   return NextResponse.json({ success: true });
 }
