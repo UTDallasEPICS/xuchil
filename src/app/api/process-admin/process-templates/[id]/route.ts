@@ -1,22 +1,19 @@
-// src/app/api/process-templates/[id]/route.ts
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { processTemplateSchema  } from "@/lib/schemas";
 import { z } from "zod";
+import {checkId} from "@/utils/responses";
 
-// GET /api/process-templates/:id
 export async function GET(
   _req: Request,
   context: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await context.params;
-  const tplId = Number(id);
-  if (Number.isNaN(tplId)) {
-    return NextResponse.json({ error: "Invalid id" }, { status: 400 });
+  const [processTemplateId, processTemplateIdError] = checkId('process-template', (await context.params).id);
+  if (processTemplateIdError !== null) {
+    return processTemplateIdError;
   }
-
   const tpl = await prisma.processTemplate.findUnique({
-    where: { id: tplId },
+    where: { id: processTemplateId },
     include: { templateSteps: { orderBy: { position: "asc" } } },
   });
 
@@ -26,16 +23,13 @@ export async function GET(
   return NextResponse.json(tpl);
 }
 
-// PUT /api/process-templates/:id
-// body: { name?, isActive?, notes? }
 export async function PUT(
   req: Request,
   context: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await context.params;
-  const tplId = Number(id);
-  if (Number.isNaN(tplId)) {
-    return NextResponse.json({ error: "Invalid id" }, { status: 400 });
+  const [processTemplateId, processTemplateIdError] = checkId('process-template', (await context.params).id);
+  if (processTemplateIdError !== null) {
+    return processTemplateIdError;
   }
 
   let body: unknown;
@@ -54,7 +48,7 @@ export async function PUT(
 
   try {
     const updated = await prisma.processTemplate.update({
-      where: { id: tplId },
+      where: { id: processTemplateId },
       data: result.data
     });
     return NextResponse.json(updated);

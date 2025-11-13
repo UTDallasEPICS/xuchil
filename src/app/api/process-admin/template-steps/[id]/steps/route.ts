@@ -2,22 +2,20 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 import { templateStepSchema } from '@/lib/schemas';
 import { z } from "zod";
+import {checkId} from "@/utils/responses";
 
-// POST /api/template-steps/:id/steps  (id = processTemplateId)
-// body: { name, position?, idealDurationMin?, requiresInput?, instructions? }
 export async function POST(
-  request: Request,
-  ctx: { params: Promise<{ id: string }> }
+  req: Request,
+  context: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await ctx.params;
-  const templateStepId = Number(id);
-  if (Number.isNaN(templateStepId)) {
-    return NextResponse.json({ error: 'Invalid templateId' }, { status: 400 });
+  const [processTemplateId, processTemplateIdError] = checkId('process-template', (await context.params).id)
+  if (processTemplateIdError !== null) {
+    return processTemplateIdError;
   }
 
   let body: unknown;
   try {
-    body = await request.json();
+    body = await req.json();
   }
   catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
