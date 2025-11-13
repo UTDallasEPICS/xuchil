@@ -1,16 +1,14 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
+import {checkId} from "@/utils/responses";
 
-// GET /api/process-worker/process-runs/:id
 export async function GET(
   _req: Request,
   context: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await context.params;
-  const runId = Number(id);
-
-  if (Number.isNaN(runId)) {
-    return NextResponse.json({ error: "Invalid run ID" }, { status: 400 });
+  const [runId, runIdError] = checkId('run', (await context.params).id)
+  if (runIdError !== null) {
+    return runIdError;
   }
 
   try {

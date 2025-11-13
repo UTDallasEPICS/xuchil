@@ -1,18 +1,17 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { StepStatus } from "@prisma/client";
+import {checkId} from "@/utils/responses";
 
-// POST /api/process-worker/step-executions/:stepId/:action
 export async function POST(
   _req: Request,
   context: { params: Promise<{ stepId: string; action: string }> }
 ) {
-  const { stepId, action } = await context.params;
-  const id = Number(stepId);
-
-  if (Number.isNaN(id)) {
-    return NextResponse.json({ error: "Invalid step ID" }, { status: 400 });
+  const [stepId, stepIdError] = checkId('step-execution', (await context.params).stepId)
+  if (stepIdError !== null) {
+    return stepIdError;
   }
+  const { action } = await context.params;
 
   const validActions = ["start", "pause", "resume", "finish"];
   if (!validActions.includes(action)) {
@@ -39,7 +38,7 @@ export async function POST(
     }
 
     const updated = await prisma.stepExecution.update({
-      where: { id },
+      where: { id: stepId },
       data: {
         status: newStatus,
         startedAt:

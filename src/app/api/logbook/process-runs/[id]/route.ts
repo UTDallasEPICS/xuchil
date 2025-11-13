@@ -1,9 +1,12 @@
 import {NextRequest, NextResponse} from 'next/server';
 import prisma from '@/lib/db';
+import {checkId} from "@/utils/responses";
 
-export async function GET(request: NextRequest, {params}: { params: Promise<{ id: string }> }) {
-  const processRunId = parseInt((await params).id);
-
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const [processRunId, processRunIdError] = checkId('process-run', (await context.params).id);
+  if (processRunIdError !== null) {
+    return processRunIdError;
+  }
   try {
     const processRun = await prisma.processRun.findUnique({
       where: {id: processRunId},
