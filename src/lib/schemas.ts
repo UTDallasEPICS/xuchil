@@ -172,6 +172,14 @@ export const authUserSchema = z.strictObject({
     lastLoginAt: z.iso.datetime(typeError("lastLoginAt", "boolean")).optional().nullable()
 })
 
+export const workerSchema = z.strictObject({
+    fullName: z.string(requiredError("fullName")).min(1, "fullName cannot be empty."),
+    roleId: z.int(typeError("roleId", "int")).optional().nullable(),
+    phone: z.string(typeError("phone", "string")).optional().nullable(),
+    profilePhotoUrl: z.string(typeError("profilePhotoUrl", "string")).optional().nullable(),
+    isActive: z.boolean(typeError("isActive", "boolean")).optional()
+})
+
 export const loginSchema = z.strictObject({
 
 })
