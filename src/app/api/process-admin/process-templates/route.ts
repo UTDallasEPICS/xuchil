@@ -1,6 +1,8 @@
 // src/app/api/process-templates/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
+import { processTemplateSchema } from "@/lib/schemas";
+import { z } from "zod";
 
 // GET /api/process-templates?product_variant_id=123
 export async function GET(request: NextRequest) {
@@ -29,38 +31,50 @@ export async function GET(request: NextRequest) {
 // POST /api/process-templates
 // body: { productVariantId:number, name:string, version?:number, isActive?:boolean, notes?:string }
 export async function POST(request: NextRequest) {
-  let body: any;
+
+  let body: unknown;
   try {
     body = await request.json();
-  } catch {
+  }
+  catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  if (!body?.productVariantId || !body?.name) {
-    return NextResponse.json(
-      { error: "productVariantId and name are required" },
-      { status: 400 }
-    );
+  const result = processTemplateSchema.safeParse(body);
+
+  if(!result.success){
+    const formattedErr = z.flattenError(result.error);
+    return NextResponse.json({ error: "Invalid request body", details: formattedErr }, { status: 400 });
   }
 
+  const validBody = result.data;
+
   try {
-    // auto-pick next version if missing
-    const last = await prisma.processTemplate.findFirst({
-      where: { productVariantId: Number(body.productVariantId) },
-      orderBy: { version: "desc" },
-      select: { version: true },
-    });
-    const version = body.version ?? (last?.version ?? 0) + 1;
+    let newVersion = validBody.version;
+
+    if (newVersion === undefined) {
+      // If version is NOT provided, calculate the next auto-incremented version.
+
+      // Find the template with the highest version for this productVariantId
+      const lastTemplate = await prisma.processTemplate.findFirst({
+        where: { productVariantId: validBody.productVariantId },
+        orderBy: { version: "desc" },
+        select: { version: true },
+      });
+
+      // Calculate the next version: (last version + 1) or 1 if no templates exist
+      newVersion = (lastTemplate?.version ?? 0) + 1;
+    }
 
     const created = await prisma.processTemplate.create({
       data: {
-        productVariantId: Number(body.productVariantId),
-        name: String(body.name),
-        version,
-        isActive: body.isActive ?? true,
-        notes: body.notes ?? null,
-      },
-    });
+        productVariantId: validBody.productVariantId,
+        name: validBody.name,
+        version: newVersion,
+        isActive: validBody.isActive,
+        notes: validBody.notes
+      }
+    })
 
     return NextResponse.json(created, { status: 201 });
   } catch (err: any) {

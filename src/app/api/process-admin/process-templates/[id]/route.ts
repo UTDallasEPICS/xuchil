@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
+import { processTemplateSchema  } from "@/lib/schemas";
+import { z } from "zod";
 import {checkId} from "@/utils/responses";
 
 export async function GET(
@@ -30,21 +32,24 @@ export async function PUT(
     return processTemplateIdError;
   }
 
-  let body: any;
+  let body: unknown;
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
+  const result = processTemplateSchema.safeParse(body);
+
+  if(!result.success){
+    const formattedErr = z.flattenError(result.error);
+    return NextResponse.json({ error: "Invalid request body", details: formattedErr }, { status: 400 });
+  }
+
   try {
     const updated = await prisma.processTemplate.update({
       where: { id: processTemplateId },
-      data: {
-        name: body.name ?? undefined,
-        isActive: typeof body.isActive === "boolean" ? body.isActive : undefined,
-        notes: body.notes ?? undefined,
-      },
+      data: result.data
     });
     return NextResponse.json(updated);
   } catch (e: any) {
