@@ -165,7 +165,7 @@ export const orderSchema = z.strictObject({
 
 export const authUserSchema = z.strictObject({
     workerId: z.number(typeError("workerId", "int")).int(typeError("workerId", "int")).optional().nullable(),
-    email: z.string(requiredError("email")).min(1, "email cannot be empty."),
+    email: z.email(requiredError("email")).min(1, "email cannot be empty."),
     passwordHash: z.string(requiredError("passwordHash")).min(1, "passwordHash cannot be empty."),
     isAdmin: z.boolean(typeError("isAdmin", "boolean")).optional(),
     isActive: z.boolean(typeError("isActive", "boolean")).optional(),
