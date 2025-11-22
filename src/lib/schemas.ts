@@ -181,6 +181,11 @@ export const workerSchema = z.strictObject({
     isActive: z.boolean(typeError("isActive", "boolean")).optional()
 })
 
+export const processPauseSchema = z.strictObject({
+    // processRunId: z.number(requiredError("processRunId")).int(typeError("processRunId", "int")),
+    reason: z.string(typeError("reason", "string")).optional().nullable(),
+})
+
 export const loginSchema = z.strictObject({
 
 })
