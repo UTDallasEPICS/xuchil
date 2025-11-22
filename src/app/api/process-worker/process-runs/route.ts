@@ -47,7 +47,7 @@ export async function POST(request: Request) {
       const validBody = result.data;
 
     const template = await prisma.processTemplate.findFirst({
-      where: { productVariantId: validBody.productVariantId, isActive: true },
+      where: { id: validBody.processTemplateId, isActive: true },
       include: { templateSteps: true },
     });
 
@@ -77,6 +77,7 @@ export async function POST(request: Request) {
           create: template.templateSteps.map((s) => ({
             templateStep: { connect: { id: s.id } },
             status: StepStatus.PENDING,
+            workerId: validBody.createdByWorkerId,
           })),
         },
       },
