@@ -33,7 +33,7 @@ export async function POST(
     }
 
     let newStatus: StepStatus;
-    let updateData: { startedAt?: Date | null, finishedAt?: Date | null } = {};
+    let updateData: { startedAt?: Date | null, finishedAt?: Date | null, actualDurationMin?: number | null } = {};
     let processRunId = currentStep.processRunId;
     let runStatus = currentStep.processRun.status;
 
@@ -116,8 +116,31 @@ export async function POST(
         if (currentStep.status !== StepStatus.IN_PROGRESS) {
           return NextResponse.json({ error: "Step must be IN_PROGRESS to finish" }, { status: 400 });
         }
+        const startedAt = currentStep.startedAt;
+        const finishedAt = now;
+
+        const completedPauses = await prisma.processPause.findMany({
+          where: { processRunId: processRunId, endedAt: { not: null } },
+        });
+        let totalPausedMs = 0; 
+        for (const pause of completedPauses) {
+          if (pause.endedAt && pause.startedAt) {
+            const pauseStart = pause.startedAt.getTime();
+            const pauseEnd = pause.endedAt.getTime();
+
+            const overlapStart = Math.max(startedAt? startedAt.getTime() : 0, pauseStart);
+            const overlapEnd = Math.min(finishedAt.getTime(), pauseEnd);
+
+            if (overlapEnd > overlapStart) {
+              const overLapDuration = overlapEnd - overlapStart;
+              totalPausedMs += overLapDuration;
+            }
+          }
+        }
+        const totalTimeMs = finishedAt.getTime() - (currentStep.startedAt ? currentStep.startedAt.getTime() : now.getTime());
+        const actualDurationMin = Math.round((totalTimeMs - totalPausedMs) / 60000);
         newStatus = StepStatus.DONE;
-        updateData = { ...updateData, finishedAt: now };
+        updateData = { ...updateData, finishedAt: finishedAt, actualDurationMin: actualDurationMin };
         break;
       default:
         return NextResponse.json({ error: "Invalid action" }, { status: 400 });
