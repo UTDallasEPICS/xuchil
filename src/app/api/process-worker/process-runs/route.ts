@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { ProcessStatus, StepStatus } from "@prisma/client";
+import { processRunSchema } from "@/lib/schemas";
+import { z } from "zod";
 
 // GET /api/process-worker/process-runs
 // Returns all "active" runs (IN_PROGRESS or PAUSED)
@@ -25,20 +27,27 @@ export async function GET() {
 
 // POST /api/process-worker/process-runs
 // Body: { productVariantId: number, plannedQty: number }
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   try {
-    const body = await req.json();
-    const { productVariantId, plannedQty } = body;
-
-    if (!productVariantId || !plannedQty) {
-      return NextResponse.json(
-        { error: "productVariantId and plannedQty are required" },
-        { status: 400 }
-      );
-    }
+    let body: unknown;
+      try {
+        body = await request.json();
+      }
+      catch {
+        return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+      }
+    
+      const result = processRunSchema.safeParse(body);
+    
+      if(!result.success){
+        const formattedErr = z.flattenError(result.error);
+        return NextResponse.json({ error: "Invalid request body", details: formattedErr }, { status: 400 });
+      }
+    
+      const validBody = result.data;
 
     const template = await prisma.processTemplate.findFirst({
-      where: { productVariantId, isActive: true },
+      where: { productVariantId: validBody.productVariantId, isActive: true },
       include: { templateSteps: true },
     });
 
@@ -51,12 +60,19 @@ export async function POST(req: Request) {
 
     const newRun = await prisma.processRun.create({
       data: {
-        productVariantId,
-        processTemplateId: template.id,
-        plannedQty,
+        productVariantId: validBody.productVariantId,
+        processTemplateId: validBody.processTemplateId,
         batchCode: `BATCH-${Date.now()}`,
-        status: ProcessStatus.IN_PROGRESS,
-        startedAt: new Date(),
+        createdByWorkerId: validBody.createdByWorkerId,
+        plannedQty: validBody.plannedQty,
+        plannedUnitId: validBody.plannedUnitId,
+        status: validBody.status,
+        startedAt: validBody.startedAt,
+        finishedAt: validBody.finishedAt,
+        goodOutputQty: validBody.goodOutputQty,
+        scrapQty: validBody.scrapQty,
+        outputUnitId: validBody.outputUnitId,
+        notes: validBody.notes,
         stepExecutions: {
           create: template.templateSteps.map((s) => ({
             templateStep: { connect: { id: s.id } },

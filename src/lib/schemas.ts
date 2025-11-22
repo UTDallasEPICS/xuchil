@@ -98,7 +98,8 @@ export const stepExecutionSchema = z.strictObject({
 export const processRunSchema = z.strictObject({
     productVariantId: z.number(requiredError("productVariantId")).int(typeError("productVariantId", "int")),
     processTemplateId: z.number(requiredError("processTemplateId")).int(typeError("processTemplateId", "int")),
-    batchCode: z.string(requiredError("batchCode")).min(1, "batchCode cannot be empty."),
+    // auto gen batchCode
+    // batchCode: z.string(requiredError("batchCode")).min(1, "batchCode cannot be empty."),
     createdByWorkerId: z.number(typeError("createdByWorkerId", "int")).int(typeError("createdByWorkerId", "int")).optional().nullable(),
     plannedQty: z.number(typeError("plannedQty", "number")).optional().nullable(),
     plannedUnitId : z.number(typeError("plannedUnitId", "int")).int(typeError("plannedUnitId", "int")).optional().nullable(),
@@ -165,7 +166,7 @@ export const orderSchema = z.strictObject({
 
 export const authUserSchema = z.strictObject({
     workerId: z.number(typeError("workerId", "int")).int(typeError("workerId", "int")).optional().nullable(),
-    email: z.email(requiredError("email")).min(1, "email cannot be empty."),
+    email: z.string(requiredError("email")).min(1, "email cannot be empty."),
     passwordHash: z.string(requiredError("passwordHash")).min(1, "passwordHash cannot be empty."),
     isAdmin: z.boolean(typeError("isAdmin", "boolean")).optional(),
     isActive: z.boolean(typeError("isActive", "boolean")).optional(),
