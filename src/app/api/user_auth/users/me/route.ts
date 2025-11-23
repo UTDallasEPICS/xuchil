@@ -5,8 +5,6 @@ import { verifySession } from "@/lib/session";
 import { workerSchema } from "@/lib/schemas";
 import { z } from "zod";
 
-const UPLOADED_IMAGE_PATH = "/mnt/data/05ca9d30-a3f6-4df0-a878-6bb26a5d69ad.png";
-
 export async function GET(request: NextRequest) {
   try {
     const payload = await verifySession();
@@ -74,11 +72,6 @@ export async function PUT(request: NextRequest) {
     }
 
     const data = parsed.data;
-
-    // If profilePhotoUrl is omitted, use uploaded image path as fallback
-    if (data.profilePhotoUrl === undefined) {
-      data.profilePhotoUrl = UPLOADED_IMAGE_PATH;
-    }
 
     const updated = await prisma.worker.update({
       where: { id: payload.workerId },
