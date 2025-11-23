@@ -180,6 +180,43 @@ export const workerSchema = z.strictObject({
     isActive: z.boolean(typeError("isActive", "boolean")).optional()
 })
 
+export const adminCreateSchema = z.strictObject({
+  email: z.string(requiredError("email")).email(typeError("email", "email")),
+  password: z.string(requiredError("password")).min(8, "password must be at least 8 characters")
+});
+
+export const workerCreateSchema = z.strictObject({
+  fullName: z.string(requiredError("fullName")).min(1, "fullName cannot be empty."),
+  roleId: z.int(typeError("roleId", "int")).optional().nullable(),
+  phone: z.string(typeError("phone", "string")).optional().nullable(),
+  profilePhotoUrl: z.string(typeError("profilePhotoUrl", "string")).optional().nullable(),
+  isActive: z.boolean(typeError("isActive", "boolean")).optional(),
+  
+  // new fields
+  isAdmin: z.boolean(typeError("isAdmin", "boolean")).optional().default(false),
+  adminCreate: z.union([adminCreateSchema, z.undefined()]).optional()
+})
+.superRefine((data, ctx) => {
+
+  // require adminCreate if isAdmin = true
+  if (data.isAdmin && !data.adminCreate) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["adminCreate"],
+      message: "adminCreate is required when isAdmin is true."
+    });
+  }
+
+  // forbid adminCreate if isAdmin = false
+  if (!data.isAdmin && data.adminCreate) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["adminCreate"],
+      message: "adminCreate must not be provided unless isAdmin is true."
+    });
+  }
+});
+
 export const loginSchema = z.strictObject({
 
 })
