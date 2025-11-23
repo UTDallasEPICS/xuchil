@@ -98,7 +98,8 @@ export const stepExecutionSchema = z.strictObject({
 export const processRunSchema = z.strictObject({
     productVariantId: z.number(requiredError("productVariantId")).int(typeError("productVariantId", "int")),
     processTemplateId: z.number(requiredError("processTemplateId")).int(typeError("processTemplateId", "int")),
-    batchCode: z.string(requiredError("batchCode")).min(1, "batchCode cannot be empty."),
+    // auto gen batchCode
+    // batchCode: z.string(requiredError("batchCode")).min(1, "batchCode cannot be empty."),
     createdByWorkerId: z.number(typeError("createdByWorkerId", "int")).int(typeError("createdByWorkerId", "int")).optional().nullable(),
     plannedQty: z.number(typeError("plannedQty", "number")).optional().nullable(),
     plannedUnitId : z.number(typeError("plannedUnitId", "int")).int(typeError("plannedUnitId", "int")).optional().nullable(),
@@ -180,6 +181,11 @@ export const workerSchema = z.strictObject({
     isActive: z.boolean(typeError("isActive", "boolean")).optional()
 })
 
+export const processPauseSchema = z.strictObject({
+    // processRunId: z.number(requiredError("processRunId")).int(typeError("processRunId", "int")),
+    reason: z.string(typeError("reason", "string")).optional().nullable(),
+})
+
 export const adminCreateSchema = z.strictObject({
   email: z.string(requiredError("email")).email(typeError("email", "email")),
   password: z.string(requiredError("password")).min(8, "password must be at least 8 characters")
@@ -191,7 +197,7 @@ export const workerCreateSchema = z.strictObject({
   phone: z.string(typeError("phone", "string")).optional().nullable(),
   profilePhotoUrl: z.string(typeError("profilePhotoUrl", "string")).optional().nullable(),
   isActive: z.boolean(typeError("isActive", "boolean")).optional(),
-  
+
   // new fields
   isAdmin: z.boolean(typeError("isAdmin", "boolean")).optional().default(false),
   adminCreate: z.union([adminCreateSchema, z.undefined()]).optional()
