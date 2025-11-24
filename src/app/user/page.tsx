@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import Button from "@/components/Button";
 import HeaderXuchil from "@/components/HeaderXuchil";
 import Modal from "@/components/Modal";
+import styles from "./User.module.css";
 
 const UserProfile = () => {
   const router = useRouter();
@@ -33,27 +34,10 @@ const UserProfile = () => {
   if (!role || !userData) return null;
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        backgroundColor: "var(--color-background)",
-        paddingTop: "1rem",
-        position: "relative",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-      }}
-    >
+    <div className={`page ${styles.pageWrapper}`}>
       <HeaderXuchil />
 
-      <div
-        style={{
-          position: "absolute",
-          top: "1rem",
-          right: "1rem",
-          zIndex: 10,
-        }}
-      >
+      <div className={styles.actionButtonRight}>
         <Button
           size="small"
           action="secondary"
@@ -64,14 +48,7 @@ const UserProfile = () => {
       </div>
 
       {role === "admin" && (
-        <div
-          style={{
-            position: "absolute",
-            top: "1rem",
-            left: "1rem",
-            zIndex: 10,
-          }}
-        >
+        <div className={styles.actionButtonLeft}>
           <Button
             size="small"
             action="primary"
@@ -82,78 +59,40 @@ const UserProfile = () => {
         </div>
       )}
 
-      <div
-        style={{
-          backgroundColor: "var(--color-background)",
-          padding: "1.5rem",
-          borderRadius: "20px",
-          width: "90%",
-          maxWidth: "360px",
-          textAlign: "center",
-        }}
-      >
-        <img
-          src={userData.avatar || "/globe.svg"}
-          alt="Avatar"
-          style={{
-            width: "140px",
-            height: "140px",
-            borderRadius: "50%",
-            backgroundColor: "#ccc",
-            margin: "0 auto 1rem",
-            objectFit: "cover",
-          }}
-        />
-
-        <h2 style={{ color: "var(--color-green-dark)", margin: 0 }}>
-          {userData.name}
-        </h2>
-        <p style={{ color: "var(--color-green-light)", margin: "4px 0 12px" }}>
-          {userData.position}
-        </p>
-        <p style={{ fontSize: "0.95rem", margin: "0 0 1.5rem" }}>
-          {userData.hours}
-        </p>
-
-        <div style={{ textAlign: "left" }}>
-          <p
-            style={{
-              fontWeight: 600,
-              color: "var(--color-green-dark)",
-              marginBottom: "4px",
-              fontSize: "1.1rem",
-            }}
-          >
-            Correo Electrónico:
-          </p>
-          <p style={{ marginBottom: "1rem", fontSize: "1rem" }}>
-            {userData.email}
-          </p>
-
-          <p
-            style={{
-              fontWeight: 600,
-              color: "var(--color-green-dark)",
-              marginBottom: "4px",
-              fontSize: "1.1rem",
-            }}
-          >
-            Teléfono:
-          </p>
-          <p style={{ fontSize: "1rem" }}>
-            {userData.phone}
-          </p>
-        </div>
+      <div className={styles.headerContainer}>
+        <h1>Perfil de usuario</h1>
       </div>
 
-      <div style={{ marginTop: "0.5rem", marginBottom: "5rem" }}>
-        <Button
-          size="regular"
-          action="negative"
-          onClick={() => setShowLogoutModal(true)}
-        >
-          Cerrar sesión
-        </Button>
+      <div className={styles.contentWrapper}>
+        <div className={styles.profileCard}>
+          <img
+            className={styles.avatar}
+            src={userData.avatar || "/globe.svg"}
+            alt="Avatar del usuario"
+          />
+
+          <h2 className={styles.profileName}>{userData.name}</h2>
+          <p className={styles.profilePosition}>{userData.position}</p>
+          <p className={styles.profileHours}>{userData.hours}</p>
+
+          <div className={styles.infoGroup}>
+            <p className={styles.infoLabel}>Correo electrónico:</p>
+            <p className={styles.infoValue}>{userData.email}</p>
+
+            <p className={styles.infoLabel}>Teléfono:</p>
+            <p className={styles.infoValue}>{userData.phone}</p>
+          </div>
+        </div>
+
+        <div className={styles.logoutWrapper}>
+          <Button
+            size="regular"
+            action="negative"
+            onClick={() => setShowLogoutModal(true)}
+          >
+            Cerrar sesión
+          </Button>
+        </div>
       </div>
 
       <Modal
