@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import HeaderXuchil from "@/components/HeaderXuchil";
 import Button from "@/components/Button";
+import Modal from "@/components/Modal";
 import styles from "./NewProcess.module.css";
 
 interface ProcessStep {
@@ -21,6 +23,7 @@ interface RawMaterial {
 }
 
 const NewProcessPage = () => {
+  const router = useRouter();
   const [processName, setProcessName] = useState("");
   const [processDescription, setProcessDescription] = useState("");
   const [steps, setSteps] = useState<ProcessStep[]>([
@@ -29,6 +32,12 @@ const NewProcessPage = () => {
   const [rawMaterials, setRawMaterials] = useState<RawMaterial[]>([
     { name: "", quantity: 0, unit: "kg" }
   ]);
+  const [modal, setModal] = useState({
+    open: false,
+    title: "",
+    message: "",
+    error: false,
+  });
 
   const addStep = () => {
     const newStep: ProcessStep = {
@@ -79,15 +88,31 @@ const NewProcessPage = () => {
       steps,
       rawMaterials
     });
-    alert("Proceso creado exitosamente!");
+    setModal({
+      open: true,
+      title: "Proceso creado exitosamente",
+      message: "El nuevo proceso ha sido registrado correctamente.",
+      error: false,
+    });
+  };
+
+  const handleModalClose = () => {
+    setModal({ ...modal, open: false });
+    if (!modal.error) {
+      router.push("/process-control");
+    }
   };
 
   return (
-    <div className="page">
+    <div className={`page ${styles.pageWrapper}`}>
       <HeaderXuchil />
+      
+      <div className={styles.headerContainer}>
+        <h1>Crear nuevo proceso</h1>
+        <p>Define la información base, materias primas y pasos para el nuevo flujo de producción.</p>
+      </div>
+
       <div className={styles.container}>
-        <h1>Crear Nuevo Proceso</h1>
-        
         <form onSubmit={handleSubmit} className={styles.form}>
           {/* Información básica del proceso */}
           <div className={styles.section}>
@@ -267,6 +292,16 @@ const NewProcessPage = () => {
           </div>
         </form>
       </div>
+
+      <Modal
+        open={modal.open}
+        title={modal.title}
+        message={modal.message}
+        confirmText="Aceptar"
+        onlyConfirm
+        onConfirm={handleModalClose}
+        danger={modal.error}
+      />
     </div>
   );
 };
