@@ -38,12 +38,12 @@ export async function GET(
       lastLoginAt: user.lastLoginAt,
       worker: user.worker
         ? {
-            id: user.worker.id,
-            fullName: user.worker.fullName,
-            phone: user.worker.phone,
-            profilePhotoUrl: user.worker.profilePhotoUrl,
-            roleId: user.worker.roleId,
-          }
+          id: user.worker.id,
+          fullName: user.worker.fullName,
+          phone: user.worker.phone,
+          profilePhotoUrl: user.worker.profilePhotoUrl,
+          roleId: user.worker.roleId,
+        }
         : null,
     });
   } catch (error) {
