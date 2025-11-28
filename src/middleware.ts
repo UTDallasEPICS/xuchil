@@ -6,7 +6,7 @@ const publicRoutes = ['/login', '/']
 export default async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname
   if (path.startsWith('/api') && !path.startsWith('/api/auth')) {
-    const payload = await verifySession(req)
+    const payload = await verifySession()
     if (!payload) {
       return new NextResponse(
         null,
