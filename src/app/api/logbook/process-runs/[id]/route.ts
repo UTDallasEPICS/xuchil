@@ -1,11 +1,11 @@
 import {NextRequest, NextResponse} from 'next/server';
 import prisma from '@/lib/db';
-import {checkId} from "@/utils/responses";
+import {idError, notFoundError, serverError} from "@/utils/responses";
 
 export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
-  const [processRunId, processRunIdError] = checkId('process-run', (await context.params).id);
-  if (processRunIdError !== null) {
-    return processRunIdError;
+  const processRunId = parseInt((await context.params).id);
+  if (isNaN(processRunId)) {
+    return idError('process run')
   }
   try {
     const processRun = await prisma.processRun.findUnique({
@@ -34,11 +34,10 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
     })
 
     if (!processRun) {
-      return NextResponse.json({message: 'Process Run not found'}, {status: 404});
+      return notFoundError('process run')
     }
-    return NextResponse.json({processRun, status: 200});
+    return NextResponse.json(processRun);
   } catch (e) {
-    console.error('Error fetching Process Run details: ', e);
-    return NextResponse.json({message: 'Internal Server Error'}, {status: 500});
+    return serverError('process run', 'fetch', e)
   }
 }

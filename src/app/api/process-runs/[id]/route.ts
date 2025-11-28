@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
-import {checkId} from "@/utils/responses";
+import {idError, notFoundError, serverError} from "@/utils/responses";
 
 export async function GET(
   _req: Request,
   context: { params: Promise<{ id: string }> }
 ) {
-  const [runId, runIdError] = checkId('run', (await context.params).id)
-  if (runIdError !== null) {
-    return runIdError;
+  const runId = parseInt((await context.params).id);
+  if (isNaN(runId)) {
+    return idError('process run')
   }
 
   try {
@@ -24,14 +24,11 @@ export async function GET(
     });
 
     if (!run) {
-      return NextResponse.json({ error: "Run not found" }, { status: 404 });
+      return notFoundError('process run')
     }
 
     return NextResponse.json(run);
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: "Failed to retrieve process run", detail: error.message },
-      { status: 500 }
-    );
+  } catch (error) {
+    return serverError('process run', 'fetch', error)
   }
 }

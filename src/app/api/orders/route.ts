@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { orderSchema } from "@/lib/schemas";
 import { z } from "zod";
+import {serverError, validationError} from "@/utils/responses";
 
 
 export async function GET() {
@@ -17,29 +18,16 @@ export async function GET() {
 
     return NextResponse.json(orders);
   } catch (error) {
-    console.error("Error fetching orders:", error);
-    return NextResponse.json({ error: "Failed to fetch orders" }, { status: 500 });
+    return serverError('orders', 'fetch', error);
   }
 }
 
 
 export async function POST(request: NextRequest) {
-  let body: unknown;
-  try {
-    // 1. Parse JSON body
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
-  }
-
+  const body = await request.json();
   const result = orderSchema.safeParse(body);
-
   if (!result.success) {
-    const formattedErr = z.flattenError(result.error);
-    return NextResponse.json(
-      { error: "Invalid request body", details: formattedErr },
-      { status: 400 }
-    );
+    return validationError('order', result.error)
   }
   try {
     const validBody = result.data
@@ -73,7 +61,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(newOrder, { status: 201 });
   } catch (error) {
-    console.error("Error creating order:", error);
-    return NextResponse.json({ error: "Failed to create order" }, { status: 500 });
+    return serverError('order', 'create', error)
   }
 }

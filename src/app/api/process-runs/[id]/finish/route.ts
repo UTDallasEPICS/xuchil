@@ -1,29 +1,28 @@
-import { NextResponse } from "next/server";
+import {NextResponse} from "next/server";
 import prisma from "@/lib/db";
 import {
   ProcessStatus,
   MovementReason,
   MovementDirection,
 } from "@prisma/client";
-import {checkId} from "@/utils/responses";
+import {idError, notFoundError, serverError} from "@/utils/responses";
 
 export async function POST(
   _req: Request,
   context: { params: Promise<{ id: string }> }
 ) {
-  const [runId, runIdError] = checkId('run', (await context.params).id)
-  if (runIdError !== null) {
-    return runIdError;
+  const runId = parseInt((await context.params).id);
+  if (isNaN(runId)) {
+    return idError('process run')
   }
-
   try {
     const run = await prisma.processRun.findUnique({
-      where: { id: runId },
-      include: { stepExecutions: true },
+      where: {id: runId},
+      include: {stepExecutions: true},
     });
 
     if (!run) {
-      return NextResponse.json({ error: "Run not found" }, { status: 404 });
+      return notFoundError('process run')
     }
 
     const incompleteSteps = run.stepExecutions.some(
@@ -32,13 +31,13 @@ export async function POST(
 
     if (incompleteSteps) {
       return NextResponse.json(
-        { error: "Cannot finalize; some steps are incomplete" },
-        { status: 400 }
+        {error: "Cannot finalize; some steps are incomplete"},
+        {status: 400}
       );
     }
 
     const finishedRun = await prisma.processRun.update({
-      where: { id: runId },
+      where: {id: runId},
       data: {
         status: ProcessStatus.COMPLETED,
         finishedAt: new Date(),
@@ -59,10 +58,7 @@ export async function POST(
     });
 
     return NextResponse.json(finishedRun);
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: "Failed to finalize process run", detail: error.message },
-      { status: 500 }
-    );
+  } catch (error) {
+    return serverError('process run', 'finalize', error)
   }
 }

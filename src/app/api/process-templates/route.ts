@@ -1,50 +1,32 @@
-// src/app/api/process-templates/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { processTemplateSchema } from "@/lib/schemas";
-import { z } from "zod";
+import {serverError, validationError} from "@/utils/responses";
 
-// GET /api/process-templates?product_variant_id=123
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const pv = searchParams.get("product_variant_id");
-    const where = pv ? { productVariantId: Number(pv) } : {};
-
+    const filter: any = {}
+    if (pv != null) {
+      filter.productVariantId = parseInt(pv)
+    }
     const items = await prisma.processTemplate.findMany({
-      where,
+      where: filter,
       orderBy: [{ productVariantId: "asc" }, { version: "desc" }],
-      include: {
-        _count: { select: { templateSteps: true } }, // relation is "templateSteps" in your schema
-      },
     });
 
     return NextResponse.json(items);
-  } catch (err: any) {
-    return NextResponse.json(
-      { error: "Failed to list templates", detail: err.message },
-      { status: 500 }
-    );
+  } catch (err) {
+    return serverError('process templates', 'fetch', err)
   }
 }
 
-// POST /api/process-templates
-// body: { productVariantId:number, name:string, version?:number, isActive?:boolean, notes?:string }
 export async function POST(request: NextRequest) {
-
-  let body: unknown;
-  try {
-    body = await request.json();
-  }
-  catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
-  }
-
+  const body = await request.json();
   const result = processTemplateSchema.safeParse(body);
-
   if(!result.success){
-    const formattedErr = z.flattenError(result.error);
-    return NextResponse.json({ error: "Invalid request body", details: formattedErr }, { status: 400 });
+    return validationError("process templates", result.error)
   }
 
   const validBody = result.data;
@@ -78,12 +60,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(created, { status: 201 });
   } catch (err: any) {
-    return NextResponse.json(
-      {
-        error: "Failed to create template (version conflict or bad FK).",
-        detail: err.message,
-      },
-      { status: 409 }
-    );
+    return serverError('process templates', 'create', err)
   }
 }

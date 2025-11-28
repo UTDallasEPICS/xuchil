@@ -1,87 +1,51 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
-import { getUserIdFromHeaders } from "@/lib/auth";
+import {idError, notFoundError, serverError} from "@/utils/responses";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: Promise<{ params: { id: string } }>
 ) {
-  const authUserId = getUserIdFromHeaders(req);
-
-  if (!authUserId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const userId = parseInt((await context).params.id);
+  if (isNaN(userId)) {
+    return idError('user')
   }
 
   try {
-    const authUser = await prisma.authUser.findUnique({
-      where: { id: authUserId },
-    });
-
-    if (!authUser?.isAdmin) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
     const user = await prisma.authUser.findUnique({
-      where: { id: Number(params.id) },
+      where: { id: userId },
       include: { worker: true },
+      omit: { passwordHash: true }
     });
 
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      return notFoundError('user')
     }
 
-    return NextResponse.json({
-      id: user.id,
-      email: user.email,
-      isAdmin: user.isAdmin,
-      isActive: user.isActive,
-      lastLoginAt: user.lastLoginAt,
-      worker: user.worker
-        ? {
-          id: user.worker.id,
-          fullName: user.worker.fullName,
-          phone: user.worker.phone,
-          profilePhotoUrl: user.worker.profilePhotoUrl,
-          roleId: user.worker.roleId,
-        }
-        : null,
-    });
+    return NextResponse.json(user);
   } catch (error) {
-    console.error("GET /users/:id error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch user" },
-      { status: 500 }
-    );
+    return serverError('user', 'fetch', null)
   }
 }
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: Promise<{ params: { id: string } }>
 ) {
-  const authUserId = getUserIdFromHeaders(req);
-
-  if (!authUserId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const userId = parseInt((await context).params.id);
+  if (isNaN(userId)) {
+    return idError('user')
   }
 
   try {
-    const authUser = await prisma.authUser.findUnique({
-      where: { id: authUserId },
-    });
-
-    if (!authUser?.isAdmin) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
     const body = await req.json();
     const { fullName, phone, profilePhotoUrl, isActive, isAdmin } = body;
 
     const updatedUser = await prisma.authUser.update({
-      where: { id: Number(params.id) },
+      where: { id: userId },
       data: {
-        isAdmin: typeof isAdmin === "boolean" ? isAdmin : undefined,
-        isActive: typeof isActive === "boolean" ? isActive : undefined,
+        isAdmin: isAdmin ?? undefined,
+        isActive: isActive ?? undefined,
         worker: {
           update: {
             fullName: fullName ?? undefined,
@@ -91,14 +55,33 @@ export async function PUT(
         },
       },
       include: { worker: true },
+      omit: { passwordHash: true }
     });
 
     return NextResponse.json(updatedUser);
   } catch (error) {
-    console.error("PUT /users/:id error:", error);
-    return NextResponse.json(
-      { error: "Failed to update user" },
-      { status: 500 }
-    );
+    return serverError('user', 'update', null)
+  }
+}
+
+export async function DELETE(
+  _req: NextRequest,
+  context: Promise<{ params: { id: string } }>
+) {
+  const userId = parseInt((await context).params.id);
+  if (isNaN(userId)) {
+    return idError('user')
+  }
+
+  try {
+    await prisma.authUser.update({
+      where: { id: userId },
+      data: { worker: { delete: true } },
+    })
+    await prisma.authUser.delete({
+      where: { id: userId },
+    })
+  } catch (error) {
+    return serverError('user', 'delete', null)
   }
 }
