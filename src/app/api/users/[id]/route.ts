@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import {idError, notFoundError, serverError} from "@/utils/responses";
+import {verifySession} from "@/lib/session";
 
 export async function GET(
   req: NextRequest,
   context: Promise<{ params: { id: string } }>
 ) {
+  const payload = await verifySession();
+  if (!payload?.isAdmin) {
+    return new NextResponse(null, { status: 403 });
+  }
   const userId = parseInt((await context).params.id);
   if (isNaN(userId)) {
     return idError('user')
@@ -32,6 +37,10 @@ export async function PUT(
   req: NextRequest,
   context: Promise<{ params: { id: string } }>
 ) {
+  const payload = await verifySession();
+  if (!payload?.isAdmin) {
+    return new NextResponse(null, { status: 403 });
+  }
   const userId = parseInt((await context).params.id);
   if (isNaN(userId)) {
     return idError('user')
@@ -68,6 +77,10 @@ export async function DELETE(
   _req: NextRequest,
   context: Promise<{ params: { id: string } }>
 ) {
+  const payload = await verifySession();
+  if (!payload?.isAdmin) {
+    return new NextResponse(null, { status: 403 });
+  }
   const userId = parseInt((await context).params.id);
   if (isNaN(userId)) {
     return idError('user')

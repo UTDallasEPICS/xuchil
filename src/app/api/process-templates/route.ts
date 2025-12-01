@@ -2,8 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { processTemplateSchema } from "@/lib/schemas";
 import {serverError, validationError} from "@/utils/responses";
+import {verifySession} from "@/lib/session";
 
 export async function GET(request: NextRequest) {
+  const payload = await verifySession();
+  if (!payload?.isAdmin) {
+    return new NextResponse(null, { status: 403 });
+  }
   try {
     const searchParams = request.nextUrl.searchParams;
     const pv = searchParams.get("product_variant_id");
@@ -23,15 +28,19 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const body = await request.json();
-  const result = processTemplateSchema.safeParse(body);
-  if(!result.success){
-    return validationError("process templates", result.error)
+  const payload = await verifySession();
+  if (!payload?.isAdmin) {
+    return new NextResponse(null, { status: 403 });
   }
-
-  const validBody = result.data;
-
   try {
+    const body = await request.json();
+    const result = processTemplateSchema.safeParse(body);
+    if(!result.success){
+      return validationError("process templates", result.error)
+    }
+
+    const validBody = result.data;
+
     let newVersion = validBody.version;
 
     if (newVersion === undefined) {

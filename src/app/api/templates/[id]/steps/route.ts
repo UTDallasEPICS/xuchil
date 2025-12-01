@@ -3,11 +3,16 @@ import prisma from '@/lib/db';
 import { templateStepSchema } from '@/lib/schemas';
 import { z } from "zod";
 import {idError, serverError, validationError} from "@/utils/responses";
+import {verifySession} from "@/lib/session";
 
 export async function POST(
   req: Request,
   context: { params: Promise<{ id: string }> }
 ) {
+  const payload = await verifySession();
+  if (!payload?.isAdmin) {
+    return new NextResponse(null, { status: 403 });
+  }
   const processTemplateId = parseInt((await context.params).id);
   if (isNaN(processTemplateId)) {
     return idError('process template')

@@ -2,11 +2,16 @@ import {NextResponse} from "next/server";
 import prisma from "@/lib/db";
 import {processTemplateSchema} from "@/lib/schemas";
 import {idError, notFoundError, serverError, validationError} from "@/utils/responses";
+import {verifySession} from "@/lib/session";
 
 export async function GET(
   _req: Request,
   context: { params: Promise<{ id: string }> }
 ) {
+  const payload = await verifySession();
+  if (!payload?.isAdmin) {
+    return new NextResponse(null, { status: 403 });
+  }
   try {
     const processTemplateId = parseInt((await context.params).id);
     if (isNaN(processTemplateId)) {
@@ -30,17 +35,21 @@ export async function PUT(
   req: Request,
   context: { params: Promise<{ id: string }> }
 ) {
-  const processTemplateId = parseInt((await context.params).id);
-  if (isNaN(processTemplateId)) {
-    return idError('process template');
-  }
-  const body = await req.json();
-  const result = processTemplateSchema.safeParse(body);
-  if (!result.success) {
-    return validationError('process template', result.error)
+  const payload = await verifySession();
+  if (!payload?.isAdmin) {
+    return new NextResponse(null, { status: 403 });
   }
 
   try {
+    const processTemplateId = parseInt((await context.params).id);
+    if (isNaN(processTemplateId)) {
+      return idError('process template');
+    }
+    const body = await req.json();
+    const result = processTemplateSchema.safeParse(body);
+    if (!result.success) {
+      return validationError('process template', result.error)
+    }
     const updated = await prisma.processTemplate.update({
       where: {id: processTemplateId},
       data: result.data

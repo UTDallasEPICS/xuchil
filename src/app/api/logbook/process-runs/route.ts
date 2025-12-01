@@ -2,8 +2,13 @@ import {NextRequest, NextResponse} from 'next/server';
 import prisma from '@/lib/db';
 import {ProcessStatus} from '@prisma/client';
 import {serverError} from "@/utils/responses";
+import {verifySession} from "@/lib/session";
 
 export async function GET(request: NextRequest) {
+  const payload = await verifySession();
+  if (!payload?.isAdmin) {
+    return new NextResponse(null, { status: 403 });
+  }
   const searchParams = request.nextUrl.searchParams;
   const batchCode = searchParams.get('batchCode');
   const workerId = searchParams.get('workerId');

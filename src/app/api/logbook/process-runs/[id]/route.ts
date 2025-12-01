@@ -1,8 +1,13 @@
 import {NextRequest, NextResponse} from 'next/server';
 import prisma from '@/lib/db';
 import {idError, notFoundError, serverError} from "@/utils/responses";
+import {verifySession} from "@/lib/session";
 
 export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const payload = await verifySession();
+  if (!payload?.isAdmin) {
+    return new NextResponse(null, { status: 403 });
+  }
   const processRunId = parseInt((await context.params).id);
   if (isNaN(processRunId)) {
     return idError('process run')

@@ -2,11 +2,16 @@ import {NextResponse} from 'next/server';
 import prisma from '@/lib/db';
 import {templateStepSchema} from '@/lib/schemas';
 import {idError, serverError, validationError} from "@/utils/responses";
+import {verifySession} from "@/lib/session";
 
 export async function PUT(
   req: Request,
   context: { params: Promise<{ id: string }> }
 ) {
+  const payload = await verifySession();
+  if (!payload?.isAdmin) {
+    return new NextResponse(null, { status: 403 });
+  }
   const stepId = parseInt((await context.params).id);
   if (isNaN(stepId)) {
     return idError('template step')
@@ -81,6 +86,10 @@ export async function DELETE(
   _req: Request,
   context: { params: Promise<{ id: string }> }
 ) {
+  const payload = await verifySession();
+  if (!payload?.isAdmin) {
+    return new NextResponse(null, { status: 403 });
+  }
   const stepId = parseInt((await context.params).id);
   if (isNaN(stepId)) {
     return idError('template step')

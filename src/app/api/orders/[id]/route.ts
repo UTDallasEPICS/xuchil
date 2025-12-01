@@ -3,6 +3,7 @@ import prisma from "@/lib/db";
 import { orderSchema } from "@/lib/schemas";
 import { z } from "zod";
 import {idError, notFoundError, serverError, validationError} from "@/utils/responses";
+import {verifySession} from "@/lib/session";
 
 export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   const orderId = parseInt((await context.params).id);
@@ -85,6 +86,10 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
 }
 
 export async function DELETE(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const payload = await verifySession();
+  if (!payload?.isAdmin) {
+    return new NextResponse(null, { status: 403 });
+  }
   const orderId = parseInt((await context.params).id);
   if (isNaN(orderId)) {
     return idError('order')
