@@ -1,63 +1,67 @@
-import {NextResponse} from 'next/server';
-import prisma from '@/lib/db';
-import {templateStepSchema} from '@/lib/schemas';
-import {idError, serverError, validationError} from "@/utils/responses";
+import { NextResponse } from "next/server";
+import prisma from "@/lib/db";
+import { templateStepSchema } from "@/lib/schemas";
+import { z } from "zod";
+import { checkId } from "@/utils/responses";
+import { verifySession } from "@/lib/session";
 
 export async function PUT(
   req: Request,
   context: { params: Promise<{ id: string }> }
 ) {
-  const stepId = parseInt((await context.params).id);
-  if (isNaN(stepId)) {
-    return idError('template step')
+
+  const payload = await verifySession();
+  if (!payload?.isAdmin) {
+    return new NextResponse(null, { status: 403 });
   }
-  const body = await req.json()
+
+  const [stepId, err] = checkId("step", (await context.params).id);
+  if (err) return err;
+
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
   const result = templateStepSchema.safeParse(body);
   if (!result.success) {
-    return validationError('template step', result.error);
+    return NextResponse.json(
+      { error: "Invalid request body", details: z.flattenError(result.error) },
+      { status: 400 }
+    );
   }
+
   const validBody = result.data;
-  const newPosition = validBody.position;
+  const newPos = validBody.position;
 
   try {
-    if (newPosition !== undefined) {
-
-      const currentStep = await prisma.templateStep.findUnique({
-        where: {id: stepId},
-        select: {position: true, processTemplateId: true}
+    if (newPos !== undefined) {
+      const current = await prisma.templateStep.findUnique({
+        where: { id: stepId },
+        select: { position: true, processTemplateId: true },
       });
 
-      if (!currentStep) {
-        return NextResponse.json({error: 'Template step not found.'}, {status: 404});
+      if (!current) {
+        return NextResponse.json({ error: "Template step not found" }, { status: 404 });
       }
 
-      const templateId = currentStep.processTemplateId;
-
-      if (newPosition !== currentStep.position) {
-
+      if (newPos !== current.position) {
         const updated = await prisma.$transaction(async (tx) => {
-
-          // --- STAGE 1: CHECK FOR CONFLICT ---
-          const conflictingStep = await tx.templateStep.findFirst({
+          const conflict = await tx.templateStep.findFirst({
             where: {
-              processTemplateId: templateId,
-              position: newPosition,
-              // Exclude the current step being updated, in case newPosition == oldPosition
-              // However, the outer check (newPosition !== currentStep.position) should cover this.
-              id: {not: stepId}
-            }
+              processTemplateId: current.processTemplateId,
+              position: newPos,
+              id: { not: stepId },
+            },
           });
 
-          if (conflictingStep) {
-            // If another step already occupies this position, throw an error.
-            // This rolls back the transaction.
-            throw new Error(`Position ${newPosition} is already occupied.`);
-          }
+          if (conflict) throw new Error(`Position ${newPos} already exists.`);
 
-          // --- STAGE 2: SET THE NEW POSITION ---
           return tx.templateStep.update({
-            where: {id: stepId},
-            data: {...validBody, position: newPosition}
+            where: { id: stepId },
+            data: { ...validBody, position: newPos },
           });
         });
 
@@ -65,15 +69,17 @@ export async function PUT(
       }
     }
 
-    // Standard update for non-position changes, or if position was provided but unchanged
-    const updatedBody = {...validBody};
     const updated = await prisma.templateStep.update({
-      where: {id: stepId},
-      data: updatedBody
+      where: { id: stepId },
+      data: validBody,
     });
+
     return NextResponse.json(updated);
-  } catch (e) {
-    return serverError('template step', 'update', e)
+  } catch (e: any) {
+    return NextResponse.json(
+      { error: "Update failed (position conflict?)", detail: e.message },
+      { status: 409 }
+    );
   }
 }
 
@@ -81,10 +87,16 @@ export async function DELETE(
   _req: Request,
   context: { params: Promise<{ id: string }> }
 ) {
-  const stepId = parseInt((await context.params).id);
-  if (isNaN(stepId)) {
-    return idError('template step')
+
+  const payload = await verifySession();
+  if (!payload?.isAdmin) {
+    return new NextResponse(null, { status: 403 });
   }
-  await prisma.templateStep.delete({where: {id: stepId}});
-  return new NextResponse(null, {status: 204})
+
+  const [stepId, err] = checkId("step", (await context.params).id);
+  if (err) return err;
+
+  await prisma.templateStep.delete({ where: { id: stepId } });
+
+  return NextResponse.json({ success: true });
 }
