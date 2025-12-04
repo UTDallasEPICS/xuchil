@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 
 import HeaderXuchil from "@/components/HeaderXuchil";
@@ -12,7 +12,8 @@ import DatePicker from "@/components/DatePicker";
 import OrderedProducts from "@/components/OrderedProducts";
 import DeleteModal from "@/components/DeleteModal";
 
-import { fetchOrders, fetchProducts } from "@/constants/api";
+import { fetchProducts } from "@/constants/api";
+import { fetchOrderByIdClient } from "@/lib/ordersClient";
 import { deliveryVariants } from "@/constants/deliveryConfig";
 import { Product } from "@/types/Product";
 
@@ -22,7 +23,30 @@ const EditOrderPage = () => {
   const { orderId } = useParams<{ orderId: string }>();
   const router = useRouter();
 
-  const order = fetchOrders().find((o) => o.id === Number(orderId));
+  const [order, setOrder] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    const idNum = Number(orderId);
+    if (Number.isNaN(idNum)) {
+      setOrder(null);
+      setLoading(false);
+      return;
+    }
+    fetchOrderByIdClient(idNum)
+      .then((o) => mounted && setOrder(o))
+      .catch((err) => {
+        console.error("Failed to fetch order", err);
+        if (mounted) setOrder(null);
+      })
+      .finally(() => mounted && setLoading(false));
+    return () => {
+      mounted = false;
+    };
+  }, [orderId]);
+
+  if (loading) return <p>Cargando pedido...</p>;
   if (!order) return <p>Pedido no encontrado</p>;
 
   const initialProducts: Product[] = useMemo(fetchProducts, []);
