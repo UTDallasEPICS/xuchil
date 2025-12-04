@@ -34,6 +34,7 @@ export const userFilterOptions: FilterOption[] = [
   { label: "Petronila Hernández", icon: User },
   { label: "Víctor Aragón", icon: User },
   { label: "Zoraida Pérez", icon: User },
+  { label: "Bob", icon: User },
 ];
 
 export const monthFilterOptions: FilterOption[] = [
