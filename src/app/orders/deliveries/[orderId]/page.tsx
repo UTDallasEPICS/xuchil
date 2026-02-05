@@ -1,12 +1,13 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import HeaderXuchil from "@/components/HeaderXuchil";
 import Button from "@/components/Button";
 import BottomButton from "@/components/BottomButton";
 import ProductCard from "@/components/ProductCard";
 import DeliveryType from "@/components/DeliveryType";
-import { fetchOrders } from "@/constants/api";
+import { fetchOrderByIdClient, putOrderStatusClient } from "@/lib/ordersClient";
 import {
   CircleUserRound as UserIcon,
   Calendar as CalendarIcon,
@@ -27,26 +28,48 @@ const OrderDetailsPage = () => {
   const { orderId } = useParams<{ orderId: string }>();
   const router = useRouter();
 
-  const order = fetchOrders().find((o) => o.id === Number(orderId));
+  const [order, setOrder] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
+  useEffect(() => {
+    let mounted = true;
+    const idNum = Number(orderId);
+    if (Number.isNaN(idNum)) {
+      setOrder(null);
+      setLoading(false);
+      return;
+    }
+    fetchOrderByIdClient(idNum)
+      .then((o) => mounted && setOrder(o))
+      .catch((err) => {
+        console.error("Failed to fetch order", err);
+        if (mounted) setOrder(null);
+      })
+      .finally(() => mounted && setLoading(false));
+    return () => {
+      mounted = false;
+    };
+  }, [orderId]);
+
+  if (loading) return <p>Cargando pedido...</p>;
   if (!order) return <p>Pedido no encontrado</p>;
 
-  const {
-    id,
-    clientName,
-    address,
-    deliveryDate,
-    deliveryVariant,
-    products,
-    delivered,
-  } = order;
+  const { id, clientName, address, deliveryDate, deliveryVariant, products, delivered } = order;
 
   const handleEdit = () => {
-    console.log("Botón presionado");
     router.push(`/orders/deliveries/${id}/edit`);
   }
 
-  const handleDelivered = () => {
-    console.log("Marca como entregado", id);
+  const handleDelivered = async () => {
+    try {
+      const newStatus = delivered ? "SCHEDULED" : "DELIVERED";
+      await putOrderStatusClient(id, newStatus as any);
+      router.replace(`/orders/deliveries/${id}`);
+    } catch (err) {
+      console.error("Failed to update order status", err);
+      alert("No se pudo cambiar el estado del pedido");
+    }
   };
 
   return (
