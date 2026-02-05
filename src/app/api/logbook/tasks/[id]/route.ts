@@ -1,11 +1,11 @@
 import {NextRequest, NextResponse} from 'next/server';
 import prisma from '@/lib/db';
-import {checkId} from "@/utils/responses";
+import {idError, notFoundError, serverError} from "@/utils/responses";
 
 export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
-  const [stepExecutionId, stepExecutionIdError] = checkId('task', (await context.params).id);
-  if (stepExecutionIdError !== null) {
-    return stepExecutionIdError;
+  const stepExecutionId = parseInt((await context.params).id);
+  if (isNaN(stepExecutionId)) {
+    return idError('task')
   }
   try {
     const stepExecution = await prisma.stepExecution.findUnique({
@@ -26,11 +26,10 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
     })
 
     if (!stepExecution) {
-      return NextResponse.json({message: 'Step Execution not found'}, {status: 404});
+      return notFoundError('task')
     }
-    return NextResponse.json({stepExecution, status: 200});
+    return NextResponse.json(stepExecution);
   } catch (e) {
-    console.error('Error fetching Step Execution details: ', e);
-    return NextResponse.json({message: 'Internal Server Error'}, {status: 500});
+    return serverError('task', 'fetch', e);
   }
 }

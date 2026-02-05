@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { orderSchema } from "@/lib/schemas";
 import { z } from "zod";
-import {checkId} from "@/utils/responses";
+import {idError, notFoundError, serverError, validationError} from "@/utils/responses";
+import {verifySession} from "@/lib/session";
 
 export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
-  const [orderId, orderIdError] = checkId('order', (await context.params).id);
-  if (orderIdError !== null) {
-    return orderIdError;
+  const orderId = parseInt((await context.params).id);
+  if (isNaN(orderId)) {
+    return idError('order')
   }
   try {
     const order = await prisma.order.findUnique({
@@ -20,43 +21,31 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
     });
 
     if (!order) {
-      return NextResponse.json({ error: "Order not found" }, { status: 404 });
+      return notFoundError('order')
     }
 
     return NextResponse.json(order);
   } catch (error) {
-    console.error("Error fetching order:", error);
-    return NextResponse.json({ error: "Failed to fetch order" }, { status: 500 });
+    return serverError('order', 'fetch', error)
   }
 }
 
 export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
-  const [orderId, orderIdError] = checkId('order', (await context.params).id);
-  if (orderIdError !== null) {
-    return orderIdError;
+  const orderId = parseInt((await context.params).id);
+  if (isNaN(orderId)) {
+    return idError('order')
   }
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
-  }
-
+  const body = await request.json();
   const result = orderSchema.safeParse(body);
-
   if (!result.success) {
-    const formattedErr = z.flattenError(result.error);
-    return NextResponse.json(
-      { error: "Invalid request body", details: formattedErr },
-      { status: 400 }
-    );
+    return validationError('order', result.error)
   }
 
   try {
     const existingOrder = await prisma.order.findUnique({ where: { id: orderId } });
     if (!existingOrder) {
-        return NextResponse.json({ error: "Order not found" }, { status: 404 });
+        return notFoundError('order')
     }
     const validBody = result.data;
     const transaction = await prisma.$transaction([
@@ -92,14 +81,18 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     ]);
     return NextResponse.json(transaction[1]);
   } catch (error) {
-    return NextResponse.json({ error: "Failed to update order" }, { status: 500 });
+    return serverError('order', 'update', error)
   }
 }
 
 export async function DELETE(req: NextRequest, context: { params: Promise<{ id: string }> }) {
-  const [orderId, orderIdError] = checkId('order', (await context.params).id);
-  if (orderIdError !== null) {
-    return orderIdError;
+  const payload = await verifySession();
+  if (!payload?.isAdmin) {
+    return new NextResponse(null, { status: 403 });
+  }
+  const orderId = parseInt((await context.params).id);
+  if (isNaN(orderId)) {
+    return idError('order')
   }
   try {
     await prisma.order.update({
@@ -107,10 +100,9 @@ export async function DELETE(req: NextRequest, context: { params: Promise<{ id: 
       data: { status: "CANCELLED" },
     });
 
-    return NextResponse.json({ message: "Order cancelled successfully" });
+    return new NextResponse(null, { status: 204 });
   } catch (error) {
-    console.error("Error cancelling order:", error);
-    return NextResponse.json({ error: "Failed to cancel order" }, { status: 500 });
+    return serverError('order', 'delete', error)
   }
 }
 

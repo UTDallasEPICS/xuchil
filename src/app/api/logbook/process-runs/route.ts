@@ -1,9 +1,15 @@
 import {NextRequest, NextResponse} from 'next/server';
 import prisma from '@/lib/db';
 import {ProcessStatus} from '@prisma/client';
+import {serverError} from "@/utils/responses";
+import {verifySession} from "@/lib/session";
 
 export async function GET(request: NextRequest) {
-  const {searchParams} = new URL(request.url);
+  const payload = await verifySession();
+  if (!payload?.isAdmin) {
+    return new NextResponse(null, { status: 403 });
+  }
+  const searchParams = request.nextUrl.searchParams;
   const batchCode = searchParams.get('batchCode');
   const workerId = searchParams.get('workerId');
   const dateFrom = searchParams.get('dateFrom');
@@ -56,7 +62,6 @@ export async function GET(request: NextRequest) {
     });
     return NextResponse.json(processRuns, {status: 200});
   } catch (e) {
-    console.error('Error fetching Process Runs history.', e);
-    return NextResponse.json({message: 'Interval Server Error'}, {status: 500});
+    return serverError('process run', 'fetch', e)
   }
 }

@@ -1,6 +1,7 @@
 import {NextRequest, NextResponse} from 'next/server';
 import prisma from '@/lib/db';
 import {verifySession} from "@/lib/session";
+import {serverError} from "@/utils/responses";
 
 export async function GET(request: NextRequest) {
   const workerId = (await verifySession())?.workerId;
@@ -51,10 +52,9 @@ export async function GET(request: NextRequest) {
         inputUnit: {select: {name: true}},
       },
     });
-    return NextResponse.json(myTasks, {status: 200});
+    return NextResponse.json(myTasks);
   } catch (e) {
-    console.error('Error fetching myTasks:', e);
-    return NextResponse.json({message: 'Internal Server Error'}, {status: 500});
+    return serverError('task', 'fetch', e)
   }
 }
 

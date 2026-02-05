@@ -1,11 +1,11 @@
 "use client";
 
-import { useMemo, useState, useRef } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { ChevronLeft, ChevronRight, X as CloseIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import DeliveryType from "@/components/DeliveryType";
 import BottomButton from "@/components/BottomButton";
-import { fetchOrders } from "@/constants/api";
+import { fetchOrdersClient } from "@/lib/ordersClient";
 import { Order } from "@/types/Order";
 import OrderCard from "@/components/OrderCard";
 import { keyFromLocalDate, parseMXDateLocal } from "@/utils/date";
@@ -82,6 +82,8 @@ function groupByVariant(orders: Order[]): VariantCount {
 const Calendar = () => {
   const router = useRouter();
   const [viewDate, setViewDate] = useState<Date>(new Date());
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
   const ordersCache = useRef<Map<string, Order[]>>(new Map());
   const [selectedOrders, setSelectedOrders] = useState<Order[] | null>(null);
   const [selectedDate,   setSelectedDate]   = useState<Date | null>(null);
@@ -92,12 +94,23 @@ const Calendar = () => {
     setSelectedDate(null);
   }
 
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    fetchOrdersClient()
+      .then((data) => mounted && setOrders(data))
+      .catch((err) => console.error("Failed to load orders", err))
+      .finally(() => mounted && setLoading(false));
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   const monthOrders = useMemo(() => {
     const key = getMonthKey(viewDate);
 
     if (!ordersCache.current.has(key)) {
-      const allOrders = fetchOrders();
-      const filtered = allOrders.filter((o) => {
+      const filtered = orders.filter((o) => {
         const [dd, mm, yyyy] = o.deliveryDate.split("/").map(Number);
         return (
           yyyy === viewDate.getFullYear() && mm - 1 === viewDate.getMonth()
@@ -106,7 +119,7 @@ const Calendar = () => {
       ordersCache.current.set(key, filtered);
     }
     return ordersCache.current.get(key)!;
-  }, [viewDate]);
+  }, [viewDate, orders]);
 
   const ordersByDate = useMemo(() => {
     const map = new Map<string, Order[]>();

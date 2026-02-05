@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import OrderCard from "@/components/OrderCard";
 import FilterButton from "@/components/FilterButton";
 import BottomButton from "@/components/BottomButton";
 import { Order } from "@/types/Order";
-import { fetchOrders } from "@/constants/api";
+import { fetchOrdersClient } from "@/lib/ordersClient";
 import {
   dateFilterOptions,
   sortFilterOptions,
@@ -42,7 +42,20 @@ const Deliveries = () => {
   const [deliveryFilter, setDeliveryFilter] = useState<FilterOption>(deliveryFilterOptions[0]);
   const router = useRouter();
 
-  const orders = useMemo(() => fetchOrders(), []);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    fetchOrdersClient()
+      .then((data) => mounted && setOrders(data))
+      .catch((err) => console.error("Failed to load orders", err))
+      .finally(() => mounted && setLoading(false));
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const visibleOrders = useMemo(() => {
     const today = new Date();
@@ -96,7 +109,9 @@ const Deliveries = () => {
         <FilterButton title="Tipo de entrega" options={deliveryFilterOptions} onChange={setDeliveryFilter} variant="dark"/>
       </div>
       <div className={styles.scrollArea}>
-        {visibleOrders.length === 0 ? (
+        {loading ? (
+          <p className={styles.empty}>Cargando pedidos...</p>
+        ) : visibleOrders.length === 0 ? (
           <p className={styles.empty}>Sin pedidos encontrados</p>
         ) : (
           visibleOrders.map((order) => (

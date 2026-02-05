@@ -1,0 +1,101 @@
+.pageWrapper {
+  position: relative;
+  padding: 0 0 3rem;
+}
+
+.actionButtonRight,
+.actionButtonLeft {
+  position: absolute;
+  top: 1rem;
+  z-index: 10;
+}
+
+.actionButtonRight {
+  right: 1rem;
+}
+
+.actionButtonLeft {
+  left: 1rem;
+}
+
+.headerContainer {
+  margin: 2rem auto 1rem;
+  padding: 0 1rem;
+  text-align: center;
+}
+
+.contentWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 0 1rem;
+}
+
+.profileCard {
+  width: 100%;
+  max-width: 320px;
+  background-color: var(--color-background);
+  border-radius: 20px;
+  padding: 1.5rem;
+  text-align: center;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.avatar {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  object-fit: cover;
+  background-color: var(--color-gray-light);
+  margin: 0 auto 1rem;
+  display: block;
+}
+
+.profileName {
+  color: var(--color-green-dark);
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.profilePosition {
+  color: var(--color-green-light);
+  margin: 0.25rem 0 0.75rem;
+  font-size: 1rem;
+}
+
+.profileHours {
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+}
+
+.infoGroup {
+  text-align: left;
+}
+
+.infoLabel {
+  font-weight: 600;
+  color: var(--color-green-dark);
+  margin-bottom: 0.25rem;
+  font-size: 1.05rem;
+}
+
+.infoValue {
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+
+.infoValue:last-child {
+  margin-bottom: 0;
+}
+
+.logoutWrapper {
+  margin-top: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .profileCard {
+    max-width: 420px;
+  }
+}
+
