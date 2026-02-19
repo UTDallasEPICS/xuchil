@@ -179,6 +179,7 @@ export const workerSchema = z.strictObject({
     phone: z.string(typeError("phone", "string")).optional().nullable(),
     profilePhotoUrl: z.string(typeError("profilePhotoUrl", "string")).optional().nullable(),
     isActive: z.boolean(typeError("isActive", "boolean")).optional()
+    
 })
 
 export const processPauseSchema = z.strictObject({

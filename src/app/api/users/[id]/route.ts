@@ -5,13 +5,15 @@ import {verifySession} from "@/lib/session";
 
 export async function GET(
   req: NextRequest,
-  context: Promise<{ params: { id: string } }>
+  context: { params: { id: string } }
 ) {
+
   const payload = await verifySession();
-  if (!payload?.isAdmin) {
+  if (!payload) {
     return new NextResponse(null, { status: 403 });
   }
-  const userId = parseInt((await context).params.id);
+  const {id} = await context.params
+  const userId = parseInt(id);
   if (isNaN(userId)) {
     return idError('user')
   }

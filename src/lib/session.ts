@@ -11,16 +11,18 @@ export default interface SessionPayload {
 
 const EXPIRATION_MS = 2 * 24 * 60 * 60 * 1000
 
-const secretKey = process.env.SESSION_SECRET;
+const secretKey = process.env.SESSION_SECRET || 's';
 const encodedKey = new TextEncoder().encode(secretKey);
 
 export async function encrypt(payload: SessionPayload, expiresAt: Date) {
+  
   return new SignJWT(payload as unknown as JWTPayload)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime(expiresAt)
     .sign(encodedKey);
 }
+
    
 export async function decrypt(session: string | undefined = '') {
   try {
@@ -35,12 +37,18 @@ export async function decrypt(session: string | undefined = '') {
 }
 
 export async function createSession(payload: SessionPayload) {
+  
   // calculate expiration one week from now
+  
   const expiresAt = new Date(Date.now() + EXPIRATION_MS);
+ 
   // encrypt payload
+  
   const session = await encrypt(payload, expiresAt);
+
   // set cookie
   const cookieStore = await cookies();
+
   cookieStore.set('session', session, {
     httpOnly: true,
     secure: true,
@@ -48,6 +56,7 @@ export async function createSession(payload: SessionPayload) {
     sameSite: 'lax',
     path: '/',
   });
+
 }
 
 export async function updateSession() {

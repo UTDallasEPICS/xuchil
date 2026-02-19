@@ -136,6 +136,29 @@ const CreateUser = () => {
       message: "El nuevo usuario ha sido registrado exitosamente.",
       error: false,
     });
+
+    //api to make new user 
+
+    const create_user = async () => {
+
+      const data = { fullName: lastName, phone, email, profilePhotoUrl: "", roleId: 1, password }
+      try {
+
+        const response = await fetch("/api/users", { method: "POST", headers: { 'Content-Type': 'application/json'}, body: JSON.stringify(data) })
+
+        console.log("response", response)
+
+
+
+      } catch (err) {
+
+        console.log("error", err)
+      }
+    }
+
+
+    create_user()
+
   };
 
   const handleModalClose = () => {

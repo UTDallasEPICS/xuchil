@@ -7,6 +7,7 @@ import {verifySession} from "@/lib/session";
 export async function GET(
   _req: NextRequest,
 ) {
+
   const payload = await verifySession();
   if (!payload?.isAdmin) {
     return new NextResponse(null, { status: 403 });
@@ -26,7 +27,11 @@ export async function GET(
 export async function POST(
   req: NextRequest,
 ) {
+
+  
+
   const payload = await verifySession();
+  console.log("payload",payload)
   if (!payload?.isAdmin) {
     return new NextResponse(null, { status: 403 });
   }
@@ -53,6 +58,7 @@ export async function POST(
 
     return NextResponse.json(user, {status: 201});
   } catch (error) {
+    console.log("error",error)
     return serverError('user', 'create', null)
   }
 }

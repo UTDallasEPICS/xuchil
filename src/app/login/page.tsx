@@ -12,55 +12,29 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [showErrorModal, setShowErrorModal] = useState(false);
   
-  const handleLogin = () => {
-    const registeredUsers = JSON.parse(localStorage.getItem("registeredUsers") || "[]");
-    
-    const baseUsers = [
-      {
-        username: "admin",
-        password: "admin",
-        role: "admin",
-        name: "Administrador Xuchil",
-        email: "admin@xuchilnatural.com",
-        phone: "+52 951 999 88 77",
-        position: "Acceso total al sistema",
-        hours: "Panel de gestión de usuarios",
-        avatar: ""
-      },
-      {
-        username: "prueba",
-        password: "prueba",
-        role: "user",
-        name: "Antonio López",
-        email: "antonio.lopez@xuchilnatural.com",
-        phone: "+52 951 123 56 78",
-        position: "Operador",
-        hours: "15.4hrs trabajadas",
-        avatar: ""
+  const handleLogin = async () => {
+    setShowErrorModal(false);
+  
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: user, password }),
+      });
+  
+      
+      if (!response.ok) {
+        setShowErrorModal(true);
+        return;
       }
-    ];
-
-    const allUsers = [...baseUsers, ...registeredUsers];
-    
-    const foundUser = allUsers.find(u => u.username === user && u.password === password);
-
-    if (foundUser) {
-      const userProfileData = JSON.parse(localStorage.getItem(`userProfile_${foundUser.username}`) || "{}");
-      
-      localStorage.setItem("currentUser", foundUser.username);
-      localStorage.setItem("role", foundUser.role);
-      
-      const userData = {
-        ...foundUser,
-        ...userProfileData
-      };
-      
-      localStorage.setItem("userData", JSON.stringify(userData));
+  
       router.push("/process-control");
-    } else {
+    } catch (err) {
+      console.log("login error", err);
       setShowErrorModal(true);
     }
   };
+  
 
   return (
     <div className="login-page">
