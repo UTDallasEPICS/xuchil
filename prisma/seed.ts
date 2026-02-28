@@ -8,6 +8,7 @@ import {
   DeliveryVariant,
   OrderStatus
 } from '@prisma/client'
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient()
 
@@ -59,7 +60,7 @@ async function main() {
   });
 
   await prisma.authUser.create({
-    data: {id: 1, workerId: 2, email: "admin@corp.com", passwordHash: "$2b$10$zJR.UT7NtHTssmHL5iRqcuv2ShubMmRNpmQgzEgB6ziY098h6Dwka", isAdmin: true}
+    data: {id: 1, workerId: 2, email: "admin@corp.com", passwordHash: (await bcrypt.hash("password", 10)) , isAdmin: true}
   });
 
   const guestCharlie = await prisma.guestCollaborator.create({
