@@ -6,8 +6,9 @@ import {serverError} from "@/utils/responses";
 
 export async function POST(req: Request) {
   try {
+    
     const {email, password} = await req.json();
-
+   
     if (!email || !password) {
       return NextResponse.json(
         {error: "Email and password are required"},
@@ -19,6 +20,8 @@ export async function POST(req: Request) {
     const user = await prisma.authUser.findUnique({
       where: {email},
     });
+
+  
 
     if (!user) {
       return NextResponse.json(
@@ -36,13 +39,19 @@ export async function POST(req: Request) {
       );
     }
 
+    console.log("user",user.id,user.workerId,user.isAdmin)
+    
     // Create session payload for cookie
     await createSession({
       authUserId: user.id,
       workerId: user.workerId,
       isAdmin: user.isAdmin,
     });
+
+  return NextResponse.json({success: true})
+
   } catch (error) {
-    return serverError('user', 'login', null)
+ console.log("error",error)
+   return serverError('user', 'login', null)
   }
 }

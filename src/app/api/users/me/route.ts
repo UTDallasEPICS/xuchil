@@ -30,19 +30,32 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
+    
     const payload = await verifySession();
     if (!payload) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const body = await request.json();
-    const result = workerSchema.partial().safeParse(body);
+
+
+    const mapped = {
+      fullName: body.name,
+      profilePhotoUrl: body.avatar,
+      phone: body.phone
+    };
+    
+    const result = workerSchema.partial().safeParse(mapped);
+    
     if (!result.success) {
       return validationError('user', result.error)
     }
+    
     const updatedWorker = await prisma.worker.update({
       where: { id: payload?.workerId ?? undefined },
       data: result.data
     });
+
+    
 
     return NextResponse.json(updatedWorker);
   } catch (error) {

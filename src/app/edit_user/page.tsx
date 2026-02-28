@@ -19,25 +19,37 @@ const EditProfile = () => {
   const [currentUsername, setCurrentUsername] = useState("");
 
   useEffect(() => {
-    const storedUserData = localStorage.getItem("userData");
-    const username = localStorage.getItem("currentUser");
-    
-    if (storedUserData && username) {
-      const parsedData = JSON.parse(storedUserData);
-      setUserData(parsedData);
-      setCurrentUsername(username);
-      
-      const nameParts = parsedData.name.split(" ");
-      setName(nameParts[0] || "");
-      setLastName(nameParts.slice(1).join(" ") || "");
-      
-      setEmail(parsedData.email || "");
-      setPhone(parsedData.phone || "");
-      setAvatarPreview(parsedData.avatar || "/user-placeholder.svg");
-    } else {
-      router.push("/login");
-    }
+    const fetchUser = async () => {
+      try {
+        const response = await fetch("/api/users/me", {
+          method: "GET",
+        });
+  
+        if (!response.ok) {
+          router.push("/login");
+          return;
+        }
+  
+        const data = await response.json();
+  
+        setUserData(data);
+        setCurrentUsername(data.username);
+  
+        const nameParts = data.name?.split(" ") || [];
+        setName(nameParts[0] || "");
+        setLastName(nameParts.slice(1).join(" ") || "");
+  
+        setEmail(data.email || "");
+        setPhone(data.phone || "");
+        setAvatarPreview(data.avatar || "/user-placeholder.svg");
+      } catch (error) {
+        router.push("/login");
+      }
+    };
+  
+    fetchUser();
   }, []);
+  
 
   const handleImageUploadClick = () => {
     if (fileInputRef.current) {
@@ -68,34 +80,36 @@ const EditProfile = () => {
     }
   };
 
-  const handleSave = () => {
-    const username = localStorage.getItem("currentUser");
-    if (!username) {
-      router.push("/login");
-      return;
+  const handleSave = async () => {
+    try {
+      const updatedUserData = {
+        name: `${name} ${lastName}`.trim(),
+        email,
+        phone,
+        avatar: avatar || avatarPreview,
+      };
+  
+      const response = await fetch("/api/users/me", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updatedUserData),
+      });
+  
+      if (!response.ok) {
+        throw new Error("Failed to update user");
+      }
+  
+      const updatedUser = await response.json();
+  
+      setUserData(updatedUser);
+      setShowSuccessModal(true);
+    } catch (error) {
+      console.log("error", error);
     }
-
-    const updatedUserData = {
-      ...userData,
-      name: `${name} ${lastName}`.trim(),
-      email,
-      phone,
-      avatar: avatar || avatarPreview,
-    };
-
-    localStorage.setItem("userData", JSON.stringify(updatedUserData));
-    
-    localStorage.setItem(`userProfile_${username}`, JSON.stringify({
-      name: `${name} ${lastName}`.trim(),
-      email,
-      phone,
-      avatar: avatar || avatarPreview,
-      position: userData.position,
-      hours: userData.hours
-    }));
-    
-    setShowSuccessModal(true);
   };
+  
 
   const handleConfirm = () => {
     setShowSuccessModal(false);

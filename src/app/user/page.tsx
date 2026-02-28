@@ -8,30 +8,71 @@ import styles from "./User.module.css";
 
 const UserProfile = () => {
   const router = useRouter();
-  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState<boolean>(false);
   const [role, setRole] = useState<"user" | "admin" | null>(null);
-  const [userData, setUserData] = useState<any>(null);
+  const [userData, setUserData] = useState<user | null>(null);
+
+  interface user { 
+    name: string,
+    position: string,
+    hours: number,
+    email: string,
+    phone: string,
+    avatar: string,
+    role: "user" | "admin"
+
+  }
 
   useEffect(() => {
-    const storedRole = localStorage.getItem("role") as "user" | "admin" | null;
-    const storedUserData = localStorage.getItem("userData");
-    
-    if (!storedRole || !storedUserData) {
-      router.push("/login");
-    } else {
-      setRole(storedRole);
-      setUserData(JSON.parse(storedUserData));
-    }
+
+const retrieveUser = async () => { 
+  try { 
+
+    const response = await fetch(`/api/users/me`,{method: 'GET'})
+
+    const person = await response.json()
+
+    const User: user = {
+      name: person.worker?.fullName,
+      position: "Operador",
+      hours: 15,
+      email: person.email,
+      phone: person.worker?.phone,
+      avatar: person.worker?.profilePhotoUrl,
+      role: person.isAdmin ? 'admin' : 'user'
+    };
+  
+
+
+    setUserData(User);
+    setRole(User.role);
+
+  }catch(err) { 
+    console.log("error",err)
+  }
+}
+
+retrieveUser()
+
   }, []);
 
-  const confirmLogout = () => {
-    localStorage.removeItem("currentUser");
-    localStorage.removeItem("role");
-    localStorage.removeItem("userData");
-    router.push("/login");
-  };
+  const confirmLogout = async () => {
+
+    try { 
+
+await fetch('api/auth/logout', {method: "POST"})
+
   
-  if (!role || !userData) return null;
+  
+    router.push("/login");
+    }catch(err) { 
+      console.log("error logging user out",err)
+    }
+  };
+
+  if (!userData) {
+    return <div style={{ padding: "2rem" }}>Loading...</div>;
+  }
 
   return (
     <div className={`page ${styles.pageWrapper}`}>
@@ -88,7 +129,14 @@ const UserProfile = () => {
           <Button
             size="regular"
             action="negative"
-            onClick={() => setShowLogoutModal(true)}
+            onClick={() =>
+              { 
+
+                
+                setShowLogoutModal(true)
+
+
+              }}
           >
             Cerrar sesión
           </Button>
