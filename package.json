@@ -7,7 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "prisma:seed": "prisma db seed"
+    "prisma:seed": "prisma db seed",
+    "user:create": "tsx scripts/create-user.ts",
+    "user:list": "tsx scripts/list-users.ts",
+    "inventory:clear": "tsx scripts/clear-inventory.ts",
+    "inventory:stats": "tsx scripts/inventory-stats.ts"
   },
   "prisma": {
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"

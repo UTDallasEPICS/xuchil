@@ -6,7 +6,7 @@ import {verifySession} from "@/lib/session";
 
 export async function GET(request: NextRequest) {
   const payload = await verifySession();
-  if (!payload?.isAdmin) {
+  if (!payload) {
     return new NextResponse(null, { status: 403 });
   }
   try {

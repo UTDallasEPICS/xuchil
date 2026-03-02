@@ -4,21 +4,43 @@ import { Calendar, Clock, User } from "lucide-react";
 import styles from "@/styles/DetailProcess.module.css";
 import UnitField from "@/components/UnitField2";
 import HeaderXuchil from "@/components/HeaderXuchil";
-import { getSessionInfo } from "@/constants/api";
 import { fetchProcessRunDetail, fetchStepExecutionDetail } from "@/app/api/logbook";
 import React from "react";
 
-const { isAdminMode, currentUser } = getSessionInfo();
-
-const DetailProcess = () => {
+const DetailProcessContent = () => {
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
+  const [isAdminMode, setIsAdminMode] = React.useState(false);
+  const [currentUser, setCurrentUser] = React.useState("");
 
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [processRun, setProcessRun] = React.useState<any | null>(null);
   const [stepDetail, setStepDetail] = React.useState<any | null>(null);
   const [materialSummary, setMaterialSummary] = React.useState<Array<{name:string, qty:number, unit?:string}>>([]);
+
+  React.useEffect(() => {
+    let mounted = true;
+
+    async function loadSession() {
+      try {
+        const response = await fetch("/api/users/me", { credentials: "include" });
+        if (!response.ok) return;
+        const data = await response.json();
+        if (!mounted) return;
+        setIsAdminMode(!!data.isAdmin);
+        setCurrentUser(data.worker?.fullName ?? data.email ?? "");
+      } catch {
+        return;
+      }
+    }
+
+    loadSession();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   React.useEffect(() => {
     async function load() {
@@ -165,6 +187,14 @@ const DetailProcess = () => {
 )}
 
     </div>
+  );
+};
+
+const DetailProcess = () => {
+  return (
+    <React.Suspense fallback={<div className={styles.container}><HeaderXuchil /><p>Cargando…</p></div>}>
+      <DetailProcessContent />
+    </React.Suspense>
   );
 };
 

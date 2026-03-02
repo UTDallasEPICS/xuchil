@@ -13,21 +13,42 @@ const UserProfile = () => {
   const [userData, setUserData] = useState<any>(null);
 
   useEffect(() => {
-    const storedRole = localStorage.getItem("role") as "user" | "admin" | null;
-    const storedUserData = localStorage.getItem("userData");
-    
-    if (!storedRole || !storedUserData) {
-      router.push("/login");
-    } else {
-      setRole(storedRole);
-      setUserData(JSON.parse(storedUserData));
+    let mounted = true;
+
+    async function loadProfile() {
+      try {
+        const response = await fetch("/api/users/me", { credentials: "include" });
+        if (!response.ok) {
+          router.push("/login");
+          return;
+        }
+
+        const authUser = await response.json();
+        if (!mounted) return;
+
+        setRole(authUser.isAdmin ? "admin" : "user");
+        setUserData({
+          name: authUser.worker?.fullName ?? "",
+          email: authUser.email,
+          phone: authUser.worker?.phone ?? "No especificado",
+          avatar: authUser.worker?.profilePhotoUrl ?? "",
+          position: authUser.worker?.role?.name ?? "Operador",
+          hours: "",
+        });
+      } catch {
+        router.push("/login");
+      }
     }
+
+    loadProfile();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  const confirmLogout = () => {
-    localStorage.removeItem("currentUser");
-    localStorage.removeItem("role");
-    localStorage.removeItem("userData");
+  const confirmLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" }).catch(() => null);
     router.push("/login");
   };
   

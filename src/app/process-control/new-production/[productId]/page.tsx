@@ -1,15 +1,40 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import HeaderXuchil from "@/components/HeaderXuchil";
 import ImageCard from "@/components/ImageCard";
-import { fetchProductVariants } from "@/constants/api";
+import { ProductVariant } from "@/types/ProductVariant";
 import styles from "./ProductDetail.module.css";
 
 const ProductDetailPage = () => {
   const { productId } = useParams();
+  const [productVariants, setProductVariants] = useState<ProductVariant[]>([]);
 
-  const productVariants = fetchProductVariants(productId as string);
+  useEffect(() => {
+    let mounted = true;
+
+    async function load() {
+      const response = await fetch(`/api/product-variants?product_id=${productId}`, { credentials: "include" });
+      if (!response.ok) return;
+      const data = await response.json();
+      if (!mounted) return;
+
+      setProductVariants(
+        data.map((variant: any) => ({
+          id: String(variant.id),
+          name: variant.name,
+          imageSrc: variant.imageUrl || "/globe.svg",
+        }))
+      );
+    }
+
+    load();
+
+    return () => {
+      mounted = false;
+    };
+  }, [productId]);
 
   if (!productVariants || productVariants.length === 0) {
     return (

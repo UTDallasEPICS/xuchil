@@ -7,7 +7,6 @@ import Chronometer from "@/components/Chronometer";
 import BottomButton from "@/components/BottomButton";
 import UnitField from "@/components/UnitField"; 
 import styles from "./ProcessStep.module.css";
-import { fetchProcessSteps, fetchProductVariants } from "@/constants/api";
 import { ProcessStep } from "@/types/ProcessStep";
 import { ProductVariant } from "@/types/ProductVariant";
 
@@ -22,15 +21,54 @@ const ProcessStepPage = () => {
   const [quantity, setQuantity] = useState("");
 
   useEffect(() => {
-    const allProductVariants = fetchProductVariants(productId as string);
-    const stringVariantId = (variantId as string);
-    const variant = allProductVariants.find((s) => s.id == stringVariantId);
-    setCurrentVariant(variant);
-    const allSteps = fetchProcessSteps(productId as string, variantId as string);
-    setSteps(allSteps);
-    const numericStepId = parseInt(stepId || "0", 10);
-    const step = allSteps.find((s) => s.id === numericStepId) || allSteps[0];
-    setCurrentStep(step);
+    let mounted = true;
+
+    async function load() {
+      const variantRes = await fetch(`/api/product-variants?product_id=${productId}`, { credentials: "include" });
+      if (!variantRes.ok) return;
+      const variants = await variantRes.json();
+      const stringVariantId = variantId as string;
+      const variant = variants.find((item: any) => String(item.id) === stringVariantId);
+      if (!variant) return;
+
+      const mappedVariant: ProductVariant = {
+        id: String(variant.id),
+        name: variant.name,
+        imageSrc: variant.imageUrl || "/globe.svg",
+      };
+
+      const templatesRes = await fetch(`/api/process-templates?product_variant_id=${variant.id}`, { credentials: "include" });
+      if (!templatesRes.ok) return;
+      const templates = await templatesRes.json();
+      const activeTemplate = templates.find((template: any) => template.isActive) || templates[0];
+      if (!activeTemplate) return;
+
+      const templateDetailRes = await fetch(`/api/process-templates/${activeTemplate.id}`, { credentials: "include" });
+      if (!templateDetailRes.ok) return;
+      const templateDetail = await templateDetailRes.json();
+
+      const allSteps: ProcessStep[] = (templateDetail.templateSteps || []).map((step: any) => ({
+        id: step.id,
+        title: step.name,
+        estimatedTime: step.idealDurationMin ?? 0,
+        hasInput: step.requiresInput,
+        unit: "",
+        description: step.instructions ?? "",
+      }));
+
+      if (!mounted) return;
+      setCurrentVariant(mappedVariant);
+      setSteps(allSteps);
+      const numericStepId = parseInt((stepId as string) || "0", 10);
+      const step = allSteps.find((item) => item.id === numericStepId) || allSteps[0] || null;
+      setCurrentStep(step);
+    }
+
+    load();
+
+    return () => {
+      mounted = false;
+    };
   }, [productId, variantId, stepId]);
 
   if (!currentStep) {

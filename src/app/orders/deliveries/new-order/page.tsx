@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import HeaderXuchil from "@/components/HeaderXuchil";
 import BottomButton from "@/components/BottomButton";
@@ -10,11 +10,10 @@ import DatePicker from "@/components/DatePicker";
 import OrderedProducts from "@/components/OrderedProducts";
 import { Product } from "@/types/Product";
 import { deliveryVariants } from "@/constants/deliveryConfig";
-import { fetchProducts } from "@/constants/api";
 import styles from "./NewOrder.module.css";
 
 const NewOrderPage = () => {
-  const products: Product[] = useMemo(fetchProducts, []);
+  const [products, setProducts] = useState<Product[]>([]);
   const [clientName, setClientName] = useState("");
   const [deliveryDate, setDeliveryDate] = useState<Date | null>(null);
   const [address, setAddress] = useState("");
@@ -23,6 +22,36 @@ const NewOrderPage = () => {
   >("mail");
 
   const router = useRouter();
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadProducts() {
+      const response = await fetch("/api/product-variants", { credentials: "include" });
+      if (!response.ok) return;
+      const data = await response.json();
+      if (!mounted) return;
+
+      setProducts(
+        data.map((variant: any) => ({
+          id: String(variant.id),
+          name: variant.product?.name ?? "Producto",
+          presentation: variant.name ?? variant.presentation ?? "",
+          image: variant.imageUrl ?? "/globe.svg",
+          quantity: 0,
+          units: variant.defaultUnit?.name ?? "",
+          categoryId: String(variant.product?.categoryId ?? ""),
+          variantId: String(variant.id),
+        }))
+      );
+    }
+
+    loadProducts();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const handleSubmit = () => {
     console.table({
@@ -73,7 +102,11 @@ const NewOrderPage = () => {
       </div>
 
       <h3>Productos:</h3>
-      <OrderedProducts products={products} />
+      {products.length > 0 ? (
+        <OrderedProducts products={products} />
+      ) : (
+        <p>Cargando productos...</p>
+      )}
 
       <BottomButton onClick={handleSubmit}>Finalizar registro</BottomButton>
     </div>

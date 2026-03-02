@@ -1,17 +1,64 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import BottomButton from "@/components/BottomButton";
 import ProductCard from "@/components/ProductCard";
 import styles from "../InventoryPage.module.css";
-import { fetchRawMaterials } from "@/constants/api";
 import { Search, SlidersHorizontal } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+type InventoryRawRow = {
+  id: number;
+  name: string;
+  image: string;
+  presentation: string;
+  quantity: number;
+  units: string;
+};
+
 export default function RawInventoryPage() {
     const [search, setSearch] = useState("");
+    const [products, setProducts] = useState<InventoryRawRow[]>([]);
     const router = useRouter();
-    const products = fetchRawMaterials();
+
+    useEffect(() => {
+        let mounted = true;
+
+        async function load() {
+            const response = await fetch("/api/inventory/summary?item_type=RAW", { credentials: "include" });
+            if (!response.ok) return;
+            const data = await response.json();
+            if (!mounted) return;
+
+            const mapped = data.map((item: any) => {
+                const qty = (item.inventoryLots || []).reduce(
+                    (sum: number, lot: any) => sum + Number(lot.qtyOnHand || 0),
+                    0
+                );
+                const units =
+                    item.rawMaterial?.defaultUnit?.name ||
+                    item.inventoryLots?.[0]?.unit?.name ||
+                    "";
+
+                return {
+                    id: item.id,
+                    name: item.rawMaterial?.name ?? "Materia prima",
+                    image: item.rawMaterial?.imageUrl ?? "/globe.svg",
+                    presentation: "",
+                    quantity: qty,
+                    units,
+                };
+            });
+
+            setProducts(mapped);
+        }
+
+        load();
+
+        return () => {
+            mounted = false;
+        };
+    }, []);
 
     const filtered = products.filter((item) =>
         item.name.toLowerCase().includes(search.toLowerCase())

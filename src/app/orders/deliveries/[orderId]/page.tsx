@@ -30,7 +30,6 @@ const OrderDetailsPage = () => {
 
   const [order, setOrder] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
 
   useEffect(() => {
     let mounted = true;
@@ -110,8 +109,8 @@ const OrderDetailsPage = () => {
 
       <h3>Productos:</h3>
       <div className={styles.productContainer}>
-        {products.map(({ id: pid, ...p }) => (
-          <ProductCard key={pid} {...p} />
+        {products.map((product: any) => (
+          <ProductCard key={product.id} {...product} />
         ))}
       </div>
 

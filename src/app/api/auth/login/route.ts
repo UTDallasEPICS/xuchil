@@ -1,6 +1,6 @@
 import {NextResponse} from "next/server";
 import prisma from "@/lib/db";
-import bcrypt from "bcryptjs";
+import bcrypt from "bcrypt";
 import {createSession} from "@/lib/session";
 import {serverError} from "@/utils/responses";
 
@@ -42,6 +42,8 @@ export async function POST(req: Request) {
       workerId: user.workerId,
       isAdmin: user.isAdmin,
     });
+
+    return NextResponse.json({ ok: true });
   } catch (error) {
     return serverError('user', 'login', null)
   }

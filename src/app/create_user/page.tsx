@@ -27,23 +27,6 @@ const CreateUser = () => {
     error: false,
   });
 
-  const dummyUsers = [
-    {
-      name: "Antonio",
-      lastName: "López",
-      phone: "+52 9511234567",
-      email: "antonio@xuchil.com",
-      username: "antonio123",
-    },
-    {
-      name: "Administrador",
-      lastName: "Xuchil",
-      phone: "+52 9519998877",
-      email: "admin@xuchilnatural.com",
-      username: "admin123",
-    },
-  ];
-
   const isPasswordValid = (pwd: string) =>
     /[a-z]/.test(pwd) &&
     /[A-Z]/.test(pwd) &&
@@ -56,7 +39,7 @@ const CreateUser = () => {
   const isPhoneValid = (phone: string) =>
     phone.replace(/\D/g, "").length >= 10;
 
-  const handleCreateUser = () => {
+  const handleCreateUser = async () => {
     if (
       !name ||
       !lastName ||
@@ -111,31 +94,45 @@ const CreateUser = () => {
       });
     }
 
-    const duplicate = dummyUsers.find(
-      (user) =>
-        user.name === name ||
-        user.lastName === lastName ||
-        user.phone === phone ||
-        user.email === email ||
-        user.username === username
-    );
+    try {
+      const response = await fetch("/api/users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fullName: `${name} ${lastName} ${secondLastName}`.trim(),
+          phone,
+          email,
+          profilePhotoUrl: null,
+          password,
+        }),
+      });
 
-    if (duplicate) {
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        return setModal({
+          open: true,
+          title: "Error al crear usuario",
+          message: payload?.error || "No se pudo registrar el usuario.",
+          error: true,
+        });
+      }
+
+      setModal({
+        open: true,
+        title: "Usuario creado",
+        message: "El nuevo usuario ha sido registrado exitosamente.",
+        error: false,
+      });
+    } catch {
       return setModal({
         open: true,
-        title: "Usuario duplicado",
-        message:
-          "Ya existe un usuario con alguno de los siguientes datos: nombre, apellido, teléfono, correo o usuario.",
+        title: "Error al crear usuario",
+        message: "Ocurrió un problema de red al registrar el usuario.",
         error: true,
       });
     }
-
-    setModal({
-      open: true,
-      title: "Usuario creado ✅",
-      message: "El nuevo usuario ha sido registrado exitosamente.",
-      error: false,
-    });
   };
 
   const handleModalClose = () => {

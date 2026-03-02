@@ -16,27 +16,49 @@ const EditProfile = () => {
   const [avatar, setAvatar] = useState("");
   const [avatarPreview, setAvatarPreview] = useState("");
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [currentUsername, setCurrentUsername] = useState("");
 
   useEffect(() => {
-    const storedUserData = localStorage.getItem("userData");
-    const username = localStorage.getItem("currentUser");
-    
-    if (storedUserData && username) {
-      const parsedData = JSON.parse(storedUserData);
-      setUserData(parsedData);
-      setCurrentUsername(username);
-      
-      const nameParts = parsedData.name.split(" ");
-      setName(nameParts[0] || "");
-      setLastName(nameParts.slice(1).join(" ") || "");
-      
-      setEmail(parsedData.email || "");
-      setPhone(parsedData.phone || "");
-      setAvatarPreview(parsedData.avatar || "/user-placeholder.svg");
-    } else {
-      router.push("/login");
+    let mounted = true;
+
+    async function loadProfile() {
+      try {
+        const response = await fetch("/api/users/me", { credentials: "include" });
+        if (!response.ok) {
+          router.push("/login");
+          return;
+        }
+
+        const authUser = await response.json();
+        if (!mounted) return;
+
+        const fullName = authUser.worker?.fullName ?? "";
+        const nameParts = fullName.split(" ");
+
+        const mapped = {
+          name: fullName,
+          email: authUser.email ?? "",
+          phone: authUser.worker?.phone ?? "",
+          avatar: authUser.worker?.profilePhotoUrl ?? "",
+          position: authUser.worker?.role?.name ?? "",
+          hours: "",
+        };
+
+        setUserData(mapped);
+        setName(nameParts[0] || "");
+        setLastName(nameParts.slice(1).join(" ") || "");
+        setEmail(mapped.email);
+        setPhone(mapped.phone);
+        setAvatarPreview(mapped.avatar || "/user-placeholder.svg");
+      } catch {
+        router.push("/login");
+      }
     }
+
+    loadProfile();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const handleImageUploadClick = () => {
@@ -68,33 +90,28 @@ const EditProfile = () => {
     }
   };
 
-  const handleSave = () => {
-    const username = localStorage.getItem("currentUser");
-    if (!username) {
-      router.push("/login");
+  const handleSave = async () => {
+    try {
+      const response = await fetch("/api/users/me", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fullName: `${name} ${lastName}`.trim(),
+          phone,
+          profilePhotoUrl: avatar || avatarPreview,
+        }),
+      });
+
+      if (!response.ok) {
+        return;
+      }
+
+      setShowSuccessModal(true);
+    } catch {
       return;
     }
-
-    const updatedUserData = {
-      ...userData,
-      name: `${name} ${lastName}`.trim(),
-      email,
-      phone,
-      avatar: avatar || avatarPreview,
-    };
-
-    localStorage.setItem("userData", JSON.stringify(updatedUserData));
-    
-    localStorage.setItem(`userProfile_${username}`, JSON.stringify({
-      name: `${name} ${lastName}`.trim(),
-      email,
-      phone,
-      avatar: avatar || avatarPreview,
-      position: userData.position,
-      hours: userData.hours
-    }));
-    
-    setShowSuccessModal(true);
   };
 
   const handleConfirm = () => {

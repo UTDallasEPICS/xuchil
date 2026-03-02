@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import HeaderXuchil from "@/components/HeaderXuchil";
 import PendingTaskCard from "@/components/PendingTaskCard";
 import styles from "./PendingTasks.module.css";
-import { fetchPendingTasks } from "@/constants/api";
 import { PendingTask } from "@/types/PendingTask";
 
 const PendingTasksPage = () => {
@@ -13,8 +12,45 @@ const PendingTasksPage = () => {
   const router = useRouter();
 
   useEffect(() => {
-    const data = fetchPendingTasks();
-    setTasks(data);
+    let mounted = true;
+
+    async function load() {
+      const response = await fetch("/api/process-runs/pending", { credentials: "include" });
+      if (!response.ok) return;
+      const data = await response.json();
+      if (!mounted) return;
+
+      const mapped: PendingTask[] = data.map((run: any) => {
+        const orderedSteps = [...(run.stepExecutions || [])];
+        const currentStepIndex = orderedSteps.findIndex(
+          (step: any) => step.status === "IN_PROGRESS" || step.status === "PENDING"
+        );
+        const safeIndex = currentStepIndex >= 0 ? currentStepIndex : 0;
+        const currentStep = orderedSteps[safeIndex];
+
+        return {
+          id: run.id,
+          productId: String(run.productVariant?.productId ?? ""),
+          productName: run.productVariant?.name || "Producto",
+          variantId: String(run.productVariantId),
+          startDate: run.startedAt
+            ? new Date(run.startedAt).toLocaleDateString("es-MX")
+            : "",
+          startedBy: run.creator?.fullName || "No asignado",
+          currentStep: currentStep?.templateStep?.name || "Sin paso",
+          currentStepNumber: safeIndex + 1,
+          totalSteps: orderedSteps.length || 0,
+        };
+      });
+
+      setTasks(mapped);
+    }
+
+    load();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   return (

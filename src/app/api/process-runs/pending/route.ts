@@ -9,7 +9,20 @@ export async function GET() {
       where: {
         status: {in: [ProcessStatus.IN_PROGRESS, ProcessStatus.PAUSED]},
       },
-      include: {productVariant: true},
+      include: {
+        productVariant: {
+          include: {
+            product: true,
+          },
+        },
+        creator: true,
+        stepExecutions: {
+          include: {
+            templateStep: true,
+          },
+          orderBy: { id: "asc" },
+        },
+      },
       orderBy: {startedAt: "desc"},
     });
 

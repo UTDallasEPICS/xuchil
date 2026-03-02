@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 
 import HeaderXuchil from "@/components/HeaderXuchil";
@@ -12,7 +12,6 @@ import DatePicker from "@/components/DatePicker";
 import OrderedProducts from "@/components/OrderedProducts";
 import DeleteModal from "@/components/DeleteModal";
 
-import { fetchProducts } from "@/constants/api";
 import { fetchOrderByIdClient } from "@/lib/ordersClient";
 import { deliveryVariants } from "@/constants/deliveryConfig";
 import { Product } from "@/types/Product";
@@ -25,6 +24,7 @@ const EditOrderPage = () => {
 
   const [order, setOrder] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const [initialProducts, setInitialProducts] = useState<Product[]>([]);
 
   useEffect(() => {
     let mounted = true;
@@ -49,7 +49,36 @@ const EditOrderPage = () => {
   if (loading) return <p>Cargando pedido...</p>;
   if (!order) return <p>Pedido no encontrado</p>;
 
-  const initialProducts: Product[] = useMemo(fetchProducts, []);
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadProducts() {
+      const response = await fetch("/api/product-variants", { credentials: "include" });
+      if (!response.ok) return;
+      const data = await response.json();
+      if (!mounted) return;
+
+      setInitialProducts(
+        data.map((variant: any) => ({
+          id: String(variant.id),
+          name: variant.product?.name ?? "Producto",
+          presentation: variant.name ?? variant.presentation ?? "",
+          image: variant.imageUrl ?? "/globe.svg",
+          quantity: 0,
+          units: variant.defaultUnit?.name ?? "",
+          categoryId: String(variant.product?.categoryId ?? ""),
+          variantId: String(variant.id),
+        }))
+      );
+    }
+
+    loadProducts();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   const [clientName, setClientName] = useState(order.clientName);
   const [deliveryDate, setDeliveryDate] = useState<Date | null>(
     (() => {
@@ -137,7 +166,11 @@ const EditOrderPage = () => {
         </div>
 
         <h3>Productos:</h3>
-        <OrderedProducts products={initialProducts} />
+        {initialProducts.length > 0 ? (
+          <OrderedProducts products={initialProducts} />
+        ) : (
+          <p>Cargando productos...</p>
+        )}
 
         <BottomButton onClick={handleSave}>Finalizar edición</BottomButton>
       </div>
