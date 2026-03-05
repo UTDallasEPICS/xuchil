@@ -48,6 +48,7 @@ const Chronometer: React.FC<ChronometerProps> = ({ estimatedTime, onStart }) => 
   const circumference = 2 * Math.PI * radius;
   const progress = Math.min(time / (estimatedTime * 60), 1);
   const strokeDashoffset = circumference * (1 - progress);
+  const isOvertime = time > estimatedTime * 60;
 
   const displayText = hasStarted ? formattedTime : "INICIAR";
 
@@ -74,9 +75,9 @@ const Chronometer: React.FC<ChronometerProps> = ({ estimatedTime, onStart }) => 
               cx={size / 2}
               cy={size / 2}
               r={radius}
-              stroke="var(--color-accent)"
+              stroke={isOvertime ? "var(--color-negative)" : "var(--color-accent)"}
               strokeWidth={strokeWidth}
-              fill="none"
+              fill={isOvertime ? "var(--color-green-light)" : "none"}
               strokeDasharray={circumference}
               strokeDashoffset={hasStarted ? strokeDashoffset : circumference}
               strokeLinecap="round"
