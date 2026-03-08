@@ -8,5 +8,6 @@ export interface PendingTask {
     currentStep: string;
     currentStepNumber: number;
     totalSteps: number;
+    openRoute: string;
 }
   

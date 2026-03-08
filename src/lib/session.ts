@@ -12,6 +12,9 @@ export default interface SessionPayload {
 const EXPIRATION_MS = 2 * 24 * 60 * 60 * 1000
 
 const secretKey = process.env.SESSION_SECRET;
+if (!secretKey) {
+  throw new Error('SESSION_SECRET environment variable is not set');
+}
 const encodedKey = new TextEncoder().encode(secretKey);
 
 export async function encrypt(payload: SessionPayload, expiresAt: Date) {
@@ -43,7 +46,7 @@ export async function createSession(payload: SessionPayload) {
   const cookieStore = await cookies();
   cookieStore.set('session', session, {
     httpOnly: true,
-    secure: true,
+    secure: process.env.NODE_ENV === 'production',
     expires: expiresAt,
     sameSite: 'lax',
     path: '/',
@@ -60,7 +63,7 @@ export async function updateSession() {
   const expiresAt = new Date(Date.now() + EXPIRATION_MS);
   cookieStore.set('session', session, {
     httpOnly: true,
-    secure: true,
+    secure: process.env.NODE_ENV === 'production',
     expires: expiresAt,
     sameSite: 'lax',
     path: '/',
