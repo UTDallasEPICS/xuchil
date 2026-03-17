@@ -257,80 +257,116 @@ const ProcessResultsPage: React.FC = () => {
     }
   }, [selectedUnitId, wasteUnitId]);
 
-  const handleFinishProcess = async () => {
-    if (!processRunId) {
-      alert("No se encontro el proceso activo. Regresa a Control de procesos y vuelve a abrir esta tarea.");
+//////// VALIDACIONES
+const validatePositiveNumber = (value: string, fieldName: string) => {
+  if (!value) {
+    return `${fieldName} es obligatorio.`;
+  }
+
+  const number = Number(value);
+
+  if (isNaN(number)) {
+    return `${fieldName} debe ser un número válido.`;
+  }
+
+  if (number <= 0) {
+    return `${fieldName} debe ser mayor a cero.`;
+  }
+
+  return null;
+};
+
+const handleFinishProcess = async () => {
+  if (!processRunId) {
+    alert("No se encontro el proceso activo. Regresa a Control de procesos y vuelve a abrir esta tarea.");
+    return;
+  }
+
+  const finalQty = resultantQty || productQty;
+
+  // Validar producto final
+  const productError = validatePositiveNumber(finalQty, "La cantidad de producto");
+  if (productError) {
+    alert(productError);
+    return;
+  }
+
+  if (!selectedUnitId) {
+    alert("Selecciona la unidad de medida del producto final.");
+    return;
+  }
+
+  // Validar merma si existe
+  if (wasteQty) {
+    const wasteError = validatePositiveNumber(wasteQty, "La merma");
+    if (wasteError) {
+      alert(wasteError);
+      return;
+    }
+  }
+
+  // Validar empaque si aplica
+  if (wasPackaged) {
+    if (!packageType) {
+      alert("Selecciona el tipo de empaque.");
       return;
     }
 
-    // Use resultantQty if waste was entered, otherwise use productQty
-    const finalQty = resultantQty || productQty;
-    if (!finalQty || parseFloat(finalQty) <= 0) {
-      alert("Ingresa la cantidad de producto obtenido.");
+    const contentError = validatePositiveNumber(contentPerPackage, "El contenido por empaque");
+    if (contentError) {
+      alert(contentError);
       return;
     }
 
-    if (!selectedUnitId) {
-      alert("Selecciona la unidad de medida del producto final.");
+    if (!packageContentUnitId) {
+      alert("Selecciona la unidad del contenido por empaque.");
       return;
     }
+  }
 
-    if (wasPackaged) {
-      if (!packageType) {
-        alert("Selecciona el tipo de empaque.");
-        return;
-      }
-      if (!contentPerPackage || parseFloat(contentPerPackage) <= 0) {
-        alert("Define el contenido por empaque.");
-        return;
-      }
-      if (!packageContentUnitId) {
-        alert("Selecciona la unidad del contenido por empaque.");
-        return;
-      }
-    }
+  setSaving(true);
+  try {
+    const outputUnit = units.find((u) => u.id === selectedUnitId);
+    const wasteUnit = units.find((u) => u.id === wasteUnitId);
+    const outputFactor = Number(outputUnit?.factorToBase ?? 1);
+    const wasteFactor = Number(wasteUnit?.factorToBase ?? 1);
 
-    setSaving(true);
-    try {
-      const outputUnit = units.find((u) => u.id === selectedUnitId);
-      const wasteUnit = units.find((u) => u.id === wasteUnitId);
-      const outputFactor = Number(outputUnit?.factorToBase ?? 1);
-      const wasteFactor = Number(wasteUnit?.factorToBase ?? 1);
-      const parsedWasteQty = parseFloat(wasteQty) || 0;
-      const convertedWasteQty = wasteUnitId && selectedUnitId
+    const parsedWasteQty = parseFloat(wasteQty) || 0;
+
+    const convertedWasteQty =
+      wasteUnitId && selectedUnitId
         ? (parsedWasteQty * wasteFactor) / outputFactor
         : parsedWasteQty;
 
-      const res = await fetch(`/api/process-runs/${processRunId}/finish`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          goodOutputQty: parseFloat(finalQty) || 0,
-          scrapQty: convertedWasteQty,
-          outputUnitId: selectedUnitId,
-          notes: observations || null,
-          // Packaging info
-          wasPackaged,
-          packageType: wasPackaged ? packageType : null,
-          contentPerPackage: wasPackaged ? parseFloat(contentPerPackage) || null : null,
-          packageContentUnitId: wasPackaged ? packageContentUnitId : null,
-        }),
-      });
+    const res = await fetch(`/api/process-runs/${processRunId}/finish`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        goodOutputQty: parseFloat(finalQty),
+        scrapQty: convertedWasteQty,
+        outputUnitId: selectedUnitId,
+        notes: observations || null,
+        wasPackaged,
+        packageType: wasPackaged ? packageType : null,
+        contentPerPackage: wasPackaged ? parseFloat(contentPerPackage) : null,
+        packageContentUnitId: wasPackaged ? packageContentUnitId : null,
+      }),
+    });
 
-      if (res.ok) {
-        router.push("/process-control");
-      } else {
-        const err = await res.json().catch(() => ({}));
-        alert(err.error || "Error al finalizar el proceso");
-      }
-    } catch (e) {
-      console.error("Error finishing process:", e);
-      alert("Error al finalizar el proceso");
-    } finally {
-      setSaving(false);
+    if (res.ok) {
+      router.push("/process-control");
+    } else {
+      const err = await res.json().catch(() => ({}));
+      alert(err.error || "Error al finalizar el proceso");
     }
-  };
+  } catch (e) {
+    console.error("Error finishing process:", e);
+    alert("Error al finalizar el proceso");
+  } finally {
+    setSaving(false);
+  }
+};
 
   const selectedUnitName = units.find((u) => u.id === selectedUnitId)?.name || "";
 
@@ -344,8 +380,10 @@ const ProcessResultsPage: React.FC = () => {
       <div className={styles.qtyRow}>
         <input
           type="number"
+          min="0.001"
+          step="0.001"
           className={styles.qtyInput}
-          value={productQty}
+         value={productQty}
           onChange={(e) => setProductQty(e.target.value)}
           placeholder="Cantidad"
         />
@@ -410,11 +448,13 @@ const ProcessResultsPage: React.FC = () => {
           <label className={styles.fieldLabel}>Contenido por empaque:</label>
           <div className={styles.qtyRow}>
             <input
-              type="number"
-              className={styles.qtyInput}
-              value={contentPerPackage}
-              onChange={(e) => setContentPerPackage(e.target.value)}
-              placeholder="Ej: 250"
+            type="number"
+            min="0.001"
+            step="0.001"
+            className={styles.qtyInput}
+            value={contentPerPackage}
+            onChange={(e) => setContentPerPackage(e.target.value)}
+            placeholder="Ej: 250"
             />
             <select
               className={styles.unitSelect}
@@ -438,6 +478,8 @@ const ProcessResultsPage: React.FC = () => {
       <div className={styles.qtyRow}>
         <input
           type="number"
+          min="0.001"
+          step="0.001"
           className={styles.qtyInput}
           value={wasteQty}
           onChange={(e) => setWasteQty(e.target.value)}
@@ -460,7 +502,9 @@ const ProcessResultsPage: React.FC = () => {
           <h2>Cantidad resultante:</h2>
           <div className={styles.qtyRow}>
             <input
-              type="number"
+               type="number"
+              min="0.001"
+              step="0.001"
               className={styles.qtyInput}
               value={resultantQty}
               onChange={(e) => setResultantQty(e.target.value)}

@@ -80,21 +80,76 @@ const NewProcessPage = () => {
   };
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Aquí se enviarían los datos al backend
-    console.log("Nuevo proceso:", {
-      processName,
-      processDescription,
-      steps,
-      rawMaterials
-    });
+  e.preventDefault();
+
+  if (!processName.trim()) {
     setModal({
       open: true,
-      title: "Proceso creado exitosamente",
-      message: "El nuevo proceso ha sido registrado correctamente.",
-      error: false,
+      title: "Error",
+      message: "El nombre del proceso es obligatorio.",
+      error: true,
     });
-  };
+    return;
+  }
+
+  for (const material of rawMaterials) {
+    if (!material.name.trim()) {
+      setModal({
+        open: true,
+        title: "Error",
+        message: "Todas las materias primas deben tener nombre.",
+        error: true,
+      });
+      return;
+    }
+
+    if (material.quantity <= 0) {
+      setModal({
+        open: true,
+        title: "Error",
+        message: "Las cantidades de materia prima deben ser mayores a 0.",
+        error: true,
+      });
+      return;
+    }
+  }
+
+  for (const step of steps) {
+    if (!step.title.trim()) {
+      setModal({
+        open: true,
+        title: "Error",
+        message: "Todos los pasos deben tener título.",
+        error: true,
+      });
+      return;
+    }
+
+    if (step.estimatedTime <= 0) {
+      setModal({
+        open: true,
+        title: "Error",
+        message: "El tiempo estimado debe ser mayor a 0 minutos.",
+        error: true,
+      });
+      return;
+    }
+  }
+
+  console.log("Nuevo proceso:", {
+    processName,
+    processDescription,
+    steps,
+    rawMaterials
+  });
+
+  setModal({
+    open: true,
+    title: "Proceso creado exitosamente",
+    message: "El nuevo proceso ha sido registrado correctamente.",
+    error: false,
+  });
+};
 
   const handleModalClose = () => {
     setModal({ ...modal, open: false });
@@ -164,13 +219,21 @@ const NewProcessPage = () => {
                 <div className={styles.quantityGroup}>
                   <div className={styles.inputGroup}>
                     <label className={styles.label}>Cantidad</label>
-                    <input
-                      type="number"
-                      className={styles.input}
-                      value={material.quantity}
-                      onChange={(e) => updateRawMaterial(index, "quantity", parseFloat(e.target.value) || 0)}
-                      required
-                    />
+                   <input
+                    type="number"
+                    min="0.001"
+                    step="0.001"
+                    className={styles.input}
+                    value={material.quantity}
+                    onChange={(e) =>
+                    updateRawMaterial(
+                    index,
+                    "quantity",
+                   Math.max(0.001, parseFloat(e.target.value) || 0.001)
+                    )
+                    }
+                     required
+                  />
                   </div>
                   <select
                     value={material.unit}
@@ -250,10 +313,18 @@ const NewProcessPage = () => {
                     <label className={styles.label}>Tiempo estimado (minutos)</label>
                     <input
                       type="number"
+                     min="1"
+                      step="1"
                       className={styles.input}
                       value={step.estimatedTime}
-                      onChange={(e) => updateStep(step.id, "estimatedTime", parseFloat(e.target.value) || 0)}
-                      required
+                      onChange={(e) =>
+                      updateStep(
+                      step.id,
+                     "estimatedTime",
+                      Math.max(1, parseInt(e.target.value) || 1)
+                    )
+                   }
+                   required
                     />
                   </div>
                   
