@@ -124,6 +124,60 @@ const NewProcessPage = () => {
       return;
     }
 
+    if (!processName.trim()) {
+      setModal({
+        open: true,
+        title: "Error",
+        message: "El nombre del proceso es obligatorio.",
+        error: true,
+      });
+      return;
+    }
+
+    for (const material of rawMaterials) {
+      if (!material.name.trim()) {
+        setModal({
+          open: true,
+          title: "Error",
+          message: "Todas las materias primas deben tener nombre.",
+          error: true,
+        });
+        return;
+      }
+
+      if (material.quantity <= 0) {
+        setModal({
+          open: true,
+          title: "Error",
+          message: "Las cantidades de materia prima deben ser mayores a 0.",
+          error: true,
+        });
+        return;
+      }
+    }
+
+    for (const step of steps) {
+      if (!step.title.trim()) {
+        setModal({
+          open: true,
+          title: "Error",
+          message: "Todos los pasos deben tener título.",
+          error: true,
+        });
+        return;
+      }
+
+      if (step.estimatedTime <= 0) {
+        setModal({
+          open: true,
+          title: "Error",
+          message: "El tiempo estimado debe ser mayor a 0 minutos.",
+          error: true,
+        });
+        return;
+      }
+    }
+
     try {
       const payload = {
         productVariantId: parseInt(productVariantId, 10),
