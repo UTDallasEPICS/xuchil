@@ -18,13 +18,41 @@ import { Product } from "@/types/Product";
 
 import styles from "./EditOrder.module.css";
 
+type OrderItemDraft = {
+  productId: string;
+  quantity: number;
+};
+
+function mapDeliveryVariantToApi(variant: keyof typeof deliveryVariants) {
+  switch (variant) {
+    case "personal":
+      return "PERSONAL" as const;
+    case "consignment":
+      return "CONSIGNMENT" as const;
+    default:
+      return "MAIL" as const;
+  }
+}
+
+function parseDateMx(date: string): Date | null {
+  const [dd, mm, yyyy] = date.split("/").map(Number);
+  if (!dd || !mm || !yyyy) return null;
+  return new Date(yyyy, mm - 1, dd);
+}
+
 const EditOrderPage = () => {
   const { orderId } = useParams<{ orderId: string }>();
   const router = useRouter();
 
   const [order, setOrder] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
-  const [initialProducts, setInitialProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [clientName, setClientName] = useState("");
+  const [deliveryDate, setDeliveryDate] = useState<Date | null>(null);
+  const [address, setAddress] = useState("");
+  const [deliveryVariant, setDeliveryVariant] = useState<keyof typeof deliveryVariants>("mail");
+  const [initialOrderItems, setInitialOrderItems] = useState<OrderItemDraft[]>([]);
+  const [orderItems, setOrderItems] = useState<OrderItemDraft[]>([]);
 
   useEffect(() => {
     let mounted = true;
@@ -46,8 +74,26 @@ const EditOrderPage = () => {
     };
   }, [orderId]);
 
-  if (loading) return <p>Cargando pedido...</p>;
-  if (!order) return <p>Pedido no encontrado</p>;
+  useEffect(() => {
+    if (!order) return;
+
+    setClientName(order.clientName ?? "");
+    setAddress(order.address ?? "");
+    setDeliveryVariant(order.deliveryVariant ?? "mail");
+    setDeliveryDate(order.deliveryDate ? parseDateMx(order.deliveryDate) : null);
+    setOrderItems(
+      (order.products || []).map((product: any) => ({
+        productId: String(product.id),
+        quantity: Number(product.quantity || 0),
+      }))
+    );
+    setInitialOrderItems(
+      (order.products || []).map((product: any) => ({
+        productId: String(product.id),
+        quantity: Number(product.quantity || 0),
+      }))
+    );
+  }, [order]);
 
   useEffect(() => {
     let mounted = true;
@@ -58,7 +104,7 @@ const EditOrderPage = () => {
       const data = await response.json();
       if (!mounted) return;
 
-      setInitialProducts(
+      setProducts(
         data.map((variant: any) => ({
           id: String(variant.id),
           name: variant.product?.name ?? "Producto",
@@ -79,38 +125,98 @@ const EditOrderPage = () => {
     };
   }, []);
 
-  const [clientName, setClientName] = useState(order.clientName);
-  const [deliveryDate, setDeliveryDate] = useState<Date | null>(
-    (() => {
-      const [dd, mm, yyyy] = order.deliveryDate.split("/").map(Number);
-      return new Date(yyyy, mm - 1, dd);
-    })()
-  );
-  const [address, setAddress] = useState(order.address);
-  const [deliveryVariant, setDeliveryVariant] =
-    useState<keyof typeof deliveryVariants>(order.deliveryVariant);
-
   const [showDelete, setShowDelete] = useState(false);
 
   const handleCancel = () => router.back();
 
-  const handleSave = () => {
-    console.table({
-      id: order.id,
-      clientName,
-      deliveryDate,
-      address,
-      deliveryVariant,
-    });
-    router.replace("/orders/deliveries");
+  const handleSave = async () => {
+    if (!order?.id) return;
+
+    if (!clientName.trim()) {
+      alert("El nombre del cliente es obligatorio.");
+      return;
+    }
+
+    if (!deliveryDate) {
+      alert("Selecciona una fecha de entrega.");
+      return;
+    }
+
+    if (!address.trim()) {
+      alert("La dirección de entrega es obligatoria.");
+      return;
+    }
+
+    const validItems = orderItems
+      .map((item) => ({
+        productVariantId: parseInt(item.productId, 10),
+        quantity: item.quantity,
+      }))
+      .filter((item) => !Number.isNaN(item.productVariantId) && item.quantity > 0);
+    if (validItems.length === 0) {
+      alert("Agrega al menos un producto al pedido.");
+      return;
+    }
+
+    const payload = {
+      clientName: clientName.trim(),
+      addressText: address.trim(),
+      deliveryDate: deliveryDate.toISOString(),
+      deliveryVariant: mapDeliveryVariantToApi(deliveryVariant),
+      orderItems: validItems.map((item) => ({
+        productVariantId: item.productVariantId,
+        quantity: item.quantity,
+        unitId: null,
+        notes: null,
+      })),
+      status: (order.raw?.status ?? "SCHEDULED") as "SCHEDULED" | "DELIVERED" | "CANCELLED",
+      deliveredAt: order.raw?.deliveredAt ?? null,
+      consignmentPartner: order.raw?.consignmentPartner ?? null,
+      notes: order.raw?.notes ?? null,
+    };
+
+    try {
+      const response = await fetch(`/api/orders/${order.id}`, {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error || "No se pudo actualizar el pedido.");
+      }
+
+      router.replace("/orders/deliveries");
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Error al actualizar el pedido.");
+    }
   };
 
   const handleDelete = () => setShowDelete(true);
 
-  const confirmDelete = () => {
-    console.log("Eliminar pedido", order.id);
-    router.replace("/orders/deliveries");
+  const confirmDelete = async () => {
+    if (!order?.id) return;
+
+    try {
+      const response = await fetch(`/api/orders/${order.id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error("No se pudo eliminar el pedido.");
+      }
+
+      router.replace("/orders/deliveries");
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Error al eliminar el pedido.");
+    }
   };
+
+  if (loading) return <p>Cargando pedido...</p>;
+  if (!order) return <p>Pedido no encontrado</p>;
 
   return (
     <>
@@ -139,7 +245,12 @@ const EditOrderPage = () => {
         <h1 className={styles.title}>Pedido #{order.id}</h1>
 
         <div className={styles.deliveryType}>
-          <DeliveryType variant={deliveryVariant} type="picker" size="sm" />
+          <DeliveryType
+            variant={deliveryVariant}
+            type="picker"
+            size="sm"
+            onVariantChange={setDeliveryVariant}
+          />
         </div>
 
         <h3>Cliente:</h3>
@@ -166,8 +277,8 @@ const EditOrderPage = () => {
         </div>
 
         <h3>Productos:</h3>
-        {initialProducts.length > 0 ? (
-          <OrderedProducts products={initialProducts} />
+        {products.length > 0 ? (
+          <OrderedProducts products={products} value={initialOrderItems} onChange={setOrderItems} />
         ) : (
           <p>Cargando productos...</p>
         )}

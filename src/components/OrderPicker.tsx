@@ -8,19 +8,46 @@ import QuantityPicker from "@/components/QuantityPicker";
 import DeleteModal from "@/components/DeleteModal";
 import { Product } from "@/types/Product";
 
+export interface OrderPickerValue {
+  productId: string;
+  quantity: number;
+}
+
 interface OrderPickerProps {
   index: number;
   products: Product[];
   onDelete: () => void;
+  value?: OrderPickerValue;
+  onChange?: (value: OrderPickerValue) => void;
 }
 
 const OrderPicker: React.FC<OrderPickerProps> = ({
   index,
   products,
   onDelete,
+  value,
+  onChange,
 }) => {
-  const [units, setUnits] = useState(1);
+  const fallbackProductId = products[0]?.id ?? "";
+  const [selectedProductId, setSelectedProductId] = useState(value?.productId ?? fallbackProductId);
+  const [units, setUnits] = useState(value?.quantity ?? 1);
   const [showModal, setShowModal] = useState(false);
+
+  React.useEffect(() => {
+    if (value) {
+      setSelectedProductId(value.productId);
+      setUnits(value.quantity);
+      return;
+    }
+
+    if (!selectedProductId && fallbackProductId) {
+      setSelectedProductId(fallbackProductId);
+    }
+  }, [value, selectedProductId, fallbackProductId]);
+
+  React.useEffect(() => {
+    onChange?.({ productId: selectedProductId, quantity: units });
+  }, [selectedProductId, units, onChange]);
 
   return (
     <>
@@ -39,6 +66,8 @@ const OrderPicker: React.FC<OrderPickerProps> = ({
 
         <ProductPicker
           products={products}
+          valueId={selectedProductId}
+          onChange={(product) => setSelectedProductId(product.id)}
         />
 
         <h3 className={styles.unitsLabel}>Unidades:</h3>
