@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import HeaderXuchil from "@/components/HeaderXuchil";
 import Button from "@/components/Button";
@@ -22,8 +22,18 @@ interface RawMaterial {
   unit: string;
 }
 
+interface ProductVariantOption {
+  id: number;
+  name: string;
+  product?: {
+    name: string;
+  };
+}
+
 const NewProcessPage = () => {
   const router = useRouter();
+  const [variants, setVariants] = useState<ProductVariantOption[]>([]);
+  const [productVariantId, setProductVariantId] = useState("");
   const [processName, setProcessName] = useState("");
   const [processDescription, setProcessDescription] = useState("");
   const [steps, setSteps] = useState<ProcessStep[]>([
@@ -38,6 +48,28 @@ const NewProcessPage = () => {
     message: "",
     error: false,
   });
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadVariants() {
+      try {
+        const res = await fetch("/api/product-variants", { credentials: "include" });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!mounted) return;
+        setVariants(data);
+      } catch (error) {
+        console.error("Failed to load product variants:", error);
+      }
+    }
+
+    loadVariants();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const addStep = () => {
     const newStep: ProcessStep = {
@@ -79,77 +111,59 @@ const NewProcessPage = () => {
     setRawMaterials(updated);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-  e.preventDefault();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  if (!processName.trim()) {
-    setModal({
-      open: true,
-      title: "Error",
-      message: "El nombre del proceso es obligatorio.",
-      error: true,
-    });
-    return;
-  }
-
-  for (const material of rawMaterials) {
-    if (!material.name.trim()) {
+    if (!productVariantId) {
       setModal({
         open: true,
-        title: "Error",
-        message: "Todas las materias primas deben tener nombre.",
+        title: "Falta información",
+        message: "Selecciona una variante de producto.",
         error: true,
       });
       return;
     }
 
-    if (material.quantity <= 0) {
+    try {
+      const payload = {
+        productVariantId: parseInt(productVariantId, 10),
+        name: processName.trim(),
+        notes: processDescription.trim() || null,
+        steps: steps.map((step) => ({
+          name: step.title.trim(),
+          idealDurationMin: step.estimatedTime > 0 ? step.estimatedTime : null,
+          requiresInput: step.hasInput,
+          instructions: step.description?.trim() || null,
+        })),
+      };
+
+      const response = await fetch("/api/process-templates/create-with-steps", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error || "No se pudo crear el proceso.");
+      }
+
       setModal({
         open: true,
-        title: "Error",
-        message: "Las cantidades de materia prima deben ser mayores a 0.",
-        error: true,
+        title: "Proceso creado exitosamente",
+        message: "El nuevo proceso ha sido registrado correctamente.",
+        error: false,
       });
-      return;
-    }
-  }
-
-  for (const step of steps) {
-    if (!step.title.trim()) {
+    } catch (error) {
       setModal({
         open: true,
-        title: "Error",
-        message: "Todos los pasos deben tener título.",
+        title: "Error al crear proceso",
+        message: error instanceof Error ? error.message : "Ocurrió un error inesperado.",
         error: true,
       });
-      return;
     }
-
-    if (step.estimatedTime <= 0) {
-      setModal({
-        open: true,
-        title: "Error",
-        message: "El tiempo estimado debe ser mayor a 0 minutos.",
-        error: true,
-      });
-      return;
-    }
-  }
-
-  console.log("Nuevo proceso:", {
-    processName,
-    processDescription,
-    steps,
-    rawMaterials
-  });
-
-  setModal({
-    open: true,
-    title: "Proceso creado exitosamente",
-    message: "El nuevo proceso ha sido registrado correctamente.",
-    error: false,
-  });
-};
+  };
 
   const handleModalClose = () => {
     setModal({ ...modal, open: false });
@@ -172,6 +186,22 @@ const NewProcessPage = () => {
           {/* Información básica del proceso */}
           <div className={styles.section}>
             <h2>Información del Proceso</h2>
+            <div className={styles.inputGroup}>
+              <label className={styles.label}>Variante de producto</label>
+              <select
+                className={styles.input}
+                value={productVariantId}
+                onChange={(e) => setProductVariantId(e.target.value)}
+                required
+              >
+                <option value="">Seleccionar...</option>
+                {variants.map((variant) => (
+                  <option key={variant.id} value={variant.id}>
+                    {variant.product?.name ? `${variant.product.name} — ${variant.name}` : variant.name}
+                  </option>
+                ))}
+              </select>
+            </div>
             <div className={styles.inputGroup}>
               <label className={styles.label}>Nombre del proceso</label>
               <input
