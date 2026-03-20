@@ -16,6 +16,9 @@ export async function GET() {
       orderBy: { deliveryDate: "asc" },
     });
 
+
+    
+
     return NextResponse.json(orders);
   } catch (error) {
     return serverError('orders', 'fetch', error);
