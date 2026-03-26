@@ -11,3 +11,108 @@
 .cardContainer{
     margin-bottom: -16;
 }
+
+.headerSection {
+  margin-bottom: 20px;
+  padding: 0 20px;
+}
+
+.headerTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.headerTop h1 {
+  margin: 0;
+  flex: 1;
+  text-align: center;
+  font-size: 1.8rem;
+  color: #333;
+}
+
+/* Charts section styles */
+.chartsSection {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  margin: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.tasksSection {
+  margin-top: 20px;
+}
+
+.sectionTitle {
+  font-size: 1.5rem;
+  margin: 20px 20px 20px 20px;
+  color: #333;
+  border-bottom: 2px solid #ff7300;
+  padding-bottom: 10px;
+}
+
+.chartWrapper {
+  margin-bottom: 30px;
+}
+
+.chartWrapper:last-child {
+  margin-bottom: 0;
+}
+
+/* State styles */
+.loadingState,
+.errorState,
+.emptyState {
+  padding: 40px;
+  text-align: center;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  margin: 20px;
+}
+
+.loadingState {
+  color: #666;
+}
+
+.errorState {
+  color: #dc3545;
+}
+
+.emptyState {
+  color: #999;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .headerTop {
+    flex-direction: column;
+  }
+  
+  .headerTop h1 {
+    order: -1;
+    margin-bottom: 10px;
+  }
+  
+  .chartsSection {
+    margin: 10px;
+    padding: 15px;
+  }
+  
+  /* Keep your existing container responsive */
+  .container {
+    max-width: 100%;
+    padding: 0 10px;
+  }
+}
+
+.chartLoadingPlaceholder {
+  padding: 40px;
+  text-align: center;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  margin: 20px;
+  color: #666;
+}
