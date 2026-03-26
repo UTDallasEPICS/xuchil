@@ -18,7 +18,7 @@ import type { LabelProps } from 'recharts';
 // import styles from "./LogbookPage.module.css";   might not need
 
 
-/* Mia's Notes:
+/* Notes:
     Need to compare with 'estimatedTime' (within ProcessStep interface)
         - time is not saved into database
     For task bar:
