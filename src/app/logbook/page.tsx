@@ -10,6 +10,7 @@ import {
 } from "@/constants/filterOptions";
 import { fetchMyTasks, fetchProcessRuns } from "@/app/api/logbook";
 import styles from "./LogbookPage.module.css";
+import Dashboard from "./dashboard/page";
 
 const Logbook = () => {
   const [isAdminMode, setIsAdminMode] = useState(false);
@@ -157,6 +158,8 @@ const Logbook = () => {
         {loading && <p>Cargando…</p>}
         {error && <p style={{color: "red"}}>{error}</p>}
       </div>
+      
+      <Dashboard />
 
       <div className={styles.tableWrapper}>
         <DynamicTable

@@ -1,16 +1,18 @@
 "use client"
 
 import styles from "./dashboard.module.css";
-import { Pie, PieChart, Sector,PieSectorShapeProps } from 'recharts';
+import { Pie, PieChart, Sector,PieSectorShapeProps, Label, ResponsiveContainer, Legend } from 'recharts';
 import type { LabelProps } from 'recharts';
 
 // #region Sample data -----------------------------
 const data = [
-    { value: 1 },
-    { value: 2 },
-    { value: 1 },
+    // IF DOING PERCENTS: 50, 90, 100
+    // why? if worker has one of each then will = 80%
+    { name: "Over Time",  value: 1 },     
+    { name: "On Time",    value: 10 },     
+    { name: "Under Time", value: 7 },
   ];
-  
+
 // from group C to group A  (left to right)
 const COLORS = [ '#efd0ca', '#FFB133', '#5C7457'];
 const LABELS = ['Over Time', 'On Time', 'Under Time'];
@@ -34,20 +36,35 @@ const CustomLegend = () => (
 export default function ProductivityDashboard() { 
     return(
         <div>
-            <PieChart style={{ width: '100%', maxHeight: '200px', aspectRatio: 1.75, 
+            <PieChart style={{ width: '100%', maxWidth: '500px', aspectRatio: 1.75, 
                     margin: '0 auto' }}
-                responsive>  
+                responsive={true}
+            >  
                 <Pie
                     data={data}                         // will need to change to schema (where it is sourcing data from)
                     dataKey="value"                     // what data is refrenced to make chart
                     cx="50%"
-                    cy="90%"
-                    innerRadius="90%"
-                    outerRadius="150%"
+                    cy="85%"
+                    innerRadius="70%"
+                    outerRadius="130%"
                     startAngle={180}
                     endAngle={0}
                     shape={MyCustomPie}                 // the colors
-                />
+                    // for the number per pie slice
+                    label
+                >
+                    <Label
+                        dy={40}
+                        fontSize="200%"
+                        fontWeight={300}
+                        position="center"
+                        //className={styles.insideLabel}        Not working grr
+                    // sizing/centering problem b/c of responsive, to solve make piechart size constant
+                    // but to what size should it be constant for?
+                    >
+                        100%
+                    </Label>
+                </Pie>
             </PieChart>
             <CustomLegend/>
         </div>

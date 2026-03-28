@@ -1,20 +1,9 @@
 "use client";
 
-import React from 'react'
-import DynamicTable from "@/components/DynamicTable";
-import FilterButton from "@/components/FilterButton";
-import {
-  monthFilterOptions,
-  productFilterOptions,
-  userFilterOptions,
-} from "@/constants/filterOptions";
-import { fetchMyTasks, fetchProcessRuns } from "@/app/api/logbook";
-
 import Link from 'next/link';
 import styles from "./dashboard.module.css";
 import ProductivityDashboard from './ProductivityDashboard';
 import TasksDashboard from './TasksDashboard';
-import type { LabelProps } from 'recharts';
 // import styles from "./LogbookPage.module.css";   might not need
 
 
@@ -31,6 +20,7 @@ import type { LabelProps } from 'recharts';
 
 export default function Dashboard() { 
     return (
+        // dashboard too long for phone change later ?
         <div className={styles.container}> 
             <h6 className={styles.dashboardTitle}>Dashboard</h6>
 

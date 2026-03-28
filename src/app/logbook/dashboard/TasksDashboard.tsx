@@ -1,16 +1,14 @@
 "use client"
 
 import styles from "./dashboard.module.css";
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, LabelList } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Label, LabelList } from 'recharts';
 import type { LabelProps } from 'recharts';
-
-/* Review and modify !!!!!!!!!!!!!!!!
-*/
 
 
 // Single row of data — each key is one section of the bar
+// sameple data
 const data = [
-    { notStarted: 1, pending: 8, completed: 12 }
+    { notStarted: 1, pending: 17, completed: 20 }
 ];
 
 // can change into total of "totalSteps" from PendingTask
@@ -28,26 +26,24 @@ const LABELS = {
     completed:  'Completed',
 };
 
-type CenteredLabelProp = LabelProps & { dataKey?: string; };
 
-function CenteredLabel(props: CenteredLabelProp) {
-    const { x, y, width, height, value, index, dataKey } = props;
+function CenteredLabel(props: LabelProps) {
+    const { x, y, width, height, value, } = props;
 
-    if ((width as number) < 10) return null;
-
-    const actualValue = data[index as number]?.[dataKey as keyof typeof data[0]];
+    // no label if width too small
+    if ((width as number) < 5) return null;
 
     return (
         <text
             x={(x as number) + (width as number) / 2}
-            y={(y as number) + (height as number) / 2}
+            y={(y as number) + (height as number) / 2 + 2} // +2 makes complete middle
             textAnchor="middle"
             dominantBaseline="middle"
             fill="var(--color-text-light)"
             fontWeight="600"
             fontSize={14}
         >
-            {actualValue}
+            {value}
         </text>
     );
 }
@@ -67,24 +63,24 @@ export default function TasksDashboard() {
     return(
         <div>
             <BarChart data={data} layout="vertical"
-                style={{ margin: '10px auto 0', height: '80px', width: '100%', maxWidth: '300px', }}
-                responsive  
+                style={{ margin: '10px auto 0', height: '80px', width: '100%', maxWidth: '400px', }}
+                responsive={true}
             >
                 <XAxis type="number" hide domain={[0, total]} /> 
                 <YAxis type="category" hide />
 
                 {/* Each Bar is one section — same stackId stacks them together */}
                 <Bar dataKey="notStarted" stackId="tasks" fill={COLORS.notStarted} radius={[6, 0, 0, 6]}>
-                    <LabelList content={<CenteredLabel />} />
+                    <LabelList dataKey="notStarted" content={<CenteredLabel />} />
                 </Bar>
 
                 <Bar dataKey="pending" stackId="tasks" fill={COLORS.pending}>
-                    <LabelList content={<CenteredLabel />} />
+                    <LabelList dataKey="pending" content={<CenteredLabel/>} />
                 </Bar>
 
                 {/* Last bar gets rounded right corners to match the image */}
                 <Bar dataKey="completed" stackId="tasks" fill={COLORS.completed} radius={[0, 6, 6, 0]}>
-                    <LabelList content={<CenteredLabel />} />
+                    <LabelList dataKey="completed" content={<CenteredLabel />} />
                 </Bar>
             </BarChart>
 
