@@ -22,8 +22,8 @@ const COLORS = {
 
 const LABELS = {
     notStarted: 'Not Started',
-    pending:    'Pending',
-    completed:  'Completed',
+    pending:    'Pendiente',
+    completed:  'Completado',
 };
 
 

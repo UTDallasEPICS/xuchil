@@ -15,7 +15,7 @@ const data = [
 
 // from group C to group A  (left to right)
 const COLORS = [ '#efd0ca', '#FFB133', '#5C7457'];
-const LABELS = ['Over Time', 'On Time', 'Under Time'];
+const LABELS = ['Tarde', 'A tiempo', 'Temprano'];
 
 const MyCustomPie = (props: PieSectorShapeProps) => {
     return <Sector {...props} fill={COLORS[props.index]} />;
@@ -37,7 +37,8 @@ export default function ProductivityDashboard() {
     return(
         <div>
             <PieChart style={{ width: '100%', maxWidth: '500px', aspectRatio: 1.75, 
-                    margin: '0 auto' }}
+                    margin: '0 auto' 
+                }}
                 responsive={true}
             >  
                 <Pie

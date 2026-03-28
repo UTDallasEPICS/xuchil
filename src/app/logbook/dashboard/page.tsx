@@ -22,15 +22,15 @@ export default function Dashboard() {
     return (
         // dashboard too long for phone change later ?
         <div className={styles.container}> 
-            <h6 className={styles.dashboardTitle}>Dashboard</h6>
+            <h6 className={styles.dashboardTitle}>Panel</h6>
 
             <Link href="/process-control/pending-tasks" 
                 className={styles.dashBackground}
                  >
-                    <h6 className={styles.insideHeader}>Productivity</h6>
+                    <h6 className={styles.insideHeader}>Productividad</h6>
                     <ProductivityDashboard />
                     
-                    <h6 className={styles.insideHeader}>Tasks</h6>
+                    <h6 className={styles.insideHeader}>Tareas</h6>
                     <TasksDashboard />
             </Link>
         </div>
