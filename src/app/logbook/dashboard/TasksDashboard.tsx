@@ -6,7 +6,7 @@ import type { LabelProps } from 'recharts';
 
 
 // Single row of data — each key is one section of the bar
-// sameple data
+// sample data
 const data = [
     { notStarted: 1, pending: 17, completed: 20 }
 ];

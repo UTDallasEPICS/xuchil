@@ -43,7 +43,7 @@ export default function ProductivityDashboard() {
             >  
                 <Pie
                     data={data}                         // will need to change to schema (where it is sourcing data from)
-                    dataKey="value"                     // what data is refrenced to make chart
+                    dataKey="value"                     // what data is referenced to make chart
                     cx="50%"
                     cy="85%"
                     innerRadius="70%"
@@ -52,15 +52,15 @@ export default function ProductivityDashboard() {
                     endAngle={0}
                     shape={MyCustomPie}                 // the colors
                     // for the number per pie slice
-                    label
+                    label={{fill: 'var(--color-text-dark) '}}
                 >
                     <Label
                         dy={40}
                         fontSize="200%"
                         fontWeight={300}
                         position="center"
-                        //className={styles.insideLabel}        Not working grr
-                    // sizing/centering problem b/c of responsive, to solve make piechart size constant
+                        fill="var(--color-text-dark)"
+                    // sizing/centering problem b/c of responsive, to solve make pie chart size constant
                     // but to what size should it be constant for?
                     >
                         100%

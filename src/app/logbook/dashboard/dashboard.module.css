@@ -51,3 +51,9 @@
     font-size: 12px; 
     color: var(--color-text-dark);
 }
+
+.summaryText {
+    text-align: center;
+    font-size: 17px;
+    color: var(--color-text-dark);
+}

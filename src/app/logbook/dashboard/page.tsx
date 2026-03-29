@@ -29,6 +29,12 @@ export default function Dashboard() {
                  >
                     <h6 className={styles.insideHeader}>Productividad</h6>
                     <ProductivityDashboard />
+
+                    {/* giving context to the 100% number. "a tiempo" is on time, which is On time + early tasks */}
+
+                    <p className={styles.summaryText}>
+                        Completaste el 100% de tus tareas a tiempo este mes.
+                    </p>
                     
                     <h6 className={styles.insideHeader}>Tareas</h6>
                     <TasksDashboard />
