@@ -75,26 +75,26 @@ export const generateMockTaskData = (): RawTaskData[] => {
   return [
     {
       taskName: "Flour",
-      category: "Production Tasks",
-      times: [5, 7, 8, 9, 15, 6, 8, 10, 12, 8, 9, 11],
+      category: "Flour",
+      times: [5, 6, 7, 8, 9, 6, 7, 8, 7, 6, 8, 9], // 5-9 min
       id: "1"
     },
     {
-      taskName: "Beans",
-      category: "Production Tasks", 
-      times: [3, 5, 4, 6, 5, 7, 5, 4, 8, 5, 6],
+      taskName: "Cookies",
+      category: "Cookies", 
+      times: [8, 10, 12, 9, 11, 13, 10, 12, 11, 9, 10, 12], // 8-13 min
       id: "2"
     },
     {
-      taskName: "Cookies",
-      category: "Production Tasks",
-      times: [10, 12, 15, 18, 25, 15, 14, 16, 20, 22],
+      taskName: "Coffee Substitute",
+      category: "Coffee Substitute",
+      times: [15, 18, 22, 25, 28, 20, 24, 26, 23, 21, 27, 30], // 15-30 min
       id: "3"
     },
     {
-      taskName: "Coffee Substitute",
-      category: "Production Tasks",
-      times: [15, 18, 20, 22, 30, 25, 20, 19, 23],
+      taskName: "Beans",
+      category: "Beans",
+      times: [20, 25, 28, 30, 32, 26, 29, 31, 27, 28, 30, 33], // 20-33 min
       id: "4"
     }
   ];

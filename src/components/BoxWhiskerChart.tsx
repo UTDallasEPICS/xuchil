@@ -3,17 +3,13 @@
 import React from 'react';
 import {
   ComposedChart,
-  CartesianGrid,
   XAxis,
   YAxis,
-  Tooltip,
+  ResponsiveContainer,
   Scatter,
   ErrorBar,
-  ResponsiveContainer,
-  Legend,
 } from 'recharts';
 
-// Define the data structure for a single task
 export interface TaskTimeData {
   taskName: string;
   min: number;
@@ -21,105 +17,143 @@ export interface TaskTimeData {
   max: number;
 }
 
-// Define props for the chart component
 interface BoxWhiskerChartProps {
   data: TaskTimeData[];
   title?: string;
   height?: number;
   unit?: string;
+  maxWidth?: string | number; 
 }
-
-// Type for the chart data with name field (transformed from taskName)
-interface ChartDataItem extends Omit<TaskTimeData, 'taskName'> {
-  name: string;
-}
-
-// Simple custom tooltip
-const CustomTooltip = ({ active, payload }: any) => {
-  if (active && payload && payload.length) {
-    const data = payload[0]?.payload;
-    
-    return (
-      <div style={{ 
-        backgroundColor: 'white', 
-        padding: '10px', 
-        border: '1px solid #ccc',
-        borderRadius: '4px',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-      }}>
-        <p style={{ margin: 0, fontWeight: 'bold', color: '#333' }}>{data?.name}</p>
-        <p style={{ margin: '5px 0 0', color: '#ff7300' }}>
-          Median: {data?.median} min
-        </p>
-        <p style={{ margin: '5px 0 0', color: '#666' }}>
-          Range: {data?.min} - {data?.max} min
-        </p>
-      </div>
-    );
-  }
-  return null;
-};
 
 const BoxWhiskerChart: React.FC<BoxWhiskerChartProps> = ({ 
   data, 
   title, 
-  height = 300,
-  unit = 'min'
+  height = 180,
+  unit = 'min',
+  maxWidth = '100%'
 }) => {
-  // Transform data for the chart (convert taskName to name for XAxis)
-  const chartData: ChartDataItem[] = data.map(item => ({
-    name: item.taskName,
-    min: item.min,
+  if (!data || data.length === 0) {
+    return (
+      <div style={{ textAlign: 'center', padding: '20px', color: '#999' }}>
+        No hay datos para {title}
+      </div>
+    );
+  }
+
+  const sortedData = [...data].sort((a, b) => a.median - b.median);
+  const maxValue = Math.max(...sortedData.map(d => d.max));
+  const minValue = Math.min(...sortedData.map(d => d.min));
+  
+  // Set domain with padding on both sides
+  const xAxisMin = Math.max(0, Math.floor(minValue - 2)); // Start just below min value
+  const xAxisMax = Math.ceil(maxValue + 2); // End just above max value
+  
+  // Calculate min, max, and median across all tasks
+  const globalMin = Math.min(...sortedData.map(d => d.min));
+  const globalMax = Math.max(...sortedData.map(d => d.max));
+  const globalMedian = sortedData[Math.floor(sortedData.length / 2)]?.median || 0;
+
+  // Create custom ticks with min, median, and max (NO 0)
+  const customTicks = [globalMin, globalMedian, globalMax]
+    .filter((value, index, self) => self.indexOf(value) === index)
+    .sort((a, b) => a - b);
+
+  console.log('Custom ticks:', customTicks); // Debug
+
+  const chartData = sortedData.map((item, index) => ({
+    taskName: item.taskName,
     median: item.median,
-    max: item.max
+    min: item.min,
+    max: item.max,
+    index: index,
   }));
 
   return (
-    <div style={{ width: '100%', height, marginBottom: '30px' }}>
-      {title && <h3 style={{ marginBottom: '10px', color: '#333' }}>{title}</h3>}
-      <ResponsiveContainer>
-        <ComposedChart data={chartData} margin={{ top: 20, right: 20, bottom: 60, left: 40 }}>
-          <CartesianGrid strokeDasharray="3 3" />
+    <div style={{ 
+      width: '100%',
+      maxWidth: maxWidth, 
+      height: height,
+      backgroundColor: 'white',
+      borderRadius: '6px',
+      padding: '8px'
+    }}>
+      {title && (
+        <h3 style={{ 
+          marginBottom: '6px', 
+          color: '#333',
+          fontSize: '12px',
+          fontWeight: '600',
+          textAlign: 'left'
+        }}>
+          {title}
+        </h3>
+      )}
+      
+      <ResponsiveContainer width="100%" height="100%">
+        <ComposedChart
+          data={chartData}
+          layout="vertical"
+          margin={{ top: 2, right: 10, left: 0, bottom: 5 }}
+          barCategoryGap={2}
+          barGap={1}
+        >
           <XAxis 
-            dataKey="name" 
-            angle={-45} 
-            textAnchor="end" 
-            height={70}
-            interval={0}
-            tick={{ fontSize: 12 }}
-          />
+            type="number"
+            domain={[xAxisMin, xAxisMax]}
+            ticks={customTicks}
+            tickCount={customTicks.length}
+           padding={{ left: 0, right: 0 }}
+          label={{ 
+            value: `Tiempo (${unit})`, 
+            position: 'bottom',
+            offset: 5,
+            style: { fontSize: '9px', fill: '#666' }
+          }}
+          tick={{ fontSize: 8 }}
+          axisLine={{ stroke: '#ccc', strokeWidth: 1 }}
+          tickLine={true}
+          allowDecimals={true}
+          interval={0}
+          // Add this to prevent extra ticks
+          allowDataOverflow={true}
+          scale="linear"
+          tickMargin={5}
+          tickFormatter={(value) => {
+          // Only show values that are in your customTicks array
+          if (customTicks.includes(value)) {
+            return value % 1 === 0 ? `${value}` : `${value.toFixed(1)}`;
+           }
+          return '';
+         }}
+/>
           <YAxis 
-            label={{ 
-              value: `Time (${unit})`, 
-              angle: -90, 
-              position: 'insideLeft',
-              style: { textAnchor: 'middle' }
-            }} 
+            type="category" 
+            dataKey="index"
+            hide={true}
+            scale="point"
+            padding={{ top: 0, bottom: 0 }}
           />
-          <Tooltip content={<CustomTooltip />} />
-          <Legend />
           
-          {/* Median points with error bars */}
           <Scatter 
             dataKey="median" 
-            fill="#ff7300" 
-            stroke="#ff7300"
-            shape="diamond"
-            name={`Median Time (${unit})`}
+            fill="#214e34"
+            shape="square"
+            name="Mediana"
+            size={28}
           >
             <ErrorBar 
-              dataKey="max" 
-              direction="y" 
+              dataKey="min" 
+              direction="x" 
               stroke="#666" 
-              strokeWidth={2} 
-              width={8}
+              strokeWidth={1}
+              width={6}
             />
             <ErrorBar 
-              dataKey="min" 
-              direction="y" 
+              dataKey="max" 
+              direction="x" 
               stroke="#666" 
-              strokeWidth={2} 
-              width={8}
+              strokeWidth={1}
+              width={6}
             />
           </Scatter>
         </ComposedChart>

@@ -1,15 +1,14 @@
 .container {
-    justify-self: center;
     display: flex;
     flex-wrap: wrap;
     gap: 16px;
     justify-content: center;
-    margin-top: 20px;
+    margin: 20px auto 0;
     max-width: 400px;
 }
 
-.cardContainer{
-    margin-bottom: -16;
+.cardContainer {
+    margin-bottom: -16px;
 }
 
 .headerSection {
@@ -40,6 +39,8 @@
   border-radius: 8px;
   margin: 20px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  width: auto;
+  overflow-x: auto;
 }
 
 .tasksSection {
@@ -52,10 +53,13 @@
   color: #333;
   border-bottom: 2px solid #ff7300;
   padding-bottom: 10px;
+  text-align: center;
 }
 
 .chartWrapper {
-  margin-bottom: 30px;
+  margin-bottom: 40px;
+  width: 100%;
+  /* Remove min-width and min-height - let content determine size */
 }
 
 .chartWrapper:last-child {
@@ -85,6 +89,15 @@
   color: #999;
 }
 
+.chartLoadingPlaceholder {
+  padding: 40px;
+  text-align: center;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  margin: 20px;
+  color: #666;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .headerTop {
@@ -97,22 +110,17 @@
   }
   
   .chartsSection {
-    margin: 10px;
-    padding: 15px;
+    padding: 16px;
+    margin: 12px;
   }
   
-  /* Keep your existing container responsive */
   .container {
     max-width: 100%;
     padding: 0 10px;
   }
-}
-
-.chartLoadingPlaceholder {
-  padding: 40px;
-  text-align: center;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  margin: 20px;
-  color: #666;
+  
+  .sectionTitle {
+    font-size: 1.2rem;
+    margin: 12px;
+  }
 }

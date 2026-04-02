@@ -2,18 +2,13 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from 'next/dynamic';
 import HeaderXuchil from "@/components/HeaderXuchil";
 import PendingTaskCard from "@/components/PendingTaskCard";
-
 import Button from "@/components/Button";
 import styles from "./PendingTasks.module.css";
 import { fetchPendingTasks } from "@/constants/api";
 import { PendingTask } from "@/types/PendingTask";
-import dynamic from 'next/dynamic';
-const BoxWhiskerChart = dynamic(
-  () => import("@/components/BoxWhiskerChart"),
-  { ssr: false, loading: () => <div>Loading chart...</div> }
-);
 import { 
   RawTaskData, 
   GroupedTaskCategory 
@@ -23,13 +18,27 @@ import {
   generateMockTaskData 
 } from "@/utils/dataUtils";
 
+// Dynamically import the chart component with SSR disabled
+const BoxWhiskerChart = dynamic(
+  () => import("@/components/BoxWhiskerChart"),
+  { 
+    ssr: false,
+    loading: () => (
+      <div className={styles.chartLoadingPlaceholder}>
+        <p>Cargando gráficos...</p>
+      </div>
+    )
+  }
+);
+
+
 
 const PendingTasksPage = () => {
   const [tasks, setTasks] = useState<PendingTask[]>([]);
   const [taskCategories, setTaskCategories] = useState<GroupedTaskCategory[]>([]);
   const [chartLoading, setChartLoading] = useState<boolean>(true);
   const [chartError, setChartError] = useState<string | null>(null);
-  const [showCharts, setShowCharts] = useState<boolean>(true); // Toggle to show/hide charts
+  const [showCharts, setShowCharts] = useState<boolean>(true);
   const router = useRouter();
 
   // Load pending tasks
@@ -44,11 +53,7 @@ const PendingTasksPage = () => {
       try {
         setChartLoading(true);
         
-        // TODO: Replace with actual API call when available
-        // For now, using mock data
-        // const response = await fetch('/api/task-times');
-        // const data: RawTaskData[] = await response.json();
-        
+        // Use mock data
         const mockData: RawTaskData[] = generateMockTaskData();
         const grouped = groupTasksByCategory(mockData);
         setTaskCategories(grouped);
@@ -63,9 +68,21 @@ const PendingTasksPage = () => {
     loadChartData();
   }, []);
 
+  // Add this test data right before the return statement
+const testData = [
+  { name: "Coffee Substitute", value: 25 },
+  { name: "Cookies", value: 12 },
+  { name: "Beans", value: 30 },
+  { name: "Flour", value: 8 },
+];
+
+// Then in your JSX, add this test chart:
+{/* Test Chart - Remove after confirming it works */}
+
+
   return (
     <div className="page">
-      <HeaderXuchil />
+      
       
       <div className={styles.headerSection}>
         <div className={styles.headerTop}>
@@ -82,53 +99,69 @@ const PendingTasksPage = () => {
             action="primary" 
             onClick={() => setShowCharts(!showCharts)}
           >
-            {showCharts ? "Hide Charts" : "Show Charts"}
+            {showCharts ? "Ocultar Gráficos" : "Mostrar Gráficos"}
           </Button>
         </div>
       </div>
 
       {/* Charts Section - Toggleable */}
-      {showCharts && (
-        <div className={styles.chartsSection}>
-          <h2 className={styles.sectionTitle}>Analysis de Tareas</h2>
-          
-          {chartLoading && (
-            <div className={styles.loadingState}>
-              <p>Loading task time data...</p>
-            </div>
-          )}
-          
-          {chartError && (
-            <div className={styles.errorState}>
-              <p>Error loading charts: {chartError}</p>
-              <Button 
-                size="small" 
-                action="primary" 
-                onClick={() => window.location.reload()}
-              >
-                Retry
-              </Button>
-            </div>
-          )}
-          
-          {!chartLoading && !chartError && taskCategories.length === 0 && (
-            <div className={styles.emptyState}>
-              <p>No task time data available</p>
-            </div>
-          )}
-          
-          {!chartLoading && !chartError && taskCategories.map((category, index) => (
-            <div key={`${category.category}-${index}`} className={styles.chartWrapper}>
-              <BoxWhiskerChart 
-                data={category.tasks}
-                title={category.category}
-                height={350}
-                unit="minutes"
-              />
-            </div>
-          ))}
-        </div>
-      )}
+    {/* Charts Section - Toggleable */}
+{showCharts && (
+  <div className={styles.chartsSection}>
+    <h2 className={styles.sectionTitle}>Análisis de Tareas</h2>
+    
+    {chartLoading && (
+      <div className={styles.loadingState}>
+        <p>Cargando datos...</p>
+      </div>
+    )}
+    
+    {chartError && (
+      <div className={styles.errorState}>
+        <p>Error: {chartError}</p>
+        <Button 
+          size="small" 
+          action="primary" 
+          onClick={() => window.location.reload()}
+        >
+          Reintentar
+        </Button>
+      </div>
+    )}
+    
+    {!chartLoading && !chartError && taskCategories.length === 0 && (
+      <div className={styles.emptyState}>
+        <p>No hay datos disponibles</p>
+      </div>
+    )}
+    
+   {!chartLoading && !chartError && taskCategories.map((category, index) => (
+  <div key={`${category.category}-${index}`} style={{ 
+    marginBottom: '10px',
+    width: '100%',
+    minHeight: '40px',
+    background: '#fafafa',
+    padding: '0px',
+    borderRadius: '8px',
+    display: 'flex',
+    justifyContent: 'center',
+  }}>
+    <div style={{ 
+      width: '100%',           // Take full width
+      maxWidth: '1000px',       // But no wider than 500px
+      minWidth: '275px'        // And no narrower than 250px
+    }}>
+      <BoxWhiskerChart 
+        data={category.tasks}
+        title={category.category}
+        height={39}
+        unit="minutos"
+      />
+    </div>
+  </div>
+))}
+  </div>
+)}
 
       {/* Pending Tasks List */}
       <div className={styles.tasksSection}>
