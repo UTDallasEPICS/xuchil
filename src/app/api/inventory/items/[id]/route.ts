@@ -14,7 +14,24 @@ export async function GET(
   try {
     const item = await prisma.inventoryItem.findUnique({
       where: { id },
-      include: { inventoryLots: true },
+      include: {
+        rawMaterial: {
+          include: {
+            defaultUnit: true,
+          },
+        },
+        productVariant: {
+          include: {
+            product: true,
+            defaultUnit: true,
+          },
+        },
+        inventoryLots: {
+          include: {
+            unit: true,
+          },
+        },
+      },
     });
 
     if (!item) return notFoundError('item');

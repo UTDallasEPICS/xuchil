@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import {idError, notFoundError, serverError} from "@/utils/responses";
-import bcrypt from "bcryptjs";
+import bcrypt from "bcrypt";
 import {verifySession} from "@/lib/session";
 
 export async function GET(

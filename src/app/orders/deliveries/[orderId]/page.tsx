@@ -30,7 +30,6 @@ const OrderDetailsPage = () => {
 
   const [order, setOrder] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
 
   useEffect(() => {
     let mounted = true;
@@ -64,8 +63,15 @@ const OrderDetailsPage = () => {
   const handleDelivered = async () => {
     try {
       const newStatus = delivered ? "SCHEDULED" : "DELIVERED";
-      await putOrderStatusClient(id, newStatus as any);
-      router.replace(`/orders/deliveries/${id}`);
+      const updated = await putOrderStatusClient(id, newStatus as any);
+      setOrder((prev: any) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          delivered: updated?.status === "DELIVERED" || Boolean(updated?.deliveredAt),
+        };
+      });
+      router.refresh();
     } catch (err) {
       console.error("Failed to update order status", err);
       alert("No se pudo cambiar el estado del pedido");
@@ -110,8 +116,8 @@ const OrderDetailsPage = () => {
 
       <h3>Productos:</h3>
       <div className={styles.productContainer}>
-        {products.map(({ id: pid, ...p }) => (
-          <ProductCard key={pid} {...p} />
+        {products.map((product: any) => (
+          <ProductCard key={product.id} {...product} />
         ))}
       </div>
 

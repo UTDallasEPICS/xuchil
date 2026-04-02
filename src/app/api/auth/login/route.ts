@@ -1,14 +1,13 @@
 import {NextResponse} from "next/server";
 import prisma from "@/lib/db";
-import bcrypt from "bcryptjs";
+import bcrypt from "bcrypt";
 import {createSession} from "@/lib/session";
 import {serverError} from "@/utils/responses";
 
 export async function POST(req: Request) {
   try {
-    
     const {email, password} = await req.json();
-   
+
     if (!email || !password) {
       return NextResponse.json(
         {error: "Email and password are required"},
@@ -20,8 +19,6 @@ export async function POST(req: Request) {
     const user = await prisma.authUser.findUnique({
       where: {email},
     });
-
-  
 
     if (!user) {
       return NextResponse.json(
@@ -39,8 +36,6 @@ export async function POST(req: Request) {
       );
     }
 
-    console.log("user",user.id,user.workerId,user.isAdmin)
-    
     // Create session payload for cookie
     await createSession({
       authUserId: user.id,
@@ -48,10 +43,8 @@ export async function POST(req: Request) {
       isAdmin: user.isAdmin,
     });
 
-  return NextResponse.json({success: true})
-
+    return NextResponse.json({ ok: true });
   } catch (error) {
- console.log("error",error)
-   return serverError('user', 'login', null)
+    return serverError('user', 'login', null)
   }
 }

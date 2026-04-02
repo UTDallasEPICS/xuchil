@@ -16,40 +16,50 @@ const EditProfile = () => {
   const [avatar, setAvatar] = useState("");
   const [avatarPreview, setAvatarPreview] = useState("");
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [currentUsername, setCurrentUsername] = useState("");
 
   useEffect(() => {
-    const fetchUser = async () => {
+    let mounted = true;
+
+    async function loadProfile() {
       try {
-        const response = await fetch("/api/users/me", {
-          method: "GET",
-        });
-  
+        const response = await fetch("/api/users/me", { credentials: "include" });
         if (!response.ok) {
           router.push("/login");
           return;
         }
-  
-        const data = await response.json();
-  
-        setUserData(data);
-        setCurrentUsername(data.username);
-  
-        const nameParts = data.name?.split(" ") || [];
+
+        const authUser = await response.json();
+        if (!mounted) return;
+
+        const fullName = authUser.worker?.fullName ?? "";
+        const nameParts = fullName.split(" ");
+
+        const mapped = {
+          name: fullName,
+          email: authUser.email ?? "",
+          phone: authUser.worker?.phone ?? "",
+          avatar: authUser.worker?.profilePhotoUrl ?? "",
+          position: authUser.worker?.role?.name ?? "",
+          hours: "",
+        };
+
+        setUserData(mapped);
         setName(nameParts[0] || "");
         setLastName(nameParts.slice(1).join(" ") || "");
-  
-        setEmail(data.email || "");
-        setPhone(data.phone || "");
-        setAvatarPreview(data.avatar || "/user-placeholder.svg");
-      } catch (error) {
+        setEmail(mapped.email);
+        setPhone(mapped.phone);
+        setAvatarPreview(mapped.avatar || "/user-placeholder.svg");
+      } catch {
         router.push("/login");
       }
+    }
+
+    loadProfile();
+
+    return () => {
+      mounted = false;
     };
-  
-    fetchUser();
   }, []);
-  
 
   const handleImageUploadClick = () => {
     if (fileInputRef.current) {
@@ -82,34 +92,27 @@ const EditProfile = () => {
 
   const handleSave = async () => {
     try {
-      const updatedUserData = {
-        name: `${name} ${lastName}`.trim(),
-        email,
-        phone,
-        avatar: avatar || avatarPreview,
-      };
-  
       const response = await fetch("/api/users/me", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(updatedUserData),
+        body: JSON.stringify({
+          fullName: `${name} ${lastName}`.trim(),
+          phone,
+          profilePhotoUrl: avatar || avatarPreview,
+        }),
       });
-  
+
       if (!response.ok) {
-        throw new Error("Failed to update user");
+        return;
       }
-  
-      const updatedUser = await response.json();
-  
-      setUserData(updatedUser);
+
       setShowSuccessModal(true);
-    } catch (error) {
-      console.log("error", error);
+    } catch {
+      return;
     }
   };
-  
 
   const handleConfirm = () => {
     setShowSuccessModal(false);

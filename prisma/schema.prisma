@@ -301,6 +301,7 @@ model GuestCollaborator {
   id               Int               @id @default(autoincrement())
   displayName      String
   contactInfo      String?
+  passwordHash     String?
   isActive         Boolean           @default(true)
   stepParticipants StepParticipant[]
 }

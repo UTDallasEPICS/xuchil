@@ -9,12 +9,11 @@ import {
   userFilterOptions,
 } from "@/constants/filterOptions";
 import { fetchMyTasks, fetchProcessRuns } from "@/app/api/logbook";
-import { getSessionInfo } from "@/constants/api";
 import styles from "./LogbookPage.module.css";
 
-const { isAdminMode, currentUser } = getSessionInfo();
-
 const Logbook = () => {
+  const [isAdminMode, setIsAdminMode] = useState(false);
+  const [currentUser, setCurrentUser] = useState("");
   const [selectedProduct, setSelectedProduct] = useState(productFilterOptions[0]);
   const [selectedUser, setSelectedUser]   = useState(userFilterOptions[0]);
   const [selectedMonth, setSelectedMonth] = useState(monthFilterOptions[0]);
@@ -34,6 +33,29 @@ const Logbook = () => {
     const toISO = (d: Date) => d.toISOString().slice(0,10);
     return { dateFrom: toISO(from), dateTo: toISO(to) };
   }
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadSession() {
+      try {
+        const response = await fetch("/api/users/me", { credentials: "include" });
+        if (!response.ok) return;
+        const data = await response.json();
+        if (!mounted) return;
+        setIsAdminMode(!!data.isAdmin);
+        setCurrentUser(data.worker?.fullName ?? data.email ?? "");
+      } catch {
+        return;
+      }
+    }
+
+    loadSession();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   // Load data from API when filters change
   useEffect(() => {

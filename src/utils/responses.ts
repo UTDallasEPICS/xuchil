@@ -13,6 +13,6 @@ export function notFoundError(name: string): NextResponse {
   return NextResponse.json({error: `${name} not found`}, {status: 404});
 }
 
-export function serverError(name: string, verb: string, error) {
+export function serverError(name: string, verb: string, error: unknown) {
   return NextResponse.json({error: `Failed to ${verb} ${name}`, details: error}, {status: 500});
 }

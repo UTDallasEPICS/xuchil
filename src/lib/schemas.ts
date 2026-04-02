@@ -82,6 +82,21 @@ export const templateStepSchema = z.strictObject({
     instructions: z.string(typeError("instructions", "string")).optional().nullable()
 })
 
+export const createProcess = z.strictObject({
+    productVariantId: z.number(requiredError("productVariantId")).int(typeError("productVariantId", "int")),
+    name: z.string(requiredError("name")).min(1, "name cannot be empty."),
+    notes: z.string(typeError("notes", "string")).optional().nullable(),
+    isActive: z.boolean(typeError("isActive", "boolean")).optional(),
+    steps: z.array(
+        z.strictObject({
+            name: z.string(requiredError("name")).min(1, "name cannot be empty."),
+            idealDurationMin: z.number(typeError("idealDurationMin", "int")).int(typeError("idealDurationMin", "int")).optional().nullable(),
+            requiresInput: z.boolean(typeError("requiresInput", "boolean")).optional(),
+            instructions: z.string(typeError("instructions", "string")).optional().nullable()
+        })
+    ).min(1, "must contain at least 1 step")
+})
+
 export const stepExecutionSchema = z.strictObject({
     processRunId: z.number(requiredError("processRunId")).int(typeError("processRunId", "int")),
     templateStepId: z.number(requiredError("templateStepId")).int(typeError("templateStepId", "int")),

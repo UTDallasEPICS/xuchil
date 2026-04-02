@@ -13,28 +13,28 @@ const Login = () => {
   const [showErrorModal, setShowErrorModal] = useState(false);
   
   const handleLogin = async () => {
-    setShowErrorModal(false);
-  
     try {
       const response = await fetch("/api/auth/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: user, password }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: user,
+          password,
+        }),
       });
-  
-      
+
       if (!response.ok) {
         setShowErrorModal(true);
         return;
       }
-  
+
       router.push("/process-control");
-    } catch (err) {
-      console.log("login error", err);
+    } catch {
       setShowErrorModal(true);
     }
   };
-  
 
   return (
     <div className="login-page">

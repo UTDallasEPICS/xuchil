@@ -1,0 +1,265 @@
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 16px;
+}
+
+.headerRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.headerRow h1 {
+    font-size: 1.3rem;
+    margin: 0;
+}
+
+.emptyText {
+    color: #888;
+    text-align: center;
+    padding: 24px 0;
+}
+
+/* Template Card */
+.templateCard {
+    background: var(--color-card-bg, #f5f0e8);
+    border-radius: 10px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    border: 1px solid var(--color-gray-dark, #c4b9a3);
+}
+
+.templateCard.inactive {
+    opacity: 0.6;
+}
+
+.templateHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.templateInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.templateName {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--color-dark-green, #3a5a40);
+}
+
+.variantLabel {
+    font-size: 0.8rem;
+    color: #888;
+}
+
+.templateActions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.85rem;
+}
+
+.badge {
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.activeBadge {
+    background: #d4edda;
+    color: #155724;
+}
+
+.inactiveBadge {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.stepCount {
+    color: #888;
+}
+
+.chevron {
+    font-size: 0.8rem;
+    color: #aaa;
+}
+
+/* Template Body */
+.templateBody {
+    padding: 0 16px 16px;
+    border-top: 1px solid var(--color-gray-dark, #c4b9a3);
+}
+
+.toggleRow {
+    padding: 8px 0;
+    text-align: right;
+}
+
+.stepList {
+    padding-left: 0;
+    list-style: none;
+    margin: 0;
+}
+
+.stepItem {
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+}
+
+.stepItem:last-child {
+    border-bottom: none;
+}
+
+.stepRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.stepInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.stepInfo strong {
+    font-size: 0.95rem;
+}
+
+.stepDuration {
+    font-size: 0.8rem;
+    color: var(--color-accent, #d4a03c);
+    font-weight: 600;
+}
+
+.stepInstr {
+    font-size: 0.8rem;
+    color: #888;
+}
+
+.stepActions {
+    display: flex;
+    gap: 6px;
+}
+
+.noSteps {
+    color: #888;
+    font-size: 0.9rem;
+    padding: 8px 0;
+}
+
+/* Buttons */
+.linkBtn {
+    background: none;
+    border: none;
+    color: var(--color-dark-green, #3a5a40);
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 4px 8px;
+    text-decoration: underline;
+}
+
+.linkBtn:hover {
+    opacity: 0.7;
+}
+
+.saveBtn {
+    background: var(--color-dark-green, #3a5a40);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 14px;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.addStepBtn {
+    background: none;
+    border: 1px dashed var(--color-gray-dark, #c4b9a3);
+    border-radius: 8px;
+    padding: 10px;
+    width: 100%;
+    margin-top: 8px;
+    cursor: pointer;
+    color: var(--color-dark-green, #3a5a40);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.addStepBtn:hover {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+.backBtn {
+    background: none;
+    border: none;
+    color: var(--color-dark-green, #3a5a40);
+    cursor: pointer;
+    font-size: 0.95rem;
+    margin-top: 16px;
+    padding: 8px 0;
+}
+
+/* Forms */
+.formCard {
+    background: var(--color-card-bg, #f5f0e8);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 16px;
+    border: 1px solid var(--color-gray-dark, #c4b9a3);
+}
+
+.formCard h3 {
+    margin: 0 0 12px;
+    font-size: 1rem;
+}
+
+.formCard label,
+.stepEditForm label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+    margin-top: 8px;
+}
+
+.input,
+.select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--color-gray-dark, #c4b9a3);
+    border-radius: 6px;
+    font-size: 0.9rem;
+    margin-bottom: 4px;
+    background: white;
+}
+
+.formActions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.stepEditForm {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.checkLabel {
+    display: flex !important;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    margin-top: 4px;
+}

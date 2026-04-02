@@ -4,8 +4,8 @@ import prisma from "@/lib/db";
 import { OrderStatusEnum } from "@/lib/schemas";
 import { z } from "zod";
 
-export async function PUT(request: NextRequest, context: { params: { id: string } }) {
-  const orderId = Number(context.params.id);
+export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const orderId = Number((await context.params).id);
 
   if (Number.isNaN(orderId)) {
     return NextResponse.json({ error: "Invalid order ID format" }, { status: 400 });

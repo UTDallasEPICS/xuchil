@@ -4,13 +4,17 @@ import styles from '../styles/Chronometer.module.css';
 
 interface ChronometerProps {
   estimatedTime: number;
-  onStart?: () => void; 
+  onStart?: () => void;
+  onPause?: () => void;
+  onResume?: () => void;
+  initialTime?: number;
+  initialRunning?: boolean;
 }
 
-const Chronometer: React.FC<ChronometerProps> = ({ estimatedTime, onStart }) => {
-  const [hasStarted, setHasStarted] = useState<boolean>(false);
-  const [time, setTime] = useState<number>(0);
-  const [isRunning, setIsRunning] = useState<boolean>(false);
+const Chronometer: React.FC<ChronometerProps> = ({ estimatedTime, onStart, onPause, onResume, initialTime = 0, initialRunning = false }) => {
+  const [hasStarted, setHasStarted] = useState<boolean>(initialRunning || initialTime > 0);
+  const [time, setTime] = useState<number>(initialTime);
+  const [isRunning, setIsRunning] = useState<boolean>(initialRunning);
 
   useEffect(() => {
     let intervalId: number | undefined;
@@ -35,7 +39,13 @@ const Chronometer: React.FC<ChronometerProps> = ({ estimatedTime, onStart }) => 
   };
 
   const handlePauseResume = () => {
+    const willPause = isRunning;
     setIsRunning((prev) => !prev);
+    if (willPause && onPause) {
+      onPause();
+    } else if (!willPause && onResume) {
+      onResume();
+    }
   };
 
   const minutes = Math.floor(time / 60);
@@ -46,8 +56,8 @@ const Chronometer: React.FC<ChronometerProps> = ({ estimatedTime, onStart }) => 
   const strokeWidth = 10;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
-  const progress = Math.min(time / (estimatedTime * 60), 1);
-  const strokeDashoffset = circumference * (1 - progress);
+  const progress = estimatedTime > 0 ? Math.min(time / (estimatedTime * 60), 1) : 0;
+  const strokeDashoffset = circumference * (1 - progress) || 0;
   const isOvertime = time > estimatedTime * 60;
 
   const displayText = hasStarted ? formattedTime : "INICIAR";
@@ -55,7 +65,7 @@ const Chronometer: React.FC<ChronometerProps> = ({ estimatedTime, onStart }) => 
   return (
     <div className={styles.container}>
       <div className={styles.idealTime}>Tiempo Ideal {estimatedTime} min</div>
-      
+
       <button
         className={hasStarted ? styles.disabledButton : styles.startButton}
         onClick={!hasStarted ? handleStart : undefined}
@@ -89,7 +99,7 @@ const Chronometer: React.FC<ChronometerProps> = ({ estimatedTime, onStart }) => 
           </div>
         </div>
       </button>
-      
+
       {hasStarted && (
         <button className={styles.pausePlayButton} onClick={handlePauseResume}>
           {isRunning ? (

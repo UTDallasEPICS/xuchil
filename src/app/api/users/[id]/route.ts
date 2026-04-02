@@ -5,15 +5,13 @@ import {verifySession} from "@/lib/session";
 
 export async function GET(
   req: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-
   const payload = await verifySession();
-  if (!payload) {
+  if (!payload?.isAdmin) {
     return new NextResponse(null, { status: 403 });
   }
-  const {id} = await context.params
-  const userId = parseInt(id);
+  const userId = parseInt((await context.params).id);
   if (isNaN(userId)) {
     return idError('user')
   }
@@ -37,13 +35,13 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
-  context: Promise<{ params: { id: string } }>
+  context: { params: Promise<{ id: string }> }
 ) {
   const payload = await verifySession();
   if (!payload?.isAdmin) {
     return new NextResponse(null, { status: 403 });
   }
-  const userId = parseInt((await context).params.id);
+  const userId = parseInt((await context.params).id);
   if (isNaN(userId)) {
     return idError('user')
   }
@@ -77,13 +75,13 @@ export async function PUT(
 
 export async function DELETE(
   _req: NextRequest,
-  context: Promise<{ params: { id: string } }>
+  context: { params: Promise<{ id: string }> }
 ) {
   const payload = await verifySession();
   if (!payload?.isAdmin) {
     return new NextResponse(null, { status: 403 });
   }
-  const userId = parseInt((await context).params.id);
+  const userId = parseInt((await context.params).id);
   if (isNaN(userId)) {
     return idError('user')
   }

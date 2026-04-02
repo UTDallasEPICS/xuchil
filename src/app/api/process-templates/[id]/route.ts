@@ -9,7 +9,7 @@ export async function GET(
   context: { params: Promise<{ id: string }> }
 ) {
   const payload = await verifySession();
-  if (!payload?.isAdmin) {
+  if (!payload) {
     return new NextResponse(null, { status: 403 });
   }
   try {

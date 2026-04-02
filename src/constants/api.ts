@@ -354,6 +354,7 @@ export function fetchProductVariants(productId: string): ProductVariant[] {
         currentStep: "Tatemado (Mezquite 5kg)",
         currentStepNumber: 2,
         totalSteps: 7,
+        openRoute: "/process-control/new-production/harina/mezquite/2",
       },
       {
         id: 2,
@@ -365,6 +366,7 @@ export function fetchProductVariants(productId: string): ProductVariant[] {
         currentStep: "Tostado",
         currentStepNumber: 3,
         totalSteps: 15,
+        openRoute: "/process-control/new-production/cafe/sustituto/3",
       },
       {
         id: 3,
@@ -376,6 +378,7 @@ export function fetchProductVariants(productId: string): ProductVariant[] {
         currentStep: "Transporte",
         currentStepNumber: 4,
         totalSteps: 7,
+        openRoute: "/process-control/new-production/harina/mezquite/4",
       },
     ];
   }

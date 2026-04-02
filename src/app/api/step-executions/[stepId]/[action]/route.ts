@@ -1,9 +1,9 @@
-import {NextResponse} from "next/server";
+import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
-import {StepStatus, ProcessStatus} from "@prisma/client";
-import {idError, notFoundError, serverError} from "@/utils/responses";
-import {processPauseSchema} from "@/lib/schemas";
-import {z} from "zod";
+import { StepStatus, ProcessStatus } from "@prisma/client";
+import { idError, notFoundError, serverError } from "@/utils/responses";
+import { processPauseSchema } from "@/lib/schemas";
+import { z } from "zod";
 
 export async function POST(
   _req: Request,
@@ -13,18 +13,18 @@ export async function POST(
   if (isNaN(stepId)) {
     return idError('step execution')
   }
-  const {action} = await context.params;
+  const { action } = await context.params;
   const validActions = ["start", "pause", "resume", "finish"];
   if (!validActions.includes(action)) {
-    return NextResponse.json({error: "Invalid action"}, {status: 400});
+    return NextResponse.json({ error: "Invalid action" }, { status: 400 });
   }
 
   try {
     const now = new Date();
 
     const currentStep = await prisma.stepExecution.findUnique({
-      where: {id: stepId},
-      select: {status: true, startedAt: true, processRunId: true, processRun: {select: {status: true}}},
+      where: { id: stepId },
+      select: { status: true, startedAt: true, processRunId: true, processRun: { select: { status: true } } },
     });
 
     if (!currentStep) {
@@ -40,48 +40,71 @@ export async function POST(
     switch (action) {
       case "start":
         if (currentStep.status !== StepStatus.PENDING) {
-          return NextResponse.json({error: "Step must be PENDING to start"}, {status: 400});
+          return NextResponse.json({ error: "Step must be PENDING to start" }, { status: 400 });
         }
         newStatus = StepStatus.IN_PROGRESS;
         if (currentStep.startedAt === null) {
           updateData.startedAt = now;
         }
+        // Start or resume the process run as needed
+        if (runStatus === ProcessStatus.PLANNED || runStatus === ProcessStatus.PAUSED) {
+          const runData: { status: typeof ProcessStatus.IN_PROGRESS; startedAt?: Date } = {
+            status: ProcessStatus.IN_PROGRESS,
+          };
+          if (runStatus === ProcessStatus.PLANNED) {
+            runData.startedAt = now;
+          }
+          await prisma.processRun.update({
+            where: { id: processRunId },
+            data: runData,
+          });
+          // Close any open pause record
+          if (runStatus === ProcessStatus.PAUSED) {
+            const openPause = await prisma.processPause.findFirst({
+              where: { processRunId, endedAt: null },
+              orderBy: { startedAt: "desc" },
+            });
+            if (openPause) {
+              await prisma.processPause.update({
+                where: { id: openPause.id },
+                data: { endedAt: now },
+              });
+            }
+          }
+        }
         break;
       case "resume":
         if (runStatus !== ProcessStatus.PAUSED) {
-          return NextResponse.json({error: `Cannot resume process run in ${runStatus} status`}, {status: 400});
+          return NextResponse.json({ error: `Cannot resume process run in ${runStatus} status` }, { status: 400 });
         }
         if (currentStep.status !== StepStatus.BLOCKED) {
-          return NextResponse.json({error: "Step must be BLOCKED (paused) to resume"}, {status: 400});
+          return NextResponse.json({ error: "Step must be BLOCKED (paused) to resume" }, { status: 400 });
         }
         newStatus = StepStatus.IN_PROGRESS;
 
         const activePause = await prisma.processPause.findFirst({
-          where: {processRunId: processRunId, endedAt: null},
-          orderBy: {startedAt: "desc"},
+          where: { processRunId: processRunId, endedAt: null },
+          orderBy: { startedAt: "desc" },
         });
         if (!activePause) {
-          return NextResponse.json({error: "No active process pause record found"}, {status: 404});
+          return NextResponse.json({ error: "No active process pause record found" }, { status: 404 });
         }
-      {
-        await prisma.$transaction([
-          prisma.processRun.update({
-            where: {id: processRunId},
-            data: {status: ProcessStatus.IN_PROGRESS},
-          }),
-          prisma.processPause.update({
-            where: {id: activePause.id},
-            data: {endedAt: now,},
-          }),
-        ]);
-      }
+        {
+          await prisma.$transaction([
+            prisma.processRun.update({
+              where: { id: processRunId },
+              data: { status: ProcessStatus.IN_PROGRESS },
+            }),
+            prisma.processPause.update({
+              where: { id: activePause.id },
+              data: { endedAt: now, },
+            }),
+          ]);
+        }
         break;
       case "pause":
-        if (runStatus !== ProcessStatus.IN_PROGRESS) {
-          return NextResponse.json({error: `Cannot pause process run in ${runStatus} status`}, {status: 400});
-        }
         if (currentStep.status !== StepStatus.IN_PROGRESS) {
-          return NextResponse.json({error: "Step must be IN_PROGRESS to pause"}, {status: 400});
+          return NextResponse.json({ error: "Step must be IN_PROGRESS to pause" }, { status: 400 });
         }
         newStatus = StepStatus.BLOCKED;
 
@@ -89,37 +112,65 @@ export async function POST(
         try {
           body = await _req.json();
         } catch {
-          return NextResponse.json({error: "Invalid JSON body"}, {status: 400});
+          return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
         }
         const result = processPauseSchema.safeParse(body);
         if (!result.success) {
           const formattedErr = z.flattenError(result.error);
-          return NextResponse.json({error: "Invalid request body", details: formattedErr}, {status: 400});
+          return NextResponse.json({ error: "Invalid request body", details: formattedErr }, { status: 400 });
         }
         const validBody = result.data;
-        await prisma.$transaction([
-          prisma.processRun.update({
-            where: {id: processRunId},
-            data: {status: ProcessStatus.PAUSED},
-          }),
-          prisma.processPause.create({
-            data: {
-              processRunId: processRunId,
-              startedAt: now,
-              reason: validBody.reason,
-            },
-          }),
-        ]);
+        {
+          const txOps = [];
+          // Only change run status if it's not already paused
+          if (runStatus !== ProcessStatus.PAUSED) {
+            txOps.push(
+              prisma.processRun.update({
+                where: { id: processRunId },
+                data: { status: ProcessStatus.PAUSED },
+              })
+            );
+          }
+          txOps.push(
+            prisma.processPause.create({
+              data: {
+                processRunId: processRunId,
+                startedAt: now,
+                reason: validBody.reason,
+              },
+            })
+          );
+          await prisma.$transaction(txOps);
+        }
         break;
       case "finish":
-        if (currentStep.status !== StepStatus.IN_PROGRESS) {
-          return NextResponse.json({error: "Step must be IN_PROGRESS to finish"}, {status: 400});
+        if (currentStep.status !== StepStatus.IN_PROGRESS && currentStep.status !== StepStatus.BLOCKED) {
+          return NextResponse.json({ error: "Step must be IN_PROGRESS or BLOCKED to finish" }, { status: 400 });
+        }
+        // If step was paused (BLOCKED), auto-close the pause and resume the run
+        if (currentStep.status === StepStatus.BLOCKED) {
+          const openPause = await prisma.processPause.findFirst({
+            where: { processRunId, endedAt: null },
+            orderBy: { startedAt: "desc" },
+          });
+          if (openPause) {
+            await prisma.processPause.update({
+              where: { id: openPause.id },
+              data: { endedAt: now },
+            });
+          }
+          if (runStatus === ProcessStatus.PAUSED) {
+            await prisma.processRun.update({
+              where: { id: processRunId },
+              data: { status: ProcessStatus.IN_PROGRESS },
+            });
+          }
         }
         const startedAt = currentStep.startedAt;
         const finishedAt = now;
 
         const completedPauses = await prisma.processPause.findMany({
-          where: {processRunId: processRunId, endedAt: {not: null}},
+          where: { processRunId: processRunId, endedAt: { not: null } },
         });
         let totalPausedMs = 0;
         for (const pause of completedPauses) {
@@ -139,19 +190,21 @@ export async function POST(
         const totalTimeMs = finishedAt.getTime() - (currentStep.startedAt ? currentStep.startedAt.getTime() : now.getTime());
         const actualDurationMin = Math.round((totalTimeMs - totalPausedMs) / 60000);
         newStatus = StepStatus.DONE;
-        updateData = {...updateData, finishedAt: finishedAt, actualDurationMin: actualDurationMin};
+        updateData = { ...updateData, finishedAt: finishedAt, actualDurationMin: actualDurationMin };
         break;
       default:
-        return NextResponse.json({error: "Invalid action"}, {status: 400});
+        return NextResponse.json({ error: "Invalid action" }, { status: 400 });
     }
 
     const updated = await prisma.stepExecution.update({
-      where: {id: stepId},
+      where: { id: stepId },
       data: {
         status: newStatus,
         ...updateData
       },
     });
+
+
 
     return NextResponse.json(updated);
   } catch (error) {
