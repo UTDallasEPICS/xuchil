@@ -1,9 +1,9 @@
 "use client"
 import React from 'react'
 import { useState,useMemo,useEffect } from "react";
-import { CartesianGrid, Line, LineChart, Tooltip, XAxis, YAxis } from 'recharts';
-import { RechartsDevtools } from '@recharts/devtools';
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts';
 
+//this page fetches analytics from orders table. gives trending items(most sold items in the past week, month, day), provides visuals on delivered orders
 interface OrderPoint {
   date: string;
   orderCount: number;
@@ -146,8 +146,11 @@ export default function Analytics() {
         const rawOrders: RawOrder[] = await response.json()
   
         const transformed = transformOrders(rawOrders,chartFilter)
+
+        const sorted = transformed.sort((a, b) => new Date(a.date) - new Date(b.date)) //sorts by date
+        
         const trend = transformTrendingItems(rawOrders,chartFilter)
-        setChartOrders(transformed)
+        setChartOrders(sorted)
         setTrendingItems(trend)
         
     
@@ -167,18 +170,39 @@ export default function Analytics() {
     return chartOrders.reduce((sum, item) => sum + item.orderCount, 0);
   }, [chartOrders]);
 
-  //average orders weekly
+  
   const averageOrders = useMemo(() => {
     if (chartOrders.length === 0) return 0;
-    return Math.round(totalOrders / 7);
-  }, [chartOrders, totalOrders]);
+  
+    if (chartFilter === "today") {
+      return totalOrders; // already per day
+    }
+  
+    if (chartFilter === "weekly") {
+      return Math.ceil(totalOrders / 7);
+    }
+  
+    if (chartFilter === "monthly") {
+      return Math.ceil(totalOrders / 30);
+    }
+  
+    return 0;
+  }, [chartOrders, totalOrders, chartFilter]);
 
   
-  const chartData = chartOrders.map((point) => ({ //points for the graph
-    date: point.date,
-    count: point.orderCount
-  }))
+  const chartData = chartOrders.length > 0
+  ? chartOrders.map((point) => ({ //points for the graph
+      date: point.date,
+      count: point.orderCount
+    }))
+  : [{ date: "", count: 0 }]
 
+  const emptyChartMessage = 
+  chartFilter === "today"
+    ? "no orders this past day"
+    : chartFilter === "weekly"
+    ? "no orders this past week"
+    : "no orders this past month"
 
   //css for the monthly,today, and weekly button
   const getPillStyle = (active: boolean): React.CSSProperties => ({
@@ -316,14 +340,14 @@ export default function Analytics() {
 
           <div>
 {/* import chart from recharts */}
-          <LineChart style={{ width: '100%', aspectRatio: 1.618, maxWidth: 800, margin: 'auto' }} responsive data={chartData}>
+    <LineChart style={{ width: '100%', aspectRatio: 1.618, maxWidth: 800, margin: 'auto' }} responsive data={chartData}>
            
       <CartesianGrid stroke="var(--color-border-3)" strokeDasharray="5 5" />
       <XAxis dataKey="date" stroke="var(--color-text-3)" />
       <YAxis width="auto" stroke="var(--color-text-3)" tickFormatter={(value) => value} />
       <Line
         type="monotone"
-        dataKey="count"
+        dataKey="count" 
         stroke="var(--color-green-light)"
         dot={{
           fill: 'var(--color-surface-base)',
@@ -332,9 +356,20 @@ export default function Analytics() {
           stroke: 'var(--color-surface-base)',
         }}
       />
-      <Tooltip/>
-      <RechartsDevtools />
     </LineChart>
+
+    {chartOrders.length === 0 && (
+      <div
+        style={{
+          textAlign: "center",
+          marginTop: "12px",
+          fontSize: "14px",
+          color: "#444",
+        }}
+      >
+        {emptyChartMessage}
+      </div>
+    )}
 
           </div>
             
@@ -366,63 +401,63 @@ export default function Analytics() {
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-            {trendingItems.map((item) => (
-              <div
-                key={item.id}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  backgroundColor: "#f6eded",
-                  borderBottom: "2px solid #222",
-                  paddingBottom: "12px",
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    style={{
-                      width: "48px",
-                      height: "48px",
-                      borderRadius: "8px",
-                      objectFit: "cover",
-                    }}
-                  />
+            {trendingItems.length === 0 ? (
+              <div style={{ fontSize: "14px", color: "#444" }}>
+                no trending items
+              </div>
+            ) : (
+              trendingItems.map((item) => (
+                <div
+                  key={item.id}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    backgroundColor: "#f6eded",
+                    borderBottom: "2px solid #222",
+                    paddingBottom: "12px",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      style={{
+                        width: "48px",
+                        height: "48px",
+                        borderRadius: "8px",
+                        objectFit: "cover",
+                      }}
+                    />
 
-                  <div>
+                    <div>
+                      <div
+                        style={{
+                          fontSize: "16px",
+                          fontWeight: 500,
+                          color: "#222",
+                          lineHeight: 1.2,
+                        }}
+                      >
+                        {item.name}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ textAlign: "right" }}>
                     <div
                       style={{
                         fontSize: "16px",
                         fontWeight: 500,
                         color: "#222",
-                        lineHeight: 1.2,
                       }}
                     >
-                      {item.name}
-                    </div>
-                    <div style={{ fontSize: "14px", color: "#444", marginTop: "4px" }}>
-                      {item.date}
+                      {item.orders} units
                     </div>
                   </div>
                 </div>
-
-                <div style={{ textAlign: "right" }}>
-                  <div
-                    style={{
-                      fontSize: "16px",
-                      fontWeight: 500,
-                      color: "#222",
-                    }}
-                  >
-                    {item.orders} units
-                  </div>
-                  <div style={{ fontSize: "14px", color: "#444", marginTop: "4px" }}>
-                    {item.growth || null}  {/*still not sure how percent should go left off here */}
-                  </div>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </div>

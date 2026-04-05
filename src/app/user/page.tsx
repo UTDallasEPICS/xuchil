@@ -51,6 +51,24 @@ const UserProfile = () => {
     await fetch("/api/auth/logout", { method: "POST" }).catch(() => null);
     router.push("/login");
   };
+
+//when clicked downloaded excel file of the workers pay based of how much they worked
+  const workerHours = async() => { 
+
+    try { 
+ //left off here
+
+
+    }catch(err) { 
+
+      console.log("err",err)
+    }
+
+  
+
+
+
+  }
   
   if (!role || !userData) return null;
 
@@ -76,6 +94,14 @@ const UserProfile = () => {
             onClick={() => router.push("/create_user")}
           >
             Crear usuario
+          </Button>
+          <Button
+            size="small"
+            action="secondary"
+            onClick={workerHours}
+            style = {{marginLeft: "3px"}}
+          >
+            worker hours
           </Button>
         </div>
       )}
