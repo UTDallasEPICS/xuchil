@@ -70,6 +70,8 @@ const UserProfile = () => {
 
 
   }
+
+
   
   if (!role || !userData) return null;
 
@@ -103,7 +105,16 @@ const UserProfile = () => {
             style = {{marginLeft: "3px"}}
           >
             worker hours
+          
           </Button>
+<div style = {{marginTop: "3px"}}>
+          <Button
+          size = "small"
+          action = "secondary"
+          onClick = {() => router.push("/analytics")}>
+            Analytics
+          </Button>
+          </div>
         </div>
       )}
 
