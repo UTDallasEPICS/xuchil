@@ -365,7 +365,7 @@ export default function Analytics() {
             <div className = "card-value">
               {averageOrders}
             </div>
-            <div className = "card-label">avg daily orders</div>
+            <div className = "card-label">avg {chartFilter} orders</div>
           </div>
         </div>
 
