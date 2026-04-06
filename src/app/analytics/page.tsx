@@ -2,7 +2,7 @@
 import React from 'react'
 import { useState,useMemo,useEffect } from "react";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts';
-
+import "./Inventory.css";
 //this page fetches analytics from orders table. gives trending items(most sold items in the past week, month, day), provides visuals on delivered orders
 interface OrderPoint {
   date: string;
@@ -31,8 +31,26 @@ interface RawOrder {
     status: string
   }
 
+
+    interface RawInventory_lot {
+      id: number;
+      inventoryItemId: number;
+      lotCode: string;
+      qtyOnHand: string; 
+      receivedAt: string; 
+      expiryAt: string | null; 
+      unitId: number;
+    }
+
+  interface expiringItems { //going to be used for both expiring and inventory since it follows same format
+    name: string,
+    daysLeft: number, 
+    quantity: number
+  }
+
 type FilterType = "monthly" | "weekly" | "today";
 
+//these 4 methods used to transform raw data
 
   //turns rawOrder interface into usable data
 const transformOrders = (orders: RawOrder[], filterType: FilterType): OrderPoint[] => {
@@ -128,11 +146,109 @@ const transformOrders = (orders: RawOrder[], filterType: FilterType): OrderPoint
       .slice(0, 4) 
   }
 
+  //method to get items that are about to expire 5 days or already expired
+  const transform_to_expiring = (
+    inventory: RawInventory_lot[]
+  ): expiringItems[] => {
+    const today = new Date();
+  
+    return inventory
+      .filter((item) => {
+        if (!item.expiryAt) return false;
+  
+        const expiry = new Date(item.expiryAt);
+        const diffTime = expiry.getTime() - today.getTime();
+        const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+        return daysLeft <= 5; 
+      })
+      .map((item) => {
+        const expiry = new Date(item.expiryAt!);
+        const diffTime = expiry.getTime() - today.getTime();
+        const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+        return {
+          name: item.lotCode,
+          daysLeft,
+          quantity: Number(item.qtyOnHand),
+        };
+      });
+  };
+//method to get items that are low in quantity or already ran out
+  const transformLowStock = (
+    inventory: RawInventory_lot[]
+  ): expiringItems[] => {
+    const today = new Date();
+  
+    return inventory
+      .filter((item) => {
+        const qty = Number(item.qtyOnHand);
+        return qty <= 50; // low stock condition
+      })
+      .map((item) => {
+        let daysLeft = 0;
+  
+        if (item.expiryAt) {
+          const expiry = new Date(item.expiryAt);
+          const diffTime = expiry.getTime() - today.getTime();
+          daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        }
+  
+        return {
+          name: item.lotCode,
+          daysLeft,
+          quantity: Number(item.qtyOnHand),
+        };
+      });
+  };
+
+
 export default function Analytics() {
   const [chartFilter, setChartFilter] = useState<FilterType>("today");
 
   const [chartOrders, setChartOrders] = useState<OrderPoint[]>([])
   const [trendingItems, setTrendingItems] = useState<TrendingItem[]>([])
+
+  
+//menu that clicks for expiring and stock buttons. going to show items that are expring soon or about to run out of quanttiy
+  const [openModal, setOpenModal] = useState<'expiry' | 'stock' | null>(null)
+
+  const [expiringItems,setExpiringItems] = useState<expiringItems[]>([])
+  const[lowStockItems,setLowStockItems] = useState<expiringItems[]>([])
+
+  
+
+  //one single api call
+  useEffect(() => { 
+
+    const inventory_lot = async () => { 
+    try { 
+
+      const response = await fetch("api/inventory")
+
+      const data = await response.json()
+
+      const expiring = transform_to_expiring(data).sort(
+        (a, b) => a.daysLeft - b.daysLeft);
+      
+      setExpiringItems(expiring)
+
+      const low_qty = transformLowStock(data).sort((a,b) => a.quantity - b.quantity)
+
+      setLowStockItems(low_qty)
+
+
+    }
+    catch(err) { 
+
+      console.log("error",err)
+    }
+
+  }
+  inventory_lot()
+
+
+  },[])
   
 //gonna be api call everytime user clicks today,weekly, monthly(update maybe if app grows large)
   useEffect(() => {
@@ -218,13 +334,7 @@ export default function Analytics() {
 
   return (
     <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        justifyContent: "center",
-        padding: "20px 0",
-        fontFamily: "Arial, sans-serif",
-      }}
+     className='page'
     >
       <div
         style={{
@@ -235,84 +345,33 @@ export default function Analytics() {
           padding: "20px 16px 28px",
           boxSizing: "border-box",
         }}
-      >
-        <h2
-          style={{
-            margin: "0 0 20px",
-            fontSize: "22px",
-            fontWeight: 500,
-            color: "#222",
-          }}
-        >
-          Analytics
-        </h2>
 
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            gap: "12px",
-            marginBottom: "28px",
-          }}
-        >
-          <div
-            style={{
-              flex: 1,
-              backgroundColor: "#e8dddd",
-              borderRadius: "24px",
-              padding: "18px 16px",
-              minHeight: "110px",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-            }}
-          >
+      >
+        <h2 className='title'>Analytics</h2>
+
+        <div className = "card-row">
+          <div className = "card">
             <img src = "/signal.png" width = {50} height = {50}/>
-            <div style={{ fontSize: "17px", fontWeight: 500, color: "#222" }}>
+            <div className = "card-value">
               {totalOrders}
             </div>
-            <div style={{ fontSize: "15px", color: "#333" }}>total orders</div>
+            <div className = "card-label">total orders</div>
           </div>
 
           <div
-            style={{
-              flex: 1,
-              backgroundColor: "#e8dddd",
-              borderRadius: "24px",
-              padding: "18px 16px",
-              minHeight: "110px",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-            }}
+           className = 'card'
           >
             <img src = "/small-zigzag-arrow-upward.png" width = {50} height = {50}/>
-            <div style={{ fontSize: "17px", fontWeight: 500, color: "#222" }}>
+            <div className = "card-value">
               {averageOrders}
             </div>
-            <div style={{ fontSize: "15px", color: "#333" }}>avg daily orders</div>
+            <div className = "card-label">avg daily orders</div>
           </div>
         </div>
 
         <div style={{ marginBottom: "28px" }}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: "12px",
-              gap: "10px",
-              flexWrap: "wrap",
-            }}
-          >
-            <h3
-              style={{
-                margin: 0,
-                fontSize: "18px",
-                fontWeight: 500,
-                color: "#222",
-              }}
-            >
+          <div className = "chart-header">
+            <h3 className = "section-title">
               chart orders
             </h3>
 
@@ -359,21 +418,12 @@ export default function Analytics() {
     </LineChart>
 
     {chartOrders.length === 0 && (
-      <div
-        style={{
-          textAlign: "center",
-          marginTop: "12px",
-          fontSize: "14px",
-          color: "#444",
-        }}
-      >
+      <div className = "empty-message">
         {emptyChartMessage}
       </div>
     )}
 
-          </div>
-            
-            
+          </div>   
         </div>
 
         <div>
@@ -460,6 +510,84 @@ export default function Analytics() {
             )}
           </div>
         </div>
+
+
+        {/* this where more metrics such as expiring items will appear as well as other things like items on low quanttiy */}
+        <div className="inventory-container">
+  
+  <h2 className="inventory-title">Inventory</h2>
+  <div className="card-row">
+    
+    <div
+      className="card"
+      onClick={() => setOpenModal("expiry")}
+    >
+      
+      <img src = "/expired.png" width = {30} height = {30} className="card-icon"/>
+      <div className="card-count">{expiringItems.length}</div>
+      <div className="card-label">expiring soon</div>
+    </div>
+
+    <div
+      className="card"
+      onClick={() => setOpenModal("stock")}
+    >
+      <img src = "/boxes.png" width = {30} height = {30} className="card-icon"/>
+      <div className="card-count">{lowStockItems.length}</div>
+      <div className="card-label">low stock</div>
+    </div>
+
+  </div>
+  {openModal && (
+    <div className="overlay">
+      <div className="modal">
+        
+        <div className="modal-header">
+          <h3>
+            {openModal === "expiry"
+              ? "Expiring Items"
+              : "Low Stock Items"}
+          </h3>
+          <button
+            className="close-btn"
+            onClick={() => setOpenModal(null)}
+          >
+            X
+          </button>
+        </div>
+
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Item</th>
+    <th>Days Left</th>
+              <th>Quantity</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {(openModal === "expiry"
+              ? expiringItems
+              : lowStockItems
+            ).map((item) => (
+              <tr key={item.name}>
+                <td>{item.name}</td>
+    
+                  <td>{item.daysLeft}</td>
+             
+                <td>{item.quantity}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+      </div>
+    </div>
+  )}
+</div>
+
+
+
       </div>
     </div>
   );

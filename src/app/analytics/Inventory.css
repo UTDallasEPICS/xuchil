@@ -1,0 +1,112 @@
+
+.card-row {
+  display: flex;
+  gap: 20px;
+}
+
+.card {
+  padding: 20px;
+  border-radius: 20px;
+  width: 180px;
+  cursor: pointer;
+  border: 1px solid #ccc;
+}
+
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal {
+  position: relative;
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  width: 500px;
+  max-height: 250px; 
+  overflow-y: auto;
+}
+
+
+
+.modal-header h3 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+
+.close-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  border: none;
+  cursor: pointer;
+  padding: 10px 14px;
+  border-radius: 10px;
+}
+
+
+.close-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  border: none;
+  cursor: pointer;
+  padding: 10px 14px;
+  border-radius: 10px;
+}
+
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed; 
+  margin-top: 10px;
+}
+
+
+.table th,
+.table td {
+  padding: 14px 10px;
+}
+
+
+.table th:nth-child(1),
+.table td:nth-child(1) {
+  width: 40%;
+  text-align: left;
+}
+
+.table th:nth-child(2),
+.table td:nth-child(2) {
+  width: 30%;
+  text-align: center;
+}
+
+.table th:nth-child(3),
+.table td:nth-child(3) {
+  width: 30%;
+  text-align: right;
+}
+
+
+.table th {
+  font-weight: 600;
+  padding-bottom: 16px;
+}
+
+
+.table tr {
+  border-bottom: 1px solid #ddd;
+}
+
