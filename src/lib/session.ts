@@ -4,9 +4,9 @@ import { JWTPayload, SignJWT, jwtVerify } from 'jose';
 import prisma from '@/lib/db';
 
 export default interface SessionPayload {
-  authUserId: number
-  workerId: number | null
+  userId: number | null
   isAdmin: boolean
+  isGuest: boolean
 }
 
 const EXPIRATION_MS = 2 * 24 * 60 * 60 * 1000
@@ -53,23 +53,6 @@ export async function createSession(payload: SessionPayload) {
   });
 }
 
-export async function updateSession() {
-  const cookieStore = await cookies()
-  const session = cookieStore.get('session')?.value
-  const payload = await decrypt(session)
-  if (!session || !payload) {
-    return null
-  }
-  const expiresAt = new Date(Date.now() + EXPIRATION_MS);
-  cookieStore.set('session', session, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    expires: expiresAt,
-    sameSite: 'lax',
-    path: '/',
-  })
-}
-
 export async function deleteSession() {
   const cookieStore = await cookies()
   cookieStore.delete('session')
@@ -82,29 +65,4 @@ export const verifySession = cache(async (): Promise<SessionPayload | null> => {
   // decrypt payload
   const payload = await decrypt(session);
   return payload;
-})
-
-export const getUser = cache(async () => {
-  const payload = await verifySession();
-  if (!payload) {
-    return null;
-  }
-  try {
-    const authUser = await prisma.authUser.findUnique({
-      where: {
-        id: payload.authUserId,
-      },
-      include: {
-        worker: true,
-      },
-      omit: {
-        passwordHash: true,
-      }
-    });
-
-    return authUser;
-  } catch (error) {
-    console.log('Failed to fetch user');
-    return null;
-  }
 })
