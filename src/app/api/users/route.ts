@@ -3,8 +3,9 @@ import {UserCreateSchema} from "@/lib/schemas";
 import {NextRequest} from "next/server";
 import {createSuccess, serverError, validationError} from "@/utils/responses";
 import bcrypt from "bcrypt";
+import prisma from "@/lib/db";
 
-export const GET = withAuthAdmin(findAllHandler("user"));
+export const GET = withAuthAdmin(findAllHandler("user", {omit: {passwordHash: true}}));
 export const POST = withAuthAdmin(
     async (req: NextRequest) => {
       try {
