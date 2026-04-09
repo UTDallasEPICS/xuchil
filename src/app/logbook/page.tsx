@@ -159,7 +159,10 @@ const Logbook = () => {
         {error && <p style={{color: "red"}}>{error}</p>}
       </div>
       
-      <Dashboard />
+      <Dashboard 
+        currentUser={currentUser} isAdminMode={isAdminMode}
+        selectedProduct={selectedProduct} selectedUser={selectedUser} selectedMonth={selectedMonth}
+      />
 
       <div className={styles.tableWrapper}>
         <DynamicTable

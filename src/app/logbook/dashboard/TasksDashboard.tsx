@@ -8,7 +8,7 @@ import type { LabelProps } from 'recharts';
 // Single row of data — each key is one section of the bar
 // sameple data
 const data = [
-    { notStarted: 1, pending: 17, completed: 20 }
+    { notStarted: 3, pending: 7, completed: 5 }
 ];
 
 // can change into total of "totalSteps" from PendingTask
@@ -21,7 +21,7 @@ const COLORS = {
 };
 
 const LABELS = {
-    notStarted: 'Not Started',
+    notStarted: 'No iniciado',
     pending:    'Pendiente',
     completed:  'Completado',
 };
@@ -59,7 +59,17 @@ const CustomLegend = () => (
     </div>
 );
 
-export default function TasksDashboard() {
+interface TasksDashboardProps {
+    currentUser: string;
+    isAdminMode: boolean;
+    selectedProduct: any;
+    selectedUser: any;
+    selectedMonth: any;
+}
+
+export default function TasksDashboard( 
+    { currentUser, isAdminMode, selectedProduct, selectedUser, selectedMonth}: TasksDashboardProps) {
+
     return(
         <div>
             <BarChart data={data} layout="vertical"

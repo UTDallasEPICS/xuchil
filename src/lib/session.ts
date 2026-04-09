@@ -11,7 +11,7 @@ export default interface SessionPayload {
 
 const EXPIRATION_MS = 2 * 24 * 60 * 60 * 1000
 
-const secretKey = process.env.SESSION_SECRET;
+const secretKey = process.env.SESSION_SECRET || "s";
 const encodedKey = new TextEncoder().encode(secretKey);
 
 export async function encrypt(payload: SessionPayload, expiresAt: Date) {

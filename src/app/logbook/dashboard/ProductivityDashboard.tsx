@@ -8,9 +8,9 @@ import type { LabelProps } from 'recharts';
 const data = [
     // IF DOING PERCENTS: 50, 90, 100
     // why? if worker has one of each then will = 80%
-    { name: "Over Time",  value: 1 },     
-    { name: "On Time",    value: 10 },     
-    { name: "Under Time", value: 7 },
+    { name: "Over Time",  value: 5 },     
+    { name: "On Time",    value: 5 },     
+    { name: "Under Time", value: 5 },
   ];
 
 // from group C to group A  (left to right)
@@ -33,7 +33,19 @@ const CustomLegend = () => (
     </div>
 );
 
-export default function ProductivityDashboard() { 
+interface ProductivityDashboardProps {
+    currentUser: string;
+    isAdminMode: boolean;
+    selectedProduct: any;
+    selectedUser: any;
+    selectedMonth: any;
+}
+
+export default function ProductivityDashboard(
+    { currentUser, isAdminMode, selectedProduct, selectedUser, selectedMonth}: ProductivityDashboardProps) 
+{
+
+
     return(
         <div>
             <PieChart style={{ width: '100%', maxWidth: '500px', aspectRatio: 1.75, 
@@ -51,17 +63,13 @@ export default function ProductivityDashboard() {
                     startAngle={180}
                     endAngle={0}
                     shape={MyCustomPie}                 // the colors
-                    // for the number per pie slice
-                    label
+                    label                               // for the number per pie slice                   
                 >
                     <Label
                         dy={40}
                         fontSize="200%"
                         fontWeight={300}
                         position="center"
-                        //className={styles.insideLabel}        Not working grr
-                    // sizing/centering problem b/c of responsive, to solve make piechart size constant
-                    // but to what size should it be constant for?
                     >
                         100%
                     </Label>

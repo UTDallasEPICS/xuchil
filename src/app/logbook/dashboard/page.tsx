@@ -4,7 +4,6 @@ import Link from 'next/link';
 import styles from "./dashboard.module.css";
 import ProductivityDashboard from './ProductivityDashboard';
 import TasksDashboard from './TasksDashboard';
-// import styles from "./LogbookPage.module.css";   might not need
 
 
 /* Notes:
@@ -18,9 +17,17 @@ import TasksDashboard from './TasksDashboard';
     
 */
 
-export default function Dashboard() { 
+interface DashboardProps {
+    currentUser: string;
+    isAdminMode: boolean;
+    selectedProduct: any;
+    selectedUser: any;
+    selectedMonth: any;
+}
+
+export default function Dashboard(
+    { currentUser, isAdminMode, selectedProduct, selectedUser, selectedMonth}: DashboardProps   ) { 
     return (
-        // dashboard too long for phone change later ?
         <div className={styles.container}> 
             <h6 className={styles.dashboardTitle}>Panel</h6>
 
@@ -28,10 +35,16 @@ export default function Dashboard() {
                 className={styles.dashBackground}
                  >
                     <h6 className={styles.insideHeader}>Productividad</h6>
-                    <ProductivityDashboard />
+                    <ProductivityDashboard 
+                        currentUser={currentUser} isAdminMode={isAdminMode}
+                        selectedProduct={selectedProduct} selectedUser={selectedUser} selectedMonth={selectedMonth}
+                    />
                     
                     <h6 className={styles.insideHeader}>Tareas</h6>
-                    <TasksDashboard />
+                    <TasksDashboard 
+                        currentUser={currentUser} isAdminMode={isAdminMode}
+                        selectedProduct={selectedProduct} selectedUser={selectedUser} selectedMonth={selectedMonth}
+                    />
             </Link>
         </div>
       );
