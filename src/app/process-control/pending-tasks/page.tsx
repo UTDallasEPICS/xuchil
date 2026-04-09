@@ -22,11 +22,17 @@ const PendingTasksPage = () => {
 
       const mapped: PendingTask[] = data.map((run: any) => {
         const orderedSteps = [...(run.stepExecutions || [])];
+        const allStepsDone =
+          orderedSteps.length > 0 &&
+          orderedSteps.every((step: any) => step.status === "DONE");
         const currentStepIndex = orderedSteps.findIndex(
-          (step: any) => step.status === "IN_PROGRESS" || step.status === "PENDING"
+          (step: any) => step.status === "IN_PROGRESS" || step.status === "PENDING" || step.status === "BLOCKED"
         );
         const safeIndex = currentStepIndex >= 0 ? currentStepIndex : 0;
         const currentStep = orderedSteps[safeIndex];
+        const openRoute = allStepsDone
+          ? `/process-control/new-production/${run.productVariant?.productId}/${run.productVariantId}/results?runId=${run.id}`
+          : `/process-control/new-production/${run.productVariant?.productId}/${run.productVariantId}/${safeIndex + 1}`;
 
         return {
           id: run.id,
@@ -37,9 +43,10 @@ const PendingTasksPage = () => {
             ? new Date(run.startedAt).toLocaleDateString("es-MX")
             : "",
           startedBy: run.creator?.fullName || "No asignado",
-          currentStep: currentStep?.templateStep?.name || "Sin paso",
-          currentStepNumber: safeIndex + 1,
+          currentStep: allStepsDone ? "Captura de resultados" : currentStep?.templateStep?.name || "Sin paso",
+          currentStepNumber: allStepsDone ? orderedSteps.length : safeIndex + 1,
           totalSteps: orderedSteps.length || 0,
+          openRoute,
         };
       });
 
@@ -62,9 +69,7 @@ const PendingTasksPage = () => {
           <div
             key={task.id}
             onClick={() =>
-              router.push(
-                `/process-control/new-production/${task.productId}/${task.variantId}/${task.currentStepNumber}`
-              )
+              router.push(task.openRoute)
             }
             style={{ cursor: "pointer" }}
             className={styles.cardContainer}

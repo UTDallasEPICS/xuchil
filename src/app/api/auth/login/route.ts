@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     }
 
     // Find user by email
-    const user = await prisma.authUser.findUnique({
+    const user = await prisma.user.findUnique({
       where: {email},
     });
 
@@ -39,13 +39,13 @@ export async function POST(req: Request) {
 
     // Create session payload for cookie
     await createSession({
-      authUserId: user.id,
-      workerId: user.workerId,
+      userId: user.id,
       isAdmin: user.isAdmin,
+      isGuest: user.isGuest,
     });
 
-    return NextResponse.json({ ok: true });
-  } catch (error) {
+    return new NextResponse(null, {status: 204});
+  } catch (e) {
     return serverError('user', 'login', null)
   }
 }

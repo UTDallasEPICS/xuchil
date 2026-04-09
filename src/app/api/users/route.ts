@@ -1,58 +1,36 @@
-import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/db";
-import {idError, notFoundError, serverError} from "@/utils/responses";
+import {findAllHandler, withAuthAdmin} from "@/utils/handlers";
+import {UserCreateSchema} from "@/lib/schemas";
+import {NextRequest} from "next/server";
+import {createSuccess, serverError, validationError} from "@/utils/responses";
 import bcrypt from "bcrypt";
-import {verifySession} from "@/lib/session";
 
-export async function GET(
-  _req: NextRequest,
-) {
-  const payload = await verifySession();
-  if (!payload?.isAdmin) {
-    return new NextResponse(null, { status: 403 });
-  }
-  try {
-    const users = await prisma.authUser.findMany({
-      include: { worker: true },
-      omit: { passwordHash: true }
-    });
-
-    return NextResponse.json(users);
-  } catch (error) {
-    return serverError('user', 'fetch', null)
-  }
-}
-
-export async function POST(
-  req: NextRequest,
-) {
-  const payload = await verifySession();
-  if (!payload?.isAdmin) {
-    return new NextResponse(null, { status: 403 });
-  }
-  try {
-    const body = await req.json();
-    const { fullName, phone, email, profilePhotoUrl, roleId, password } = body;
-
-    const user = await prisma.authUser.create({
-      data: {
-        email,
-        passwordHash: await bcrypt.hash(password, 10),
-        worker: {
-          create: {
-            fullName,
-            roleId,
-            phone,
-            profilePhotoUrl,
-          }
+export const GET = withAuthAdmin(findAllHandler("user"));
+export const POST = withAuthAdmin(
+    async (req: NextRequest) => {
+      try {
+        const body = await req.json();
+        const res = UserCreateSchema.safeParse(body);
+        if (!res.success) {
+          return validationError("user", "create", res.error);
         }
-      },
-      include: { worker: true },
-      omit: { passwordHash: true }
-    });
 
-    return NextResponse.json(user, {status: 201});
-  } catch (error) {
-    return serverError('user', 'create', null)
-  }
-}
+        const newItem = await prisma.user.create({
+          data: {
+            name: res.data.name,
+            email: res.data.email,
+            phone: res.data.phone,
+            imgUrl: res.data.imgUrl,
+            passwordHash: await bcrypt.hash(res.data.password, 10),
+            isAdmin: res.data.isAdmin,
+            isGuest: res.data.isGuest,
+          },
+          omit: {
+            passwordHash: true
+          }
+        });
+        return createSuccess(newItem);
+      } catch (e) {
+        return serverError("user", "create", e);
+      }
+    }
+);

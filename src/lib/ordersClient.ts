@@ -68,6 +68,7 @@ export async function fetchOrderByIdClient(id: number) {
 export async function putOrderStatusClient(id: number, status: "SCHEDULED" | "DELIVERED" | "CANCELLED") {
   const res = await fetch(`/api/orders/${id}/status`, {
     method: "PUT",
+    credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(status),
   });

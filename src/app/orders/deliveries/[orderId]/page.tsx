@@ -63,8 +63,15 @@ const OrderDetailsPage = () => {
   const handleDelivered = async () => {
     try {
       const newStatus = delivered ? "SCHEDULED" : "DELIVERED";
-      await putOrderStatusClient(id, newStatus as any);
-      router.replace(`/orders/deliveries/${id}`);
+      const updated = await putOrderStatusClient(id, newStatus as any);
+      setOrder((prev: any) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          delivered: updated?.status === "DELIVERED" || Boolean(updated?.deliveredAt),
+        };
+      });
+      router.refresh();
     } catch (err) {
       console.error("Failed to update order status", err);
       alert("No se pudo cambiar el estado del pedido");

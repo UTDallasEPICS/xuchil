@@ -8,7 +8,7 @@ import {
   productFilterOptions,
   userFilterOptions,
 } from "@/constants/filterOptions";
-import { fetchMyTasks, fetchProcessRuns } from "@/app/api/logbook";
+import { fetchMyTasks, fetchProcessRuns } from "@/app/oldapi/logbook";
 import styles from "./LogbookPage.module.css";
 import Dashboard from "./dashboard/page";
 
