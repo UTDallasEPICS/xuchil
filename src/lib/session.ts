@@ -1,7 +1,6 @@
 import { cache } from 'react';
 import { cookies } from 'next/headers';
 import { JWTPayload, SignJWT, jwtVerify } from 'jose';
-import prisma from '@/lib/db';
 
 export default interface SessionPayload {
   userId: number | null

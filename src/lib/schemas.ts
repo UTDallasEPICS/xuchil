@@ -77,6 +77,9 @@ export const UserCreateSchema = z.strictObject({
   email: z.email().optional(),
   phone: z.string().optional(),
   imgUrl: z.url().optional(),
+  password: z.string(),
+  isAdmin: z.boolean().optional(),
+  isGuest: z.boolean().optional(),
 });
 export const UserReadSchema = z.object({
   id: z.number().int(),
@@ -87,22 +90,6 @@ export const UserReadSchema = z.object({
 });
 export type UserCreate = z.infer<typeof UserCreateSchema>;
 export type UserRead = z.infer<typeof UserReadSchema>;
-
-// AuthInfo
-export const AuthInfoCreateSchema = z.strictObject({
-  userId: z.number().int(),
-  passwordHash: z.string(),
-  isAdmin: z.boolean().optional(),
-  isGuest: z.boolean().optional(),
-});
-export const AuthInfoReadSchema = z.object({
-  userId: z.number().int(),
-  passwordHash: z.string(),
-  isAdmin: z.boolean(),
-  isGuest: z.boolean(),
-});
-export type AuthInfoCreate = z.infer<typeof AuthInfoCreateSchema>;
-export type AuthInfoRead = z.infer<typeof AuthInfoReadSchema>;
 
 // ProcessTemplate
 export const ProcessTemplateCreateSchema = z.strictObject({
