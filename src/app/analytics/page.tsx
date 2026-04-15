@@ -3,13 +3,14 @@ import React from 'react'
 import { useState,useMemo,useEffect } from "react";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts';
 import "./Inventory.css";
-//this page fetches analytics from orders table. gives trending items(most sold items in the past week, month, day), provides visuals on delivered orders
-interface OrderPoint {
+import { JsonObject } from '@prisma/client/runtime/library';
+//this page fetches analytics from orders table and inventory table to display orders, avg orders, trending items, items low on stock, expiring items
+interface OrderPoint {  //points on the graph
   date: string;
   orderCount: number;
 }
 
-interface TrendingItem {
+interface TrendingItem { 
   id: number;
   name: string;
 //   date: string;
@@ -17,29 +18,41 @@ interface TrendingItem {
   image: string;
 }
 
-interface RawOrder {
-    addressText: string | null
+interface RawOrder { //orders api what it returns 
+    address: string | null
     clientName: string
     consignmentPartner: string | null
-    createdByUserId: string | null
-    deliveredAt: string
+    deliveredAt: string | null
     deliveryDate: string
     deliveryVariant: string
     id: number
     notes: string | null
-    orderItems: unknown[]
+    orderItems: {
+      id: number
+      quantity: number | string
+      product: {
+        id: number
+        name: string
+        imgUrl: string | null
+        unit: {
+          id: number
+          name: string
+        }
+      }
+    }[]
     status: string
   }
 
 
-    interface RawInventory_lot {
+    interface RawInventory_lot { //what inventory api returns
       id: number;
-      inventoryItemId: number;
-      lotCode: string;
-      qtyOnHand: string; 
-      receivedAt: string; 
-      expiryAt: string | null; 
-      unitId: number;
+      itemType: string;
+      product: string | null;
+      productId: number | null; 
+      quantity: number; 
+      rawMaterial: JsonObject | null; 
+      rawMaterialId: number;
+      expiryAt: Date
     }
 
   interface expiringItems { //going to be used for both expiring and inventory since it follows same format
@@ -62,7 +75,7 @@ const transformOrders = (orders: RawOrder[], filterType: FilterType): OrderPoint
       if (!order.deliveredAt) return
   
       const deliveredDate = new Date(order.deliveredAt)
-      const diffTime = today.getTime() - deliveredDate.getTime()
+      const diffTime = today.getTime() - deliveredDate.getTime() //classify as today, last 7 days or last 30  
       const diffDays = diffTime / (1000 * 60 * 60 * 24)
   
       if (filterType === "today") {
@@ -100,9 +113,9 @@ const transformOrders = (orders: RawOrder[], filterType: FilterType): OrderPoint
   
   //turns rawOrder interface into usable data for trends interface
   const transformTrendingItems = (orders: RawOrder[], filterType: FilterType): TrendingItem[] => {
-    const grouped: Record<number, number> = {}
+    const grouped: Record<number, { id: number; name: string; image: string; orders: number }> = {}
     const today = new Date()
-  
+
     orders.forEach((order) => {
       if (order.status !== "DELIVERED") return
       if (!order.deliveredAt) return
@@ -129,19 +142,21 @@ const transformOrders = (orders: RawOrder[], filterType: FilterType): OrderPoint
       }
   
       order.orderItems.forEach((item) => {    //for quantity adding
-        grouped[item.productVariantId] =
-          (Number(grouped[item.productVariantId]) || 0) + Number(item.quantity)
+        if (!grouped[item.product.id]) {
+          grouped[item.product.id] = {
+            id: item.product.id,
+            name: item.product.name,
+            orders: 0,
+            image: item.product.imgUrl || "/placeholder.png",
+          }
+        }
+
+        grouped[item.product.id].orders =
+          (Number(grouped[item.product.id].orders) || 0) + Number(item.quantity)
       })
     })
   
-    return Object.entries(grouped)
-      .map(([id, quantity]) => ({
-        id: Number(id),
-        name: `Product Variant ${id}`, //update to actual name once integrations are completed
-        // date: today.toISOString().split("T")[0],
-        orders: quantity,
-        image: "/placeholder.png", //use actual image as well 
-      }))
+    return Object.values(grouped)
       .sort((a, b) => b.orders - a.orders)
       .slice(0, 4) 
   }
@@ -166,38 +181,38 @@ const transformOrders = (orders: RawOrder[], filterType: FilterType): OrderPoint
         const expiry = new Date(item.expiryAt!);
         const diffTime = expiry.getTime() - today.getTime();
         const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  
+    
         return {
-          name: item.lotCode,
+          name: item.rawMaterial?.name || `Item ${item.id}`,
           daysLeft,
-          quantity: Number(item.qtyOnHand),
+          quantity: Number(item.quantity),
         };
       });
   };
-//method to get items that are low in quantity or already ran out
+  //method to get items are low in stock  less than 50 units
   const transformLowStock = (
     inventory: RawInventory_lot[]
   ): expiringItems[] => {
     const today = new Date();
-  
+    
     return inventory
       .filter((item) => {
-        const qty = Number(item.qtyOnHand);
+        const qty = Number(item.quantity);
         return qty <= 50; // low stock condition
       })
       .map((item) => {
         let daysLeft = 0;
-  
+    
         if (item.expiryAt) {
           const expiry = new Date(item.expiryAt);
           const diffTime = expiry.getTime() - today.getTime();
           daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         }
-  
+    
         return {
-          name: item.lotCode,
+          name: item.rawMaterial?.name || `Item ${item.id}`,
           daysLeft,
-          quantity: Number(item.qtyOnHand),
+          quantity: Number(item.quantity),
         };
       });
   };
@@ -224,7 +239,7 @@ export default function Analytics() {
     const inventory_lot = async () => { 
     try { 
 
-      const response = await fetch("api/inventory")
+      const response = await fetch("oldapi/inventory")
 
       const data = await response.json()
 
@@ -257,13 +272,14 @@ export default function Analytics() {
   
       try {
   
-        const response = await fetch("/api/orders")
+        const response = await fetch("/oldapi/orders")
+
   
         const rawOrders: RawOrder[] = await response.json()
   
         const transformed = transformOrders(rawOrders,chartFilter)
 
-        const sorted = transformed.sort((a, b) => new Date(a.date) - new Date(b.date)) //sorts by date
+        const sorted = transformed.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()) //sorts by date
         
         const trend = transformTrendingItems(rawOrders,chartFilter)
         setChartOrders(sorted)
@@ -592,5 +608,3 @@ export default function Analytics() {
     </div>
   );
 };
-
-
