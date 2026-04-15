@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import HeaderXuchil from "@/components/HeaderXuchil";
 import Button from "@/components/Button";
@@ -22,8 +22,18 @@ interface RawMaterial {
   unit: string;
 }
 
+interface ProductVariantOption {
+  id: number;
+  name: string;
+  product?: {
+    name: string;
+  };
+}
+
 const NewProcessPage = () => {
   const router = useRouter();
+  const [variants, setVariants] = useState<ProductVariantOption[]>([]);
+  const [productVariantId, setProductVariantId] = useState("");
   const [processName, setProcessName] = useState("");
   const [processDescription, setProcessDescription] = useState("");
   const [steps, setSteps] = useState<ProcessStep[]>([
@@ -38,6 +48,28 @@ const NewProcessPage = () => {
     message: "",
     error: false,
   });
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadVariants() {
+      try {
+        const res = await fetch("/api/product-variants", { credentials: "include" });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!mounted) return;
+        setVariants(data);
+      } catch (error) {
+        console.error("Failed to load product variants:", error);
+      }
+    }
+
+    loadVariants();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const addStep = () => {
     const newStep: ProcessStep = {
@@ -79,21 +111,112 @@ const NewProcessPage = () => {
     setRawMaterials(updated);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Aquí se enviarían los datos al backend
-    console.log("Nuevo proceso:", {
-      processName,
-      processDescription,
-      steps,
-      rawMaterials
-    });
-    setModal({
-      open: true,
-      title: "Proceso creado exitosamente",
-      message: "El nuevo proceso ha sido registrado correctamente.",
-      error: false,
-    });
+
+    if (!productVariantId) {
+      setModal({
+        open: true,
+        title: "Falta información",
+        message: "Selecciona una variante de producto.",
+        error: true,
+      });
+      return;
+    }
+
+    if (!processName.trim()) {
+      setModal({
+        open: true,
+        title: "Error",
+        message: "El nombre del proceso es obligatorio.",
+        error: true,
+      });
+      return;
+    }
+
+    for (const material of rawMaterials) {
+      if (!material.name.trim()) {
+        setModal({
+          open: true,
+          title: "Error",
+          message: "Todas las materias primas deben tener nombre.",
+          error: true,
+        });
+        return;
+      }
+
+      if (material.quantity <= 0) {
+        setModal({
+          open: true,
+          title: "Error",
+          message: "Las cantidades de materia prima deben ser mayores a 0.",
+          error: true,
+        });
+        return;
+      }
+    }
+
+    for (const step of steps) {
+      if (!step.title.trim()) {
+        setModal({
+          open: true,
+          title: "Error",
+          message: "Todos los pasos deben tener título.",
+          error: true,
+        });
+        return;
+      }
+
+      if (step.estimatedTime <= 0) {
+        setModal({
+          open: true,
+          title: "Error",
+          message: "El tiempo estimado debe ser mayor a 0 minutos.",
+          error: true,
+        });
+        return;
+      }
+    }
+
+    try {
+      const payload = {
+        productVariantId: parseInt(productVariantId, 10),
+        name: processName.trim(),
+        notes: processDescription.trim() || null,
+        steps: steps.map((step) => ({
+          name: step.title.trim(),
+          idealDurationMin: step.estimatedTime > 0 ? step.estimatedTime : null,
+          requiresInput: step.hasInput,
+          instructions: step.description?.trim() || null,
+        })),
+      };
+
+      const response = await fetch("/api/process-templates/create-with-steps", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error || "No se pudo crear el proceso.");
+      }
+
+      setModal({
+        open: true,
+        title: "Proceso creado exitosamente",
+        message: "El nuevo proceso ha sido registrado correctamente.",
+        error: false,
+      });
+    } catch (error) {
+      setModal({
+        open: true,
+        title: "Error al crear proceso",
+        message: error instanceof Error ? error.message : "Ocurrió un error inesperado.",
+        error: true,
+      });
+    }
   };
 
   const handleModalClose = () => {
@@ -117,6 +240,22 @@ const NewProcessPage = () => {
           {/* Información básica del proceso */}
           <div className={styles.section}>
             <h2>Información del Proceso</h2>
+            <div className={styles.inputGroup}>
+              <label className={styles.label}>Variante de producto</label>
+              <select
+                className={styles.input}
+                value={productVariantId}
+                onChange={(e) => setProductVariantId(e.target.value)}
+                required
+              >
+                <option value="">Seleccionar...</option>
+                {variants.map((variant) => (
+                  <option key={variant.id} value={variant.id}>
+                    {variant.product?.name ? `${variant.product.name} — ${variant.name}` : variant.name}
+                  </option>
+                ))}
+              </select>
+            </div>
             <div className={styles.inputGroup}>
               <label className={styles.label}>Nombre del proceso</label>
               <input
@@ -164,13 +303,21 @@ const NewProcessPage = () => {
                 <div className={styles.quantityGroup}>
                   <div className={styles.inputGroup}>
                     <label className={styles.label}>Cantidad</label>
-                    <input
-                      type="number"
-                      className={styles.input}
-                      value={material.quantity}
-                      onChange={(e) => updateRawMaterial(index, "quantity", parseFloat(e.target.value) || 0)}
-                      required
-                    />
+                   <input
+                    type="number"
+                    min="0.001"
+                    step="0.001"
+                    className={styles.input}
+                    value={material.quantity}
+                    onChange={(e) =>
+                    updateRawMaterial(
+                    index,
+                    "quantity",
+                   Math.max(0.001, parseFloat(e.target.value) || 0.001)
+                    )
+                    }
+                     required
+                  />
                   </div>
                   <select
                     value={material.unit}
@@ -250,10 +397,18 @@ const NewProcessPage = () => {
                     <label className={styles.label}>Tiempo estimado (minutos)</label>
                     <input
                       type="number"
+                     min="1"
+                      step="1"
                       className={styles.input}
                       value={step.estimatedTime}
-                      onChange={(e) => updateStep(step.id, "estimatedTime", parseFloat(e.target.value) || 0)}
-                      required
+                      onChange={(e) =>
+                      updateStep(
+                      step.id,
+                     "estimatedTime",
+                      Math.max(1, parseInt(e.target.value) || 1)
+                    )
+                   }
+                   required
                     />
                   </div>
                   

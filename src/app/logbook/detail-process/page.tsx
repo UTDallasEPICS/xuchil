@@ -4,7 +4,7 @@ import { Calendar, Clock, User } from "lucide-react";
 import styles from "@/styles/DetailProcess.module.css";
 import UnitField from "@/components/UnitField2";
 import HeaderXuchil from "@/components/HeaderXuchil";
-import { fetchProcessRunDetail, fetchStepExecutionDetail } from "@/app/api/logbook";
+import { fetchProcessRunDetail, fetchStepExecutionDetail } from "@/app/oldapi/logbook";
 import React from "react";
 
 const DetailProcessContent = () => {

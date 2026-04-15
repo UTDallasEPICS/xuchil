@@ -6,10 +6,6 @@ In order to run this project, a few technologies are required:
 
 - [Node.js](https://nodejs.org)
 
-If you have these installed already, you can skip to [running this project](#running-this-project).
-
-Node.js is what allows us to write all our applications in JavaScript. Usually, JavaScript is run only in a web browser. By building on top of Node.js, we can write code that is executed on the server, simpler to write, and/or more secure.
-
 ### Installing Node
 
 #### Node for Windows
@@ -38,40 +34,28 @@ These commands do the following:
 
 This completes your installation of Node!
 
-### Installing pnpm (recommended/optional)
-
-pnpm is an improved version of the Node Package Manager (npm). Though not required, it is highly recommended that you install it. You can install it using the following command in your terminal/powershell after node has been installed
-
-```bash
-npm install -g pnpm
-```
-
-If you choose to install pnpm, then you can substitute all usage of 'npm' with 'pnpm' and all usage of 'npx' with 'pnpx'. Additionally, you can create an alias in your `.bashrc` (Linux) or `.zshrc` (Mac) files. This will mean that when you type in npm or npx, pnpm and pnpx will be substituted. Use the following commands to add the aliases to the corresponding file:
-
-```bash
-# Linux
-echo 'alias npm="pnpm"' >> .bashrc
-
-# Mac
-echo 'alias npm="pnpm"' >> .zshrc
-```
-
-## Running This Project
+## Setup
 
 Make sure dependencies are installed:
 ```bash
 npm install
-# or
-pnpm install
-# remember to run pnpm post install scripts if prompted
 ```
 
-First, run the development server:
+Create a .env file in the project root with the following contents:
+```
+DATABASE_URL="file:./dev.db"
+SESSION_SECRET=<random long string here>
+```
+
+Run the following command to setup database:
+```
+npx prisma migrate reset
+```
+
+Now you can run the development server:
 
 ```bash
 npm run dev
-# or
-pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.

@@ -34,7 +34,7 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    "src/app/api/tasks/route.ts",
+    "src/app/oldapi/tasks/route.ts",
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [

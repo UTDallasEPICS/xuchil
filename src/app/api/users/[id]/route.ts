@@ -1,100 +1,47 @@
-import { NextRequest, NextResponse } from "next/server";
+import {deleteHandler, findByIdHandler, withAuthAdmin} from "@/utils/handlers";
+import {UserCreateSchema} from "@/lib/schemas";
 import prisma from "@/lib/db";
-import {idError, notFoundError, serverError} from "@/utils/responses";
-import {verifySession} from "@/lib/session";
+import {NextRequest} from "next/server";
+import {idError, notFoundError, serverError, updateSuccess, validationError} from "@/utils/responses";
+import {Prisma} from "@prisma/client";
+import bcrypt from "bcrypt";
 
-export async function GET(
-  req: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
-  const payload = await verifySession();
-  if (!payload?.isAdmin) {
-    return new NextResponse(null, { status: 403 });
-  }
-  const userId = parseInt((await context.params).id);
-  if (isNaN(userId)) {
-    return idError('user')
-  }
-
-  try {
-    const user = await prisma.authUser.findUnique({
-      where: { id: userId },
-      include: { worker: true },
-      omit: { passwordHash: true }
-    });
-
-    if (!user) {
-      return notFoundError('user')
-    }
-
-    return NextResponse.json(user);
-  } catch (error) {
-    return serverError('user', 'fetch', null)
-  }
-}
-
-export async function PUT(
-  req: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
-  const payload = await verifySession();
-  if (!payload?.isAdmin) {
-    return new NextResponse(null, { status: 403 });
-  }
-  const userId = parseInt((await context.params).id);
-  if (isNaN(userId)) {
-    return idError('user')
-  }
-
-  try {
-    const body = await req.json();
-    const { fullName, phone, profilePhotoUrl, isActive, isAdmin } = body;
-
-    const updatedUser = await prisma.authUser.update({
-      where: { id: userId },
-      data: {
-        isAdmin: isAdmin ?? undefined,
-        isActive: isActive ?? undefined,
-        worker: {
-          update: {
-            fullName: fullName ?? undefined,
-            phone: phone ?? undefined,
-            profilePhotoUrl: profilePhotoUrl ?? undefined,
+export const GET = withAuthAdmin(findByIdHandler("user", {omit: {passwordHash: true}}));
+export const PUT = withAuthAdmin(
+    async (req: NextRequest, {params}: { params: Promise<{ id: string }> }) => {
+      try {
+        const {id} = await params;
+        const idParsed = parseInt(id);
+        if (Number.isNaN(idParsed)) {
+          return idError("user");
+        }
+        const body = await req.json();
+        const res = UserCreateSchema.partial().safeParse(body);
+        if (!res.success) {
+          return validationError("user", "update", res.error);
+        }
+        const updatedItem = await prisma.user.update({
+          where: {id: idParsed},
+          data: {
+            name: res.data.name,
+            email: res.data.email,
+            phone: res.data.phone,
+            imgUrl: res.data.imgUrl,
+            passwordHash: res.data.password && await bcrypt.hash(res.data.password, 10),
+            isAdmin: res.data.isAdmin,
+            isGuest: res.data.isGuest,
           },
-        },
-      },
-      include: { worker: true },
-      omit: { passwordHash: true }
-    });
-
-    return NextResponse.json(updatedUser);
-  } catch (error) {
-    return serverError('user', 'update', null)
-  }
-}
-
-export async function DELETE(
-  _req: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
-  const payload = await verifySession();
-  if (!payload?.isAdmin) {
-    return new NextResponse(null, { status: 403 });
-  }
-  const userId = parseInt((await context.params).id);
-  if (isNaN(userId)) {
-    return idError('user')
-  }
-
-  try {
-    await prisma.authUser.update({
-      where: { id: userId },
-      data: { worker: { delete: true } },
-    })
-    await prisma.authUser.delete({
-      where: { id: userId },
-    })
-  } catch (error) {
-    return serverError('user', 'delete', null)
-  }
-}
+          omit: {
+            passwordHash: true,
+          }
+        });
+        return updateSuccess(updatedItem);
+      } catch (e) {
+        if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025") {
+          return notFoundError("user");
+        }
+        return serverError("user", "update", e);
+      }
+    }
+);
+export const DELETE = withAuthAdmin(deleteHandler("user"));
