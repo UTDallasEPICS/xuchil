@@ -17,12 +17,12 @@ const UserProfile = () => {
 
     async function loadProfile() {
       try {
-        const response = await fetch("/api/users/me", { credentials: "include" });
+        const response = await fetch("/api/users/1", { credentials: "include" }); //this is hardcoded update in the future
         if (!response.ok) {
           router.push("/login");
           return;
         }
-
+  
         const authUser = await response.json();
         if (!mounted) return;
 

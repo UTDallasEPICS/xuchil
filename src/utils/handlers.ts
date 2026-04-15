@@ -24,15 +24,19 @@ function qsToObject(sp: URLSearchParams) {
 export function findByIdHandler(name: keyof typeof prisma & string, prismaOpts = {}) {
   return async (req: NextRequest, {params}: { params: Promise<{ id: string }> }) => {
     try {
+      
       const {id} = await params;
+      
       const idParsed = parseInt(id);
       if (Number.isNaN(idParsed)) {
         return idError(name);
       }
+      
       const item = await prisma[name].findUnique({
         where: {id: idParsed},
         ...prismaOpts
       });
+
       if (!item) {
         return notFoundError(name)
       }
