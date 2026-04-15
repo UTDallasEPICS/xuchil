@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import HeaderXuchil from "@/components/HeaderXuchil";
 import Button from "@/components/Button";
 import styles from "./Templates.module.css";
+import * as processesService from "@/lib/services/processesService";
+import * as productsService from "@/lib/services/productsService";
 
 interface TemplateStep {
     id: number;
@@ -58,29 +60,43 @@ const TemplatesPage = () => {
     const [editStepRequiresInput, setEditStepRequiresInput] = useState(false);
 
     const loadTemplates = useCallback(async () => {
-        const res = await fetch("/api/process-templates", { credentials: "include" });
-        if (!res.ok) return;
-        const data = await res.json();
+        try {
+            const listRaw = await processesService.listProcessTemplates();
+            const list = Array.isArray(listRaw) ? listRaw as unknown[] : [];
 
-        // Load detail for each template to get steps
-        const detailed: Template[] = await Promise.all(
-            data.map(async (tpl: any) => {
-                const detailRes = await fetch(`/api/process-templates/${tpl.id}`, { credentials: "include" });
-                if (detailRes.ok) {
-                    return await detailRes.json();
-                }
-                return { ...tpl, templateSteps: [] };
-            })
-        );
+            const detailed: Template[] = await Promise.all(
+                list.map(async (tplRaw) => {
+                    const tpl = tplRaw as Record<string, unknown>;
+                    const id = typeof tpl.id === "number" ? tpl.id : Number(tpl.id);
+                    try {
+                        const detail = await processesService.getProcessTemplate(id);
+                        return detail as Template;
+                    } catch {
+                        return {
+                            id,
+                            productVariantId: typeof tpl.productVariantId === 'number' ? tpl.productVariantId as number : Number(tpl.productVariantId),
+                            version: typeof tpl.version === 'number' ? tpl.version as number : 1,
+                            name: String(tpl.name ?? ""),
+                            isActive: Boolean(tpl.isActive),
+                            notes: null,
+                            templateSteps: [],
+                        } as Template;
+                    }
+                })
+            );
 
-        setTemplates(detailed);
+            setTemplates(detailed);
+        } catch (e) {
+            console.error("Failed to load templates:", e);
+        }
     }, []);
 
     const loadVariants = useCallback(async () => {
-        const res = await fetch("/api/product-variants", { credentials: "include" });
-        if (res.ok) {
-            const data = await res.json();
-            setVariants(data);
+        try {
+            const data = await productsService.fetchProductVariants();
+            setVariants(Array.isArray(data) ? data as Variant[] : []);
+        } catch (e) {
+            console.error("Failed to load variants:", e);
         }
     }, []);
 
@@ -91,70 +107,54 @@ const TemplatesPage = () => {
 
     const handleCreateTemplate = async () => {
         if (!newTplVariantId || !newTplName.trim()) return;
-        const res = await fetch("/api/process-templates", {
-            method: "POST",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
+        try {
+            await processesService.createTemplate({
                 productVariantId: parseInt(newTplVariantId),
                 name: newTplName.trim(),
                 isActive: true,
-            }),
-        });
-        if (res.ok) {
+            });
             setShowNewTemplate(false);
             setNewTplName("");
             setNewTplVariantId("");
             loadTemplates();
-        } else {
-            const err = await res.json().catch(() => ({}));
-            alert(err.error || "Error al crear plantilla");
+        } catch (err) {
+            const message = err instanceof Error ? err.message : "Error al crear plantilla";
+            alert(message);
         }
     };
 
     const handleToggleActive = async (tpl: Template) => {
-        await fetch(`/api/process-templates/${tpl.id}`, {
-            method: "PUT",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
+        try {
+            await processesService.updateTemplate(tpl.id, {
                 productVariantId: tpl.productVariantId,
                 name: tpl.name,
                 isActive: !tpl.isActive,
-            }),
-        });
-        loadTemplates();
+            });
+            loadTemplates();
+        } catch (e) {
+            console.error("Failed to toggle template active:", e);
+        }
     };
 
     const handleAddStep = async (templateId: number) => {
         if (!newStepName.trim()) return;
-
-        // Find the template to get processTemplateId for the step
-        const tpl = templates.find((t) => t.id === templateId);
-        if (!tpl) return;
-
-        const res = await fetch(`/api/templates/${templateId}/steps`, {
-            method: "POST",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
+        try {
+            await processesService.addTemplateStep(templateId, {
                 processTemplateId: templateId,
                 name: newStepName.trim(),
                 idealDurationMin: newStepDuration ? parseInt(newStepDuration) : null,
                 instructions: newStepInstructions.trim() || null,
                 requiresInput: newStepRequiresInput,
-            }),
-        });
-        if (res.ok) {
+            });
             setShowNewStep(null);
             setNewStepName("");
             setNewStepDuration("");
             setNewStepInstructions("");
             setNewStepRequiresInput(false);
             loadTemplates();
-        } else {
-            const err = await res.json().catch(() => ({}));
-            alert(err.error || "Error al agregar paso");
+        } catch (err) {
+            const message = err instanceof Error ? err.message : "Error al agregar paso";
+            alert(message);
         }
     };
 
@@ -167,32 +167,30 @@ const TemplatesPage = () => {
     };
 
     const handleSaveStep = async (step: TemplateStep) => {
-        const res = await fetch(`/api/template-steps/${step.id}`, {
-            method: "PUT",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
+        try {
+            await processesService.updateTemplateStep(step.id, {
                 processTemplateId: step.position, // Keep existing
                 name: editStepName.trim(),
                 position: step.position,
                 idealDurationMin: editStepDuration ? parseInt(editStepDuration) : null,
                 instructions: editStepInstructions.trim() || null,
                 requiresInput: editStepRequiresInput,
-            }),
-        });
-        if (res.ok) {
+            });
             setEditingStepId(null);
             loadTemplates();
+        } catch (e) {
+            console.error("Failed to save step:", e);
         }
     };
 
     const handleDeleteStep = async (stepId: number) => {
         if (!confirm("¿Eliminar este paso?")) return;
-        await fetch(`/api/template-steps/${stepId}`, {
-            method: "DELETE",
-            credentials: "include",
-        });
-        loadTemplates();
+        try {
+            await processesService.deleteTemplateStep(stepId);
+            loadTemplates();
+        } catch (e) {
+            console.error("Failed to delete step:", e);
+        }
     };
 
     const getVariantLabel = (tpl: Template) => {

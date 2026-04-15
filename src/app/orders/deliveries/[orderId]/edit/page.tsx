@@ -12,7 +12,8 @@ import DatePicker from "@/components/DatePicker";
 import OrderedProducts from "@/components/OrderedProducts";
 import DeleteModal from "@/components/DeleteModal";
 
-import { fetchOrderByIdClient } from "@/lib/ordersClient";
+import * as ordersService from "@/lib/services/ordersService";
+import * as productsService from "@/lib/services/productsService";
 import { deliveryVariants } from "@/constants/deliveryConfig";
 import { Product } from "@/types/Product";
 
@@ -34,17 +35,38 @@ function mapDeliveryVariantToApi(variant: keyof typeof deliveryVariants) {
   }
 }
 
+function mapDeliveryVariantFromApi(serverVariant?: string) {
+  switch ((serverVariant || "").toUpperCase()) {
+    case "PERSONAL":
+      return "personal" as const;
+    case "CONSIGNMENT":
+      return "consignment" as const;
+    default:
+      return "mail" as const;
+  }
+}
+
 function parseDateMx(date: string): Date | null {
   const [dd, mm, yyyy] = date.split("/").map(Number);
   if (!dd || !mm || !yyyy) return null;
   return new Date(yyyy, mm - 1, dd);
 }
 
+type OrderView = {
+  id: number;
+  clientName?: string;
+  address?: string;
+  deliveryVariant?: string;
+  deliveryDate?: string;
+  products?: Array<Record<string, unknown>>;
+  raw?: Record<string, unknown>;
+};
+
 const EditOrderPage = () => {
   const { orderId } = useParams<{ orderId: string }>();
   const router = useRouter();
 
-  const [order, setOrder] = useState<any | null>(null);
+  const [order, setOrder] = useState<OrderView | null>(null);
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<Product[]>([]);
   const [clientName, setClientName] = useState("");
@@ -62,7 +84,7 @@ const EditOrderPage = () => {
       setLoading(false);
       return;
     }
-    fetchOrderByIdClient(idNum)
+    ordersService.fetchOrderById(idNum)
       .then((o) => mounted && setOrder(o))
       .catch((err) => {
         console.error("Failed to fetch order", err);
@@ -79,19 +101,25 @@ const EditOrderPage = () => {
 
     setClientName(order.clientName ?? "");
     setAddress(order.address ?? "");
-    setDeliveryVariant(order.deliveryVariant ?? "mail");
+    setDeliveryVariant(mapDeliveryVariantFromApi(order.deliveryVariant as string | undefined));
     setDeliveryDate(order.deliveryDate ? parseDateMx(order.deliveryDate) : null);
     setOrderItems(
-      (order.products || []).map((product: any) => ({
-        productId: String(product.id),
-        quantity: Number(product.quantity || 0),
-      }))
+      (order.products || []).map((productRaw: unknown) => {
+        const product = (productRaw || {}) as Record<string, unknown>;
+        return {
+          productId: String(product.id ?? ""),
+          quantity: Number(product.quantity ?? 0),
+        };
+      })
     );
     setInitialOrderItems(
-      (order.products || []).map((product: any) => ({
-        productId: String(product.id),
-        quantity: Number(product.quantity || 0),
-      }))
+      (order.products || []).map((productRaw: unknown) => {
+        const product = (productRaw || {}) as Record<string, unknown>;
+        return {
+          productId: String(product.id ?? ""),
+          quantity: Number(product.quantity ?? 0),
+        };
+      })
     );
   }, [order]);
 
@@ -99,23 +127,29 @@ const EditOrderPage = () => {
     let mounted = true;
 
     async function loadProducts() {
-      const response = await fetch("/api/product-variants", { credentials: "include" });
-      if (!response.ok) return;
-      const data = await response.json();
-      if (!mounted) return;
+      try {
+        const data = await productsService.fetchProductVariants();
+        if (!Array.isArray(data)) return;
+        if (!mounted) return;
 
-      setProducts(
-        data.map((variant: any) => ({
-          id: String(variant.id),
-          name: variant.product?.name ?? "Producto",
-          presentation: variant.name ?? variant.presentation ?? "",
-          image: variant.imageUrl ?? "/globe.svg",
-          quantity: 0,
-          units: variant.defaultUnit?.name ?? "",
-          categoryId: String(variant.product?.categoryId ?? ""),
-          variantId: String(variant.id),
-        }))
-      );
+        setProducts(
+          data.map((variantRaw: unknown) => {
+            const variant = variantRaw as Record<string, unknown>;
+            return {
+              id: String(variant.id ?? ""),
+              name: (variant.product && typeof (variant.product as Record<string, unknown>).name === "string") ? (variant.product as Record<string, unknown>).name as string : "Producto",
+              presentation: typeof variant.name === "string" ? variant.name : String(variant.presentation ?? ""),
+              image: typeof variant.imageUrl === "string" ? variant.imageUrl : "/globe.svg",
+              quantity: 0,
+              units: (variant.defaultUnit && typeof (variant.defaultUnit as Record<string, unknown>).name === "string") ? (variant.defaultUnit as Record<string, unknown>).name as string : "",
+              categoryId: String((variant.product && (variant.product as Record<string, unknown>).categoryId) ?? ""),
+              variantId: String(variant.id ?? ""),
+            } as Product;
+          })
+        );
+      } catch (error) {
+        console.error("Failed to load product variants:", error);
+      }
     }
 
     loadProducts();
@@ -176,18 +210,7 @@ const EditOrderPage = () => {
     };
 
     try {
-      const response = await fetch(`/api/orders/${order.id}`, {
-        method: "PUT",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(err.error || "No se pudo actualizar el pedido.");
-      }
-
+      await ordersService.updateOrder(order.id, payload);
       router.replace("/orders/deliveries");
     } catch (error) {
       alert(error instanceof Error ? error.message : "Error al actualizar el pedido.");
@@ -200,15 +223,7 @@ const EditOrderPage = () => {
     if (!order?.id) return;
 
     try {
-      const response = await fetch(`/api/orders/${order.id}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        throw new Error("No se pudo eliminar el pedido.");
-      }
-
+      await ordersService.deleteOrder(order.id);
       router.replace("/orders/deliveries");
     } catch (error) {
       alert(error instanceof Error ? error.message : "Error al eliminar el pedido.");

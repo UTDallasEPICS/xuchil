@@ -6,23 +6,31 @@ import HeaderXuchil from "@/components/HeaderXuchil";
 import Modal from "@/components/Modal";
 import styles from "./User.module.css";
 
-interface Guest {
-  id: number;
-  displayName: string;
-  contactInfo: string | null;
+import userService from "@/lib/services/userService";
+import * as authService from "@/lib/services/authService";
+import {UserRead, UserRestrictedUpdate} from "@/lib/schemas";
+
+interface UserData {
+  name: string;
+  email?: string | null;
+  phone?: string;
+  avatar?: string;
+  position?: string;
+  hours?: string;
 }
 
 const UserProfile = () => {
   const router = useRouter();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [role, setRole] = useState<"user" | "admin" | null>(null);
-  const [userData, setUserData] = useState<any>(null);
+  const [userData, setUserData] = useState<UserData | null>(null);
 
   // Guest management state
-  const [guests, setGuests] = useState<Guest[]>([]);
+  const [guests, setGuests] = useState<UserRead[]>([]);
   const [showGuestSection, setShowGuestSection] = useState(false);
   const [newGuestName, setNewGuestName] = useState("");
-  const [newGuestContact, setNewGuestContact] = useState("");
+  const [newGuestEmail, setNewGuestEmail] = useState("");
+  const [newGuestPhone, setNewGuestPhone] = useState("");
   const [newGuestPassword, setNewGuestPassword] = useState("");
   const [guestLoading, setGuestLoading] = useState(false);
 
@@ -31,22 +39,19 @@ const UserProfile = () => {
 
     async function loadProfile() {
       try {
-        const response = await fetch("/api/users/me", { credentials: "include" });
-        if (!response.ok) {
-          router.push("/login");
-          return;
-        }
-
-        const authUser = await response.json();
+        const user = await userService.getCurrentUser();
         if (!mounted) return;
 
-        setRole(authUser.isAdmin ? "admin" : "user");
+        let position = "Operador";
+        if (user.isAdmin) position = "Administracion";
+
+        setRole(user.isAdmin ? "admin" : "user");
         setUserData({
-          name: authUser.worker?.fullName ?? "",
-          email: authUser.email,
-          phone: authUser.worker?.phone ?? "No especificado",
-          avatar: authUser.worker?.profilePhotoUrl ?? "",
-          position: authUser.worker?.role?.name ?? "Operador",
+          name: user.name ?? "",
+          email: user.email ?? "",
+          phone: user.phone ?? "No especificado",
+          avatar: user.imgUrl ?? "",
+          position: position,
           hours: "",
         });
       } catch {
@@ -59,7 +64,7 @@ const UserProfile = () => {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [router]);
 
   // Load guests when admin opens section
   useEffect(() => {
@@ -70,11 +75,8 @@ const UserProfile = () => {
 
   const loadGuests = async () => {
     try {
-      const res = await fetch("/api/guests", { credentials: "include" });
-      if (res.ok) {
-        const data = await res.json();
-        setGuests(data);
-      }
+      const data = await userService.getAllUsers({isGuest: true});
+      setGuests(data);
     } catch (e) {
       console.error("Failed to load guests:", e);
     }
@@ -84,22 +86,18 @@ const UserProfile = () => {
     if (!newGuestName.trim()) return;
     setGuestLoading(true);
     try {
-      const res = await fetch("/api/guests", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          displayName: newGuestName.trim(),
-          contactInfo: newGuestContact.trim() || null,
-          password: newGuestPassword || null,
-        }),
+      await userService.createUser({
+        name: newGuestName.trim(),
+        email: newGuestEmail?.trim(),
+        phone: newGuestPhone?.trim(),
+        password: newGuestPassword,
+        isGuest: true
       });
-      if (res.ok) {
-        setNewGuestName("");
-        setNewGuestContact("");
-        setNewGuestPassword("");
-        await loadGuests();
-      }
+      setNewGuestName("");
+      setNewGuestEmail("");
+      setNewGuestPhone("");
+      setNewGuestPassword("");
+      await loadGuests();
     } catch (e) {
       console.error("Failed to create guest:", e);
     } finally {
@@ -109,10 +107,7 @@ const UserProfile = () => {
 
   const handleDeleteGuest = async (guestId: number) => {
     try {
-      await fetch(`/api/guests/${guestId}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
+      await userService.deleteUser(guestId);
       await loadGuests();
     } catch (e) {
       console.error("Failed to delete guest:", e);
@@ -120,7 +115,7 @@ const UserProfile = () => {
   };
 
   const confirmLogout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" }).catch(() => null);
+    await authService.logout().catch(() => null);
     router.push("/login");
   };
 
@@ -196,10 +191,15 @@ const UserProfile = () => {
                     {guests.map((guest) => (
                       <div key={guest.id} className={styles.guestItem}>
                         <div>
-                          <strong>{guest.displayName}</strong>
-                          {guest.contactInfo && (
+                          <strong>{guest.name}</strong>
+                          {guest.email && (
                             <span className={styles.guestContact}>
-                              {" "}— {guest.contactInfo}
+                              {" "}— {guest.email}
+                            </span>
+                          )}
+                          {guest.phone && (
+                              <span className={styles.guestContact}>
+                              {" "}— {guest.phone}
                             </span>
                           )}
                         </div>
@@ -229,9 +229,16 @@ const UserProfile = () => {
                   />
                   <input
                     type="text"
-                    placeholder="Información de contacto"
-                    value={newGuestContact}
-                    onChange={(e) => setNewGuestContact(e.target.value)}
+                    placeholder="Correo electrónico"
+                    value={newGuestEmail}
+                    onChange={(e) => setNewGuestEmail(e.target.value)}
+                    className={styles.guestInput}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Teléfono"
+                    value={newGuestPhone}
+                    onChange={(e) => setNewGuestPhone(e.target.value)}
                     className={styles.guestInput}
                   />
                   <input

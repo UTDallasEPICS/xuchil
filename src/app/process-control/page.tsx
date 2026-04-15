@@ -7,6 +7,7 @@ import HeaderXuchil from "@/components/HeaderXuchil";
 import Button from "@/components/Button";
 import ActiveTaskItem from "@/components/ActiveTaskItem";
 import styles from "./ProcessControl.module.css";
+import * as processesService from "@/lib/services/processesService";
 
 interface ActiveTask {
   processRunId: number;
@@ -27,33 +28,45 @@ const ProcessControl = () => {
 
   const loadActiveTasks = useCallback(async () => {
     try {
-      const res = await fetch("/api/process-runs/pending", { credentials: "include" });
-      if (!res.ok) return;
-      const runs = await res.json();
+      const runsRaw = await processesService.fetchPendingRuns();
+      const runs = Array.isArray(runsRaw) ? runsRaw as unknown[] : [];
 
-      const mapped: ActiveTask[] = runs.map((run: any) => {
-        const orderedSteps = [...(run.stepExecutions || [])];
+      const mapped: ActiveTask[] = runs.map((run: unknown) => {
+        const r = run as Record<string, unknown>;
+        const orderedStepsRaw = r.stepExecutions;
+        const orderedSteps = Array.isArray(orderedStepsRaw) ? [...orderedStepsRaw as unknown[]] : [];
         const allStepsDone =
           orderedSteps.length > 0 &&
-          orderedSteps.every((step: any) => step.status === "DONE");
-        const currentStepIndex = orderedSteps.findIndex(
-          (step: any) => step.status === "IN_PROGRESS" || step.status === "PENDING" || step.status === "BLOCKED"
-        );
+          orderedSteps.every((step) => {
+            const s = step as Record<string, unknown>;
+            const status = s.status;
+            return typeof status === "string" && status === "DONE";
+          });
+        const currentStepIndex = orderedSteps.findIndex((step) => {
+          const s = step as Record<string, unknown>;
+          const status = s.status;
+          return typeof status === "string" && (status === "IN_PROGRESS" || status === "PENDING" || status === "BLOCKED");
+        });
         const safeIndex = currentStepIndex >= 0 ? currentStepIndex : 0;
-        const currentStep = orderedSteps[safeIndex];
+        const currentStep = orderedSteps[safeIndex] as Record<string, unknown> | undefined;
+        const productVariant = r.productVariant as Record<string, unknown> | undefined;
+        const productId = productVariant && typeof productVariant.productId === "number" ? productVariant.productId : r.productVariantId as number | undefined;
         const openRoute = allStepsDone
-          ? `/process-control/new-production/${run.productVariant?.productId}/${run.productVariantId}/results?runId=${run.id}`
-          : `/process-control/new-production/${run.productVariant?.productId}/${run.productVariantId}/${safeIndex + 1}`;
+          ? `/process-control/new-production/${productId}/${r.productVariantId}/results?runId=${r.id}`
+          : `/process-control/new-production/${productId}/${r.productVariantId}/${safeIndex + 1}`;
+
+        const currentStepName = allStepsDone ? "Captura de resultados" : (currentStep && currentStep.templateStep && typeof (currentStep.templateStep as Record<string, unknown>).name === "string") ? (currentStep.templateStep as Record<string, unknown>).name as string : "Sin paso";
+        const productName = productVariant && typeof productVariant.name === "string" ? productVariant.name as string : "Producto";
 
         return {
-          processRunId: run.id,
-          productName: run.productVariant?.name || "Producto",
-          currentStepName: allStepsDone ? "Captura de resultados" : currentStep?.templateStep?.name || "Sin paso",
+          processRunId: (r.id as number) ?? 0,
+          productName,
+          currentStepName,
           currentStepNumber: allStepsDone ? orderedSteps.length : safeIndex + 1,
           totalSteps: orderedSteps.length || 0,
-          status: run.status === "PAUSED" ? "PAUSED" : "IN_PROGRESS",
-          stepExecutionId: currentStep?.id ?? null,
-          startedAt: currentStep?.startedAt ?? null,
+          status: (r.status === "PAUSED") ? "PAUSED" : "IN_PROGRESS",
+          stepExecutionId: currentStep && typeof currentStep.id === "number" ? currentStep.id as number : null,
+          startedAt: currentStep && typeof currentStep.startedAt === "string" ? currentStep.startedAt as string : null,
           openRoute,
           isResultsStage: allStepsDone,
         };

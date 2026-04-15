@@ -76,5 +76,5 @@ export async function putOrderStatusClient(id: number, status: "SCHEDULED" | "DE
     const txt = await res.text();
     throw new Error(txt || "Failed to update status");
   }
-  return res.json();
+  return await res.json();
 }

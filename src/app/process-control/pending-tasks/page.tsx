@@ -6,6 +6,7 @@ import HeaderXuchil from "@/components/HeaderXuchil";
 import PendingTaskCard from "@/components/PendingTaskCard";
 import styles from "./PendingTasks.module.css";
 import { PendingTask } from "@/types/PendingTask";
+import * as processesService from "@/lib/services/processesService";
 
 const PendingTasksPage = () => {
   const [tasks, setTasks] = useState<PendingTask[]>([]);
@@ -15,39 +16,47 @@ const PendingTasksPage = () => {
     let mounted = true;
 
     async function load() {
-      const response = await fetch("/api/process-runs/pending", { credentials: "include" });
-      if (!response.ok) return;
-      const data = await response.json();
+      const dataRaw = await processesService.fetchPendingRuns();
+      const data = Array.isArray(dataRaw) ? dataRaw as unknown[] : [];
       if (!mounted) return;
 
-      const mapped: PendingTask[] = data.map((run: any) => {
-        const orderedSteps = [...(run.stepExecutions || [])];
+      const mapped: PendingTask[] = data.map((run: unknown) => {
+        const r = run as Record<string, unknown>;
+        const orderedStepsRaw = r.stepExecutions;
+        const orderedSteps = Array.isArray(orderedStepsRaw) ? [...orderedStepsRaw as unknown[]] : [];
         const allStepsDone =
           orderedSteps.length > 0 &&
-          orderedSteps.every((step: any) => step.status === "DONE");
-        const currentStepIndex = orderedSteps.findIndex(
-          (step: any) => step.status === "IN_PROGRESS" || step.status === "PENDING" || step.status === "BLOCKED"
-        );
+          orderedSteps.every((step) => {
+            const s = step as Record<string, unknown>;
+            const status = s.status;
+            return typeof status === "string" && status === "DONE";
+          });
+        const currentStepIndex = orderedSteps.findIndex((step) => {
+          const s = step as Record<string, unknown>;
+          const status = s.status;
+          return typeof status === "string" && (status === "IN_PROGRESS" || status === "PENDING" || status === "BLOCKED");
+        });
         const safeIndex = currentStepIndex >= 0 ? currentStepIndex : 0;
-        const currentStep = orderedSteps[safeIndex];
-        const openRoute = allStepsDone
-          ? `/process-control/new-production/${run.productVariant?.productId}/${run.productVariantId}/results?runId=${run.id}`
-          : `/process-control/new-production/${run.productVariant?.productId}/${run.productVariantId}/${safeIndex + 1}`;
+        const currentStep = orderedSteps[safeIndex] as Record<string, unknown> | undefined;
+        const productVariant = r.productVariant as Record<string, unknown> | undefined;
+
+        const startDate = typeof r.startedAt === "string" ? new Date(r.startedAt).toLocaleDateString("es-MX") : "";
+        const startedBy = (r.creator && typeof (r.creator as Record<string, unknown>).fullName === "string") ? (r.creator as Record<string, unknown>).fullName as string : "No asignado";
 
         return {
-          id: run.id,
-          productId: String(run.productVariant?.productId ?? ""),
-          productName: run.productVariant?.name || "Producto",
-          variantId: String(run.productVariantId),
-          startDate: run.startedAt
-            ? new Date(run.startedAt).toLocaleDateString("es-MX")
-            : "",
-          startedBy: run.creator?.fullName || "No asignado",
-          currentStep: allStepsDone ? "Captura de resultados" : currentStep?.templateStep?.name || "Sin paso",
+          id: r.id as number,
+          productId: String(productVariant?.productId ?? ""),
+          productName: productVariant && typeof productVariant.name === "string" ? productVariant.name as string : "Producto",
+          variantId: String(r.productVariantId as number | undefined ?? ""),
+          startDate,
+          startedBy,
+          currentStep: allStepsDone ? "Captura de resultados" : (currentStep && currentStep.templateStep && typeof (currentStep.templateStep as Record<string, unknown>).name === "string") ? (currentStep.templateStep as Record<string, unknown>).name as string : "Sin paso",
           currentStepNumber: allStepsDone ? orderedSteps.length : safeIndex + 1,
           totalSteps: orderedSteps.length || 0,
-          openRoute,
-        };
+          openRoute: allStepsDone
+            ? `/process-control/new-production/${productVariant?.productId}/${r.productVariantId}/results?runId=${r.id}`
+            : `/process-control/new-production/${productVariant?.productId}/${r.productVariantId}/${safeIndex + 1}`,
+        } as PendingTask;
       });
 
       setTasks(mapped);

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FaPlay, FaPause, FaExternalLinkAlt } from "react-icons/fa";
 import styles from "../styles/ActiveTaskItem.module.css";
+import * as stepExecutionService from "@/lib/services/stepExecutionService";
 
 interface ActiveTaskItemProps {
     productName: string;
@@ -58,13 +59,7 @@ const ActiveTaskItem: React.FC<ActiveTaskItemProps> = ({
         if (!stepExecutionId || isLoading) return;
         setIsLoading(true);
         try {
-            const opts: RequestInit = {
-                method: "POST",
-                credentials: "include",
-                headers: { "Content-Type": "application/json" },
-            };
-            if (body) opts.body = JSON.stringify(body);
-            await fetch(`/api/step-executions/${stepExecutionId}/${action}`, opts);
+            await stepExecutionService.postAction(stepExecutionId, action, body);
             onActionComplete?.();
         } catch (e) {
             console.error(`Action ${action} error:`, e);

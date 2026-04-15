@@ -4,11 +4,11 @@ import { useRouter } from "next/navigation";
 import HeaderXuchil from "@/components/HeaderXuchil";
 import Button from "@/components/Button";
 import Modal from "@/components/Modal";
+import userService from "@/lib/services/userService";
 
 const EditProfile = () => {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [userData, setUserData] = useState<any>(null);
   const [name, setName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -22,13 +22,12 @@ const EditProfile = () => {
 
     async function loadProfile() {
       try {
-        const response = await fetch("/api/users/me", { credentials: "include" });
-        if (!response.ok) {
+        const authUser = await userService.getCurrentUser();
+        if (!authUser) {
           router.push("/login");
           return;
         }
 
-        const authUser = await response.json();
         if (!mounted) return;
 
         const fullName = authUser.worker?.fullName ?? "";
@@ -43,7 +42,6 @@ const EditProfile = () => {
           hours: "",
         };
 
-        setUserData(mapped);
         setName(nameParts[0] || "");
         setLastName(nameParts.slice(1).join(" ") || "");
         setEmail(mapped.email);
@@ -59,7 +57,7 @@ const EditProfile = () => {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [router]);
 
   const handleImageUploadClick = () => {
     if (fileInputRef.current) {
@@ -92,21 +90,11 @@ const EditProfile = () => {
 
   const handleSave = async () => {
     try {
-      const response = await fetch("/api/users/me", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          fullName: `${name} ${lastName}`.trim(),
-          phone,
-          profilePhotoUrl: avatar || avatarPreview,
-        }),
+      await userService.updateCurrentUser({
+        fullName: `${name} ${lastName}`.trim(),
+        phone,
+        profilePhotoUrl: avatar || avatarPreview,
       });
-
-      if (!response.ok) {
-        return;
-      }
 
       setShowSuccessModal(true);
     } catch {

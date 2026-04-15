@@ -11,6 +11,8 @@ import OrderedProducts from "@/components/OrderedProducts";
 import { Product } from "@/types/Product";
 import { deliveryVariants } from "@/constants/deliveryConfig";
 import styles from "./NewOrder.module.css";
+import * as productsService from "@/lib/services/productsService";
+import * as ordersService from "@/lib/services/ordersService";
 
 type OrderItemDraft = {
   productId: string;
@@ -44,23 +46,29 @@ const NewOrderPage = () => {
     let mounted = true;
 
     async function loadProducts() {
-      const response = await fetch("/api/product-variants", { credentials: "include" });
-      if (!response.ok) return;
-      const data = await response.json();
-      if (!mounted) return;
+      try {
+        const data = await productsService.fetchProductVariants();
+        if (!Array.isArray(data)) return;
+        if (!mounted) return;
 
-      setProducts(
-        data.map((variant: any) => ({
-          id: String(variant.id),
-          name: variant.product?.name ?? "Producto",
-          presentation: variant.name ?? variant.presentation ?? "",
-          image: variant.imageUrl ?? "/globe.svg",
-          quantity: 0,
-          units: variant.defaultUnit?.name ?? "",
-          categoryId: String(variant.product?.categoryId ?? ""),
-          variantId: String(variant.id),
-        }))
-      );
+        setProducts(
+          data.map((variantRaw: unknown) => {
+            const variant = variantRaw as Record<string, unknown>;
+            return {
+              id: String(variant.id ?? ""),
+              name: (variant.product && typeof (variant.product as Record<string, unknown>).name === "string") ? (variant.product as Record<string, unknown>).name as string : "Producto",
+              presentation: typeof variant.name === "string" ? variant.name : String(variant.presentation ?? ""),
+              image: typeof variant.imageUrl === "string" ? variant.imageUrl : "/globe.svg",
+              quantity: 0,
+              units: (variant.defaultUnit && typeof (variant.defaultUnit as Record<string, unknown>).name === "string") ? (variant.defaultUnit as Record<string, unknown>).name as string : "",
+              categoryId: String((variant.product && (variant.product as Record<string, unknown>).categoryId) ?? ""),
+              variantId: String(variant.id ?? ""),
+            } as Product;
+          })
+        );
+      } catch (error) {
+        console.error("Failed to load product variants:", error);
+      }
     }
 
     loadProducts();
@@ -115,18 +123,7 @@ const NewOrderPage = () => {
     };
 
     try {
-      const response = await fetch("/api/orders", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(err.error || "No se pudo crear el pedido.");
-      }
-
+      await ordersService.createOrder(payload);
       router.replace("/orders/deliveries");
     } catch (error) {
       alert(error instanceof Error ? error.message : "Error al crear el pedido.");
