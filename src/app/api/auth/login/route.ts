@@ -33,6 +33,7 @@ export async function POST(req: Request) {
 
     // Verify password
     const passwordMatch = await bcrypt.compare(password, user.passwordHash);
+
     if (!passwordMatch) {
       return NextResponse.json(
         {error: "Invalid email or password"},
