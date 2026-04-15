@@ -81,14 +81,25 @@ export const UserCreateSchema = z.strictObject({
   isAdmin: z.boolean().optional(),
   isGuest: z.boolean().optional(),
 });
+export const UserRestrictedUpdateSchema = z.strictObject({
+  name: z.string(),
+  email: z.email().optional(),
+  phone: z.string().optional(),
+  imgUrl: z.url().optional(),
+  password: z.string(),
+});
+
 export const UserReadSchema = z.object({
   id: z.number().int(),
   name: z.string(),
   email: z.email().nullable().optional(),
   phone: z.string().nullable().optional(),
   imgUrl: z.url().nullable().optional(),
+  isAdmin: z.boolean(),
+  isGuest: z.boolean()
 });
 export type UserCreate = z.infer<typeof UserCreateSchema>;
+export type UserRestrictedUpdate = z.infer<typeof UserRestrictedUpdateSchema>;
 export type UserRead = z.infer<typeof UserReadSchema>;
 
 // ProcessTemplate

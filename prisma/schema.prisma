@@ -74,7 +74,7 @@ model Product {
   category         ProductCategory   @relation(fields: [categoryId], references: [id])
   unit             Unit              @relation(fields: [unitId], references: [id])
   processTemplates ProcessTemplate[]
-  inventoryItems   InventoryItem[]
+  inventoryItem    InventoryItem?
   orderItems       OrderItem[]
 }
 
@@ -87,7 +87,7 @@ model RawMaterial {
   unit                         Unit                          @relation(fields: [unitId], references: [id])
   processTemplateStepMaterials ProcessTemplateStepMaterial[]
   processStepMaterialUsages    ProcessStepMaterialUsage[]
-  inventoryItems               InventoryItem[]
+  inventoryItem                InventoryItem?
 }
 
 model User {
@@ -211,8 +211,8 @@ model ProcessStepWorker {
 model InventoryItem {
   id            Int      @id @default(autoincrement())
   itemType      ItemType
-  rawMaterialId Int?
-  productId     Int?
+  rawMaterialId Int?     @unique
+  productId     Int?     @unique
   quantity      Decimal
 
   rawMaterial        RawMaterial?        @relation(fields: [rawMaterialId], references: [id])
