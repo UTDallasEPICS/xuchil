@@ -12,65 +12,59 @@ const PendingTasksPage = () => {
   const router = useRouter();
 
   useEffect(() => {
-    let mounted = true;
+    const dummy: PendingTask[] = [
+      {
+        id: "1",
+        productId: "101",
+        productName: "Producto A",
+        variantId: "201",
+        startDate: "04/10/2026",
+        startedBy: "Juan Perez",
+        currentStep: "Mezcla",
+        currentStepNumber: 2,
+        totalSteps: 5,
+        openRoute: "/process-control/new-production/101/201/2",
+      },
+      {
+        id: "2",
+        productId: "102",
+        productName: "Producto B",
+        variantId: "202",
+        startDate: "04/12/2026",
+        startedBy: "Maria Lopez",
+        currentStep: "Empaque",
+        currentStepNumber: 4,
+        totalSteps: 6,
+        openRoute: "/process-control/new-production/102/202/4",
+      },
+      {
+        id: "3",
+        productId: "103",
+        productName: "Producto C",
+        variantId: "203",
+        startDate: "04/13/2026",
+        startedBy: "Carlos Ruiz",
+        currentStep: "Captura de resultados",
+        currentStepNumber: 5,
+        totalSteps: 5,
+        openRoute:
+          "/process-control/new-production/103/203/results?runId=3",
+      },
+    ];
 
-    async function load() {
-      const response = await fetch("/api/process-runs/pending", { credentials: "include" });
-      if (!response.ok) return;
-      const data = await response.json();
-      if (!mounted) return;
-
-      const mapped: PendingTask[] = data.map((run: any) => {
-        const orderedSteps = [...(run.stepExecutions || [])];
-        const allStepsDone =
-          orderedSteps.length > 0 &&
-          orderedSteps.every((step: any) => step.status === "DONE");
-        const currentStepIndex = orderedSteps.findIndex(
-          (step: any) => step.status === "IN_PROGRESS" || step.status === "PENDING" || step.status === "BLOCKED"
-        );
-        const safeIndex = currentStepIndex >= 0 ? currentStepIndex : 0;
-        const currentStep = orderedSteps[safeIndex];
-        const openRoute = allStepsDone
-          ? `/process-control/new-production/${run.productVariant?.productId}/${run.productVariantId}/results?runId=${run.id}`
-          : `/process-control/new-production/${run.productVariant?.productId}/${run.productVariantId}/${safeIndex + 1}`;
-
-        return {
-          id: run.id,
-          productId: String(run.productVariant?.productId ?? ""),
-          productName: run.productVariant?.name || "Producto",
-          variantId: String(run.productVariantId),
-          startDate: run.startedAt
-            ? new Date(run.startedAt).toLocaleDateString("es-MX")
-            : "",
-          startedBy: run.creator?.fullName || "No asignado",
-          currentStep: allStepsDone ? "Captura de resultados" : currentStep?.templateStep?.name || "Sin paso",
-          currentStepNumber: allStepsDone ? orderedSteps.length : safeIndex + 1,
-          totalSteps: orderedSteps.length || 0,
-          openRoute,
-        };
-      });
-
-      setTasks(mapped);
-    }
-
-    load();
-
-    return () => {
-      mounted = false;
-    };
+    setTasks(dummy);
   }, []);
 
   return (
     <div className="page">
       <HeaderXuchil />
       <h1>Tareas Pendientes</h1>
+
       <div className={styles.container}>
         {tasks.map((task) => (
           <div
             key={task.id}
-            onClick={() =>
-              router.push(task.openRoute)
-            }
+            onClick={() => router.push(task.openRoute)}
             style={{ cursor: "pointer" }}
             className={styles.cardContainer}
           >
