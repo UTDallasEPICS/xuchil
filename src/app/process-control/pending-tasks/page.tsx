@@ -29,6 +29,54 @@ const BoxWhiskerChart = dynamic(
     )
   }
 );
+const fetchPendingTasks = (): PendingTask[] => { //this is just dummy data for now no integrations so far
+  return [
+    {
+      id: "1",
+      productId: "101",
+      productName: "Coffee Substitute",
+      variantId: "201",
+      startDate: "04/10/2026",
+      startedBy: "Juan Perez",
+      currentStep: "Mezcla",
+      currentStepNumber: 2,
+      totalSteps: 5,
+    },
+    {
+      id: "2",
+      productId: "102",
+      productName: "Cookies",
+      variantId: "202",
+      startDate: "04/11/2026",
+      startedBy: "Maria Lopez",
+      currentStep: "Horneado",
+      currentStepNumber: 3,
+      totalSteps: 6,
+    },
+    {
+      id: "3",
+      productId: "103",
+      productName: "Beans",
+      variantId: "203",
+      startDate: "04/12/2026",
+      startedBy: "Carlos Ruiz",
+      currentStep: "Empaque",
+      currentStepNumber: 4,
+      totalSteps: 4,
+    },
+    {
+      id: "4",
+      productId: "104",
+      productName: "Flour",
+      variantId: "204",
+      startDate: "04/13/2026",
+      startedBy: "Ana Torres",
+      currentStep: "Captura de resultados",
+      currentStepNumber: 5,
+      totalSteps: 5,
+    },
+  ];
+};
 
 
 
