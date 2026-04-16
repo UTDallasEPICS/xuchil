@@ -11,8 +11,8 @@ import OrderedProducts from "@/components/OrderedProducts";
 import { Product } from "@/types/Product";
 import { deliveryVariants } from "@/constants/deliveryConfig";
 import styles from "./NewOrder.module.css";
-import * as productsService from "@/lib/services/productsService";
-import * as ordersService from "@/lib/services/ordersService";
+import * as productsService from "@/lib/services/productClient";
+import * as ordersService from "@/lib/services/orderClient";
 
 type OrderItemDraft = {
   productId: string;

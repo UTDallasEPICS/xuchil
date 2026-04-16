@@ -1,11 +1,12 @@
 import { NextRequest } from "next/server";
-import {qsToObject, withAuthWorker} from "@/utils/handlers";
+import {withAuthWorker} from "@/utils/handlers";
 import { UserCreateSchema } from "@/lib/schemas";
 import {createSuccess, serverError, validationError, fetchSuccess, forbiddenError} from "@/utils/responses";
 import bcrypt from "bcrypt";
 import prisma from "@/lib/db";
 import { z } from "zod";
 import {verifySession} from "@/lib/session";
+import qs from 'qs';
 
 export const GET = withAuthWorker(async (req: NextRequest) => {
   try {
@@ -14,12 +15,15 @@ export const GET = withAuthWorker(async (req: NextRequest) => {
       isGuest: z.coerce.boolean(),
       offset: z.coerce.number().int(),
       limit: z.coerce.number().int(),
+      sort: z.strictObject({
+        name: z.enum(["asc", "desc"]).optional(),
+      }).optional()
     });
-    const res = paginatedFilterSchema.partial().safeParse(qsToObject(req.nextUrl.searchParams));
+    const res = paginatedFilterSchema.partial().safeParse(qs.parse(req.nextUrl.search));
     if (!res.success) {
       return validationError("user", "fetch", res.error);
     }
-    const { limit, offset, ...where } = res.data as z.infer<typeof paginatedFilterSchema>;
+    const { limit, offset, sort, ...where } = res.data as z.infer<typeof paginatedFilterSchema>;
 
     const items = await prisma.user.findMany({
       where: {
@@ -27,9 +31,10 @@ export const GET = withAuthWorker(async (req: NextRequest) => {
         // workers can only see guests, admins can see all users
         ...(!session.isAdmin && { isGuest: true }),
       },
+      omit: { passwordHash: true },
       skip: offset,
       take: limit,
-      omit: { passwordHash: true },
+      orderBy: sort ?? { id: "asc" },
     });
     return fetchSuccess(items);
   } catch (e) {

@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import HeaderXuchil from "@/components/HeaderXuchil";
 import Button from "@/components/Button";
 import styles from "./Templates.module.css";
-import * as processesService from "@/lib/services/processesService";
-import * as productsService from "@/lib/services/productsService";
+import * as processesService from "@/lib/services/templateClient";
+import * as productsService from "@/lib/services/productClient";
 
 interface TemplateStep {
     id: number;

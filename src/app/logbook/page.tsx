@@ -9,7 +9,7 @@ import {
   userFilterOptions,
 } from "@/constants/filterOptions";
 import * as logbookService from "@/lib/services/logbookService";
-import userService from "@/lib/services/userService";
+import userService from "@/lib/services/userClient";
 import styles from "./LogbookPage.module.css";
 
 const Logbook = () => {

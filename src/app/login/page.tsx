@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import Button from "@/components/Button";
 import HeaderXuchil from "@/components/HeaderXuchil";
 import Modal from "@/components/Modal";
-import * as authService from "@/lib/services/authService";
+import * as authService from "@/lib/services/authClient";
 
 const Login = () => {
   const router = useRouter();

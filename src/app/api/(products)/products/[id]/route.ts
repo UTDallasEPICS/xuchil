@@ -12,7 +12,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     if (Number.isNaN(idParsed)) {
       return idError("product");
     }
-    const item = await prisma.product.findUnique({ where: { id: idParsed } });
+    const item = await prisma.product.findUnique({
+      where: { id: idParsed },
+      include: {
+        unit: true,
+      }
+    });
     if (!item) {
       return notFoundError("product");
     }
@@ -34,7 +39,13 @@ export const PUT = withAuthAdmin(async (req: NextRequest, { params }: { params: 
     if (!res.success) {
       return validationError("product", "update", res.error);
     }
-    const updatedItem = await prisma.product.update({ where: { id: idParsed }, data: res.data });
+    const updatedItem = await prisma.product.update({
+      where: { id: idParsed },
+      data: res.data,
+      include: {
+        unit: true,
+      }
+    });
     return updateSuccess(updatedItem);
   } catch (e) {
     return serverError("product", "update", e);

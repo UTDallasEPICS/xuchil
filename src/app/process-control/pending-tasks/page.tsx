@@ -6,7 +6,7 @@ import HeaderXuchil from "@/components/HeaderXuchil";
 import PendingTaskCard from "@/components/PendingTaskCard";
 import styles from "./PendingTasks.module.css";
 import { PendingTask } from "@/types/PendingTask";
-import * as processesService from "@/lib/services/processesService";
+import * as processesService from "@/lib/services/templateClient";
 
 const PendingTasksPage = () => {
   const [tasks, setTasks] = useState<PendingTask[]>([]);

@@ -12,7 +12,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     if (Number.isNaN(idParsed)) {
       return idError("order");
     }
-    const item = await prisma.order.findUnique({ where: { id: idParsed } });
+    const item = await prisma.order.findUnique({
+      where: { id: idParsed },
+      include: {
+        orderItems: true,
+      }
+    });
     if (!item) {
       return notFoundError("order");
     }
@@ -34,7 +39,12 @@ export const PUT = withAuthWorker(async (req: NextRequest, { params }: { params:
     if (!res.success) {
       return validationError("order", "update", res.error);
     }
-    const updatedItem = await prisma.order.update({ where: { id: idParsed }, data: res.data });
+    const updatedItem = await prisma.order.update({
+      where: { id: idParsed }, data: res.data,
+      include: {
+        orderItems: true,
+      }
+    });
     return updateSuccess(updatedItem);
   } catch (e) {
     return serverError("order", "update", e);

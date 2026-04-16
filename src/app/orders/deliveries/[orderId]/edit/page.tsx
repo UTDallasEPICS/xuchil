@@ -12,8 +12,8 @@ import DatePicker from "@/components/DatePicker";
 import OrderedProducts from "@/components/OrderedProducts";
 import DeleteModal from "@/components/DeleteModal";
 
-import * as ordersService from "@/lib/services/ordersService";
-import * as productsService from "@/lib/services/productsService";
+import * as ordersService from "@/lib/services/orderClient";
+import * as productsService from "@/lib/services/productClient";
 import { deliveryVariants } from "@/constants/deliveryConfig";
 import { Product } from "@/types/Product";
 

@@ -7,7 +7,7 @@ import HeaderXuchil from "@/components/HeaderXuchil";
 import Button from "@/components/Button";
 import ActiveTaskItem from "@/components/ActiveTaskItem";
 import styles from "./ProcessControl.module.css";
-import * as processesService from "@/lib/services/processesService";
+import * as processesService from "@/lib/services/templateClient";
 
 interface ActiveTask {
   processRunId: number;

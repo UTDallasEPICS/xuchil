@@ -1,8 +1,17 @@
-// processesService: process templates, runs, pending runs
 import { sendRequest } from '@/utils/request';
+import {ProcessTemplateRead, ProcessTemplateReadSchema} from "@/lib/schemas";
 
 export async function fetchPendingRuns() {
   return await sendRequest({ method: 'GET', url: '/api/process-runs/pending', credentials: 'include' });
+}
+
+async function getAllProcessTemplates(): Promise<ProcessTemplateRead[]> {
+  const res = await sendRequest({ method: 'GET', url: '/api/process-templates' });
+  return (await res.json()).map((item: unknown) => ProcessTemplateReadSchema.parse(item));}
+
+async function getProcessTemplateById(id: number): Promise<ProcessTemplateRead> {
+  const res = await sendRequest({ method: 'GET', url: `/api/process-templates/${id}` });
+  return ProcessTemplateReadSchema.parse(await res.json());
 }
 
 export async function listProcessTemplates() {

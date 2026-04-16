@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FaPlay, FaPause, FaExternalLinkAlt } from "react-icons/fa";
 import styles from "../styles/ActiveTaskItem.module.css";
-import * as stepExecutionService from "@/lib/services/stepExecutionService";
+import * as stepExecutionService from "@/lib/services/executionClient";
 
 interface ActiveTaskItemProps {
     productName: string;

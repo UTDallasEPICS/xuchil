@@ -21,6 +21,9 @@ export async function GET(req: NextRequest) {
       where: where,
       skip: offset,
       take: limit,
+      include: {
+        orderItems: true,
+      }
     });
     return fetchSuccess(items);
   } catch (e) {
@@ -35,7 +38,12 @@ export const POST = withAuthWorker(async (req: NextRequest) => {
     if (!res.success) {
       return validationError("order", "create", res.error);
     }
-    const newItem = await prisma.order.create({ data: res.data });
+    const newItem = await prisma.order.create({
+      data: res.data,
+      include: {
+        orderItems: true,
+      }
+    });
     return createSuccess(newItem);
   } catch (e) {
     return serverError("order", "create", e);

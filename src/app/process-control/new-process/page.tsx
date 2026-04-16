@@ -6,8 +6,8 @@ import HeaderXuchil from "@/components/HeaderXuchil";
 import Button from "@/components/Button";
 import Modal from "@/components/Modal";
 import styles from "./NewProcess.module.css";
-import * as productsService from "@/lib/services/productsService";
-import * as processesService from "@/lib/services/processesService";
+import * as productsService from "@/lib/services/productClient";
+import * as processesService from "@/lib/services/templateClient";
 
 interface ProcessStep {
   id: number;
