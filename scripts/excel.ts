@@ -1,4 +1,3 @@
-
 //convert work hours to an excel sheet
 import * as XLSX from "xlsx";
 
@@ -29,13 +28,23 @@ export default function Excel(input: work_info[], wage: number) {
 
   const worksheet = XLSX.utils.aoa_to_sheet(summaryRows); //excel sheet
 
+  worksheet["!cols"] = [
+    { wch: 20 },
+    { wch: 15 },
+    { wch: 50 },
+    { wch: 50 },
+    { wch: 15 },
+    { wch: 15 },
+    { wch: 20 },
+  ];
+
   const tableData = input.map((item) => ({ //information to go in columns
     name: item.name,
     date: new Date(item.date).toLocaleDateString(),
     start_time: item.start_time,
     end_time: item.end_time,
     total_hours: item.total_hours,
-    total_pay: item.total_hours * wage,
+    total_pay: item.total_pay,
     task_name: item.task_name,
   }));
 
@@ -48,7 +57,7 @@ export default function Excel(input: work_info[], wage: number) {
 
 // calculate totals
 const totalHours = input.reduce((sum, item) => sum + item.total_hours, 0);
-const totalPay = totalHours * wage;
+const totalPay = input.reduce((sum, item) => sum + item.total_pay, 0);
 
 // find where table ends
 const startRow = 5; // where table starts
@@ -63,51 +72,50 @@ XLSX.utils.sheet_add_aoa(worksheet, [
   XLSX.writeFile(workbook, "work_info.xlsx");
 }
 
-
-Excel([
-    {
-      name: "Efrain",
-      date: new Date("2026-03-20"),
-      start_time: "9:00 AM",
-      end_time: "1:30 PM",
-      total_hours: 4.5,
-      total_pay: 0,
-      task_name: "Frontend UI"
-    },
-    {
-      name: "Efrain",
-      date: new Date("2026-03-21"),
-      start_time: "10:00 AM",
-      end_time: "3:00 PM",
-      total_hours: 5,
-      total_pay: 0,
-      task_name: "API Integration"
-    },
-    {
-      name: "Efrain",
-      date: new Date("2026-03-22"),
-      start_time: "8:30 AM",
-      end_time: "12:30 PM",
-      total_hours: 4,
-      total_pay: 0,
-      task_name: "Bug Fixing"
-    },
-    {
-      name: "Efrain",
-      date: new Date("2026-03-23"),
-      start_time: "1:00 PM",
-      end_time: "6:00 PM",
-      total_hours: 5,
-      total_pay: 0,
-      task_name: "Backend Logic"
-    },
-    {
-      name: "Efrain",
-      date: new Date("2026-03-24"),
-      start_time: "9:00 AM",
-      end_time: "2:00 PM",
-      total_hours: 5,
-      total_pay: 0,
-      task_name: "Database Setup"
-    }
-  ],30)
+// Excel([
+//     {
+//       name: "Efrain",
+//       date: new Date("2026-03-20"),
+//       start_time: "9:00 AM",
+//       end_time: "1:30 PM",
+//       total_hours: 4.5,
+//       total_pay: 0,
+//       task_name: "Frontend UI"
+//     },
+//     {
+//       name: "Efrain",
+//       date: new Date("2026-03-21"),
+//       start_time: "10:00 AM",
+//       end_time: "3:00 PM",
+//       total_hours: 5,
+//       total_pay: 0,
+//       task_name: "API Integration"
+//     },
+//     {
+//       name: "Efrain",
+//       date: new Date("2026-03-22"),
+//       start_time: "8:30 AM",
+//       end_time: "12:30 PM",
+//       total_hours: 4,
+//       total_pay: 0,
+//       task_name: "Bug Fixing"
+//     },
+//     {
+//       name: "Efrain",
+//       date: new Date("2026-03-23"),
+//       start_time: "1:00 PM",
+//       end_time: "6:00 PM",
+//       total_hours: 5,
+//       total_pay: 0,
+//       task_name: "Backend Logic"
+//     },
+//     {
+//       name: "Efrain",
+//       date: new Date("2026-03-24"),
+//       start_time: "9:00 AM",
+//       end_time: "2:00 PM",
+//       total_hours: 5,
+//       total_pay: 0,
+//       task_name: "Database Setup"
+//     }
+//   ],30)

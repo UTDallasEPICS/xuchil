@@ -49,6 +49,7 @@ export function findByIdHandler(name: keyof typeof prisma & string, prismaOpts =
 
 export function findAllHandler(name: keyof typeof prisma & string, filterSchema: z.ZodObject<z.ZodRawShape> | null = null, prismaOpts = {}) {
   return async (req: NextRequest) => {
+
     try {
       const paginatedFilterSchema = z.strictObject({
         ...(filterSchema?.shape),
@@ -69,8 +70,16 @@ export function findAllHandler(name: keyof typeof prisma & string, filterSchema:
         where: filter,
         skip: offset,
         take: limit,
+        include: {
+          processStepWorkers: { 
+            include: {
+              worker: true
+            }
+          }
+        },
         ...prismaOpts
       });
+      console.log("items",items)
       return fetchSuccess(items);
     } catch (e) {
       return serverError(name, "fetch", e);

@@ -8,10 +8,15 @@ import {
   MovementReason,
 } from "@prisma/client";
 
-// Helpers
-const DateTimeString = z
-  .string()
-  .refine((s) => !isNaN(Date.parse(s)), { message: "Invalid ISO date string" });
+const DateTimeString = z.iso.datetime({offset:true});
+const LocalDateString = z.iso.datetime({offset:true}).transform((val) => {
+  const d = new Date(val);
+  if (Number.isNaN(d.getTime())) return "";
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const yyyy = d.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
+})
 
 // Unit
 export const UnitCreateSchema = z.strictObject({
@@ -52,6 +57,7 @@ export const ProductReadSchema = z.object({
   name: z.string(),
   imgUrl: z.url().nullable().optional(),
   unitId: z.number().int(),
+  unit: UnitReadSchema,
 });
 export type ProductCreate = z.infer<typeof ProductCreateSchema>;
 export type ProductRead = z.infer<typeof ProductReadSchema>;
@@ -65,8 +71,9 @@ export const RawMaterialCreateSchema = z.strictObject({
 export const RawMaterialReadSchema = z.object({
   id: z.number().int(),
   name: z.string(),
-  unitId: z.number().int(),
   imgUrl: z.url().nullable().optional(),
+  unitId: z.number().int(),
+  unit: UnitReadSchema,
 });
 export type RawMaterialCreate = z.infer<typeof RawMaterialCreateSchema>;
 export type RawMaterialRead = z.infer<typeof RawMaterialReadSchema>;
@@ -81,14 +88,24 @@ export const UserCreateSchema = z.strictObject({
   isAdmin: z.boolean().optional(),
   isGuest: z.boolean().optional(),
 });
+export const UserRestrictedUpdateSchema = z.strictObject({
+  name: z.string(),
+  email: z.email().optional(),
+  phone: z.string().optional(),
+  imgUrl: z.url().optional(),
+  password: z.string(),
+});
 export const UserReadSchema = z.object({
   id: z.number().int(),
   name: z.string(),
   email: z.email().nullable().optional(),
   phone: z.string().nullable().optional(),
   imgUrl: z.url().nullable().optional(),
+  isAdmin: z.boolean(),
+  isGuest: z.boolean()
 });
 export type UserCreate = z.infer<typeof UserCreateSchema>;
+export type UserRestrictedUpdate = z.infer<typeof UserRestrictedUpdateSchema>;
 export type UserRead = z.infer<typeof UserReadSchema>;
 
 // ProcessTemplate
@@ -278,22 +295,42 @@ export type InventoryItemCreate = z.infer<
 >;
 export type InventoryItemRead = z.infer<typeof InventoryItemReadSchema>;
 
+export const InventoryLotCreateSchema = z.strictObject({
+  inventoryItemId: z.number().int(),
+  lotCode: z.string().optional(),
+  quantity: z.number(),
+  receivedAt: DateTimeString,
+  expiryAt: DateTimeString.optional(),
+});
+export const InventoryLotReadSchema = z.object({
+  id: z.number().int(),
+  inventoryItemId: z.number().int(),
+  lotCode: z.string().nullable().optional(),
+  quantity: z.number(),
+  receivedAt: DateTimeString,
+  expiryAt: DateTimeString.nullable().optional(),
+});
+export type InventoryLotCreate = z.infer<typeof InventoryLotCreateSchema>;
+export type InventoryLotRead = z.infer<typeof InventoryLotReadSchema>;
+
 // InventoryMovement
 export const InventoryMovementCreateSchema = z.strictObject({
-  itemId: z.number().int(),
+  inventoryLotId: z.number().int(),
   quantityChange: z.number(),
   reason: z.enum(MovementReason),
   relatedStepMaterialUsageId: z.number().int().optional(),
+  relatedProcessExecutionId: z.number().int().optional(),
   relatedOrderId: z.number().int().optional(),
   note: z.string().optional(),
   movedAt: DateTimeString,
 });
 export const InventoryMovementReadSchema = z.object({
   id: z.number().int(),
-  itemId: z.number().int(),
+  inventoryLotId: z.number().int(),
   quantityChange: z.number(),
   reason: z.enum(MovementReason),
   relatedStepMaterialUsageId: z.number().int().nullable().optional(),
+  relatedProcessExecutionId: z.number().int().nullable().optional(),
   relatedOrderId: z.number().int().nullable().optional(),
   note: z.string().nullable().optional(),
   movedAt: DateTimeString,
@@ -304,31 +341,6 @@ export type InventoryMovementCreate = z.infer<
 export type InventoryMovementRead = z.infer<
   typeof InventoryMovementReadSchema
 >;
-
-// Order
-export const OrderCreateSchema = z.strictObject({
-  clientName: z.string(),
-  address: z.string().optional(),
-  deliveryDate: DateTimeString,
-  deliveryVariant: z.enum(DeliveryVariant).optional(),
-  status: z.enum(OrderStatus).optional(),
-  deliveredAt: DateTimeString.optional(),
-  consignmentPartner: z.string().optional(),
-  notes: z.string().optional(),
-});
-export const OrderReadSchema = z.object({
-  id: z.number().int(),
-  clientName: z.string(),
-  address: z.string().nullable().optional(),
-  deliveryDate: DateTimeString,
-  deliveryVariant: z.enum(DeliveryVariant),
-  status: z.enum(OrderStatus),
-  deliveredAt: DateTimeString.nullable().optional(),
-  consignmentPartner: z.string().nullable().optional(),
-  notes: z.string().nullable().optional(),
-});
-export type OrderCreate = z.infer<typeof OrderCreateSchema>;
-export type OrderRead = z.infer<typeof OrderReadSchema>;
 
 // OrderItem
 export const OrderItemCreateSchema = z.strictObject({
@@ -345,3 +357,28 @@ export const OrderItemReadSchema = z.object({
 export type OrderItemCreate = z.infer<typeof OrderItemCreateSchema>;
 export type OrderItemRead = z.infer<typeof OrderItemReadSchema>;
 
+// Order
+export const OrderCreateSchema = z.strictObject({
+  clientName: z.string(),
+  address: z.string().optional(),
+  deliveryDate: DateTimeString,
+  deliveryVariant: z.enum(DeliveryVariant).optional(),
+  status: z.enum(OrderStatus).optional(),
+  deliveredAt: DateTimeString.optional(),
+  consignmentPartner: z.string().optional(),
+  notes: z.string().optional(),
+});
+export const OrderReadSchema = z.object({
+  id: z.number().int(),
+  clientName: z.string(),
+  address: z.string().nullable().optional(),
+  deliveryDate: LocalDateString,
+  deliveryVariant: z.enum(DeliveryVariant),
+  status: z.enum(OrderStatus),
+  deliveredAt: z.nullish(LocalDateString),
+  consignmentPartner: z.string().nullable().optional(),
+  notes: z.string().nullable().optional(),
+  orderItems: OrderItemReadSchema.array(),
+});
+export type OrderCreate = z.infer<typeof OrderCreateSchema>;
+export type OrderRead = z.infer<typeof OrderReadSchema>;

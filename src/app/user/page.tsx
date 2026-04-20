@@ -6,6 +6,8 @@ import HeaderXuchil from "@/components/HeaderXuchil";
 import Modal from "@/components/Modal";
 import styles from "./User.module.css";
 
+import Excel from "scripts/excel";
+
 const UserProfile = () => {
   const router = useRouter();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -17,7 +19,7 @@ const UserProfile = () => {
 
     async function loadProfile() {
       try {
-        const response = await fetch("/api/users/1", { credentials: "include" }); //this is hardcoded update in the future
+        const response = await fetch("/api/users/me", { credentials: "include" });
         if (!response.ok) {
           router.push("/login");
           return;
@@ -53,23 +55,69 @@ const UserProfile = () => {
   };
 
 //when clicked downloaded excel file of the workers pay based of how much they worked
-  const workerHours = async() => { 
+interface work_info { //transform what the api/process-step-execution returns into this format. this will be passed into another method which
+  name: string;       //is the Excel method that creates the excel file
+  date: Date;
+  start_time: string;
+  end_time: string;
+  total_hours: number;
+  total_pay: number;
+  task_name: string;
+}
+//because process-step-executions is how tasks are recorded which is most likely how there gonna be payed. going to use it to create
+// excel sheet for their hours.
+const workerHours = async (): Promise<work_info[]> => {
+  try {
+    const response = await fetch("/api/process-step-executions");
 
-    try { 
- //left off here
 
-
-
-    }catch(err) { 
-
-      console.log("err",err)
+    if (!response.ok) {
+      throw new Error("Failed to fetch process step executions");
     }
 
+    const data = await response.json();
+
+    const formatTime = (date: Date) =>
+      date.toLocaleString("en-US", {
+        month: "short",   
+        day: "numeric",   
+        year: "numeric", 
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      });
+
+    const transformedData = data.map((item: any) => {
+      const worker = item.processStepWorkers?.[0]?.worker;
+
+      const start = new Date(item.startedAt);
+      const end = new Date();
+
+      const totalHours = Math.ceil(item.actualDurationMin / 60) 
+        
+
+      return {
+        name: worker?.name || "",   //this will be going inside of excel method to have downloadable excel file
+        date: start,
+        start_time: formatTime(start), 
+        end_time: formatTime(end),     
+        total_hours: Number(totalHours.toFixed(2)),
+        total_pay: Number((totalHours * 20).toFixed(2)),
+        task_name: `Step ${item.stepId}`,
+      };
+    });
+
+    
+
+  Excel(transformedData,30)
+
   
-
-
-
+    
+  } catch (err) {
+    console.log("err", err);
+    return [];
   }
+};
 
 
   
