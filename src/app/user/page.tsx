@@ -70,12 +70,27 @@ const workerHours = async (): Promise<work_info[]> => {
   try {
     const response = await fetch("/api/process-step-executions");
 
-
     if (!response.ok) {
       throw new Error("Failed to fetch process step executions");
     }
 
+
+
     const data = await response.json();
+
+const now = new Date();
+const sevenDaysAgo = new Date();
+sevenDaysAgo.setDate(now.getDate() - 7);
+
+const filteredData = data.filter((item: any) => { //make sure data return is from last seven days because their payed weekly, and task is completed
+  if (item.status !== "DONE") return false;
+
+  if (!item.finishedAt) return false;
+
+  const finishedDate = new Date(item.finishedAt);
+
+  return finishedDate >= sevenDaysAgo && finishedDate <= now;
+});
 
     const formatTime = (date: Date) =>
       date.toLocaleString("en-US", {
@@ -87,7 +102,7 @@ const workerHours = async (): Promise<work_info[]> => {
         hour12: true,
       });
 
-    const transformedData = data.map((item: any) => {
+    const transformedData = filteredData.map((item: any) => {
       const worker = item.processStepWorkers?.[0]?.worker;
 
       const start = new Date(item.startedAt);
