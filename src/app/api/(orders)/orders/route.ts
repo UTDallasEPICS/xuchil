@@ -1,6 +1,5 @@
 import { NextRequest } from "next/server";
 import prisma from "@/lib/db";
-import { z } from "zod";
 import { fetchSuccess, validationError, serverError, createSuccess } from "@/utils/responses";
 import { OrderCreateSchema } from "@/lib/schemas";
 import { withAuthWorker } from "@/utils/handlers";

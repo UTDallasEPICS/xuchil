@@ -8,36 +8,25 @@ import DeliveryType from "@/components/DeliveryType";
 import TextField from "@/components/TextField";
 import DatePicker from "@/components/DatePicker";
 import OrderedProducts from "@/components/OrderedProducts";
-import { Product } from "@/types/Product";
 import { deliveryVariants } from "@/constants/deliveryConfig";
 import styles from "./NewOrder.module.css";
-import * as productsService from "@/lib/services/productClient";
-import * as ordersService from "@/lib/services/orderClient";
+import productClient from "@/lib/services/productClient";
+import orderClient from "@/lib/services/orderClient";
+import {ProductRead} from "@/lib/schemas";
 
 type OrderItemDraft = {
-  productId: string;
+  productId: number;
   quantity: number;
 };
 
-function mapDeliveryVariantToApi(variant: keyof typeof deliveryVariants) {
-  switch (variant) {
-    case "personal":
-      return "PERSONAL" as const;
-    case "consignment":
-      return "CONSIGNMENT" as const;
-    default:
-      return "MAIL" as const;
-  }
-}
-
 const NewOrderPage = () => {
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<ProductRead[]>([]);
   const [clientName, setClientName] = useState("");
   const [deliveryDate, setDeliveryDate] = useState<Date | null>(null);
   const [address, setAddress] = useState("");
   const [deliveryVariant, setDeliveryVariant] = useState<
     keyof typeof deliveryVariants
-  >("mail");
+  >("MAIL");
   const [orderItems, setOrderItems] = useState<OrderItemDraft[]>([]);
 
   const router = useRouter();
@@ -47,25 +36,11 @@ const NewOrderPage = () => {
 
     async function loadProducts() {
       try {
-        const data = await productsService.fetchProductVariants();
+        const data = await productClient.getAllProducts();
         if (!Array.isArray(data)) return;
         if (!mounted) return;
 
-        setProducts(
-          data.map((variantRaw: unknown) => {
-            const variant = variantRaw as Record<string, unknown>;
-            return {
-              id: String(variant.id ?? ""),
-              name: (variant.product && typeof (variant.product as Record<string, unknown>).name === "string") ? (variant.product as Record<string, unknown>).name as string : "Producto",
-              presentation: typeof variant.name === "string" ? variant.name : String(variant.presentation ?? ""),
-              image: typeof variant.imageUrl === "string" ? variant.imageUrl : "/globe.svg",
-              quantity: 0,
-              units: (variant.defaultUnit && typeof (variant.defaultUnit as Record<string, unknown>).name === "string") ? (variant.defaultUnit as Record<string, unknown>).name as string : "",
-              categoryId: String((variant.product && (variant.product as Record<string, unknown>).categoryId) ?? ""),
-              variantId: String(variant.id ?? ""),
-            } as Product;
-          })
-        );
+        setProducts(data);
       } catch (error) {
         console.error("Failed to load product variants:", error);
       }
@@ -96,34 +71,30 @@ const NewOrderPage = () => {
 
     const validItems = orderItems
       .map((item) => ({
-        productVariantId: parseInt(item.productId, 10),
+        productId: item.productId,
         quantity: item.quantity,
       }))
-      .filter((item) => !Number.isNaN(item.productVariantId) && item.quantity > 0);
+      .filter((item) => !Number.isNaN(item.productId) && item.quantity > 0);
     if (validItems.length === 0) {
       alert("Agrega al menos un producto al pedido.");
       return;
     }
 
-    const payload = {
-      clientName: clientName.trim(),
-      addressText: address.trim(),
-      deliveryDate: deliveryDate.toISOString(),
-      deliveryVariant: mapDeliveryVariantToApi(deliveryVariant),
-      orderItems: validItems.map((item) => ({
-        productVariantId: item.productVariantId,
-        quantity: item.quantity,
-        unitId: null,
-        notes: null,
-      })),
-      status: "SCHEDULED" as const,
-      deliveredAt: null,
-      consignmentPartner: null,
-      notes: null,
-    };
-
     try {
-      await ordersService.createOrder(payload);
+      const order = await orderClient.createOrder({
+        clientName: clientName.trim(),
+        address: address.trim(),
+        deliveryDate: deliveryDate.toISOString(),
+        deliveryVariant: deliveryVariant,
+        status: "SCHEDULED" as const,
+      });
+      await Promise.all(validItems.map(async (item) => {
+        await orderClient.createOrderItem({
+          orderId: order.id,
+          productId: item.productId,
+          quantity: item.quantity,
+        });
+      }));
       router.replace("/orders/deliveries");
     } catch (error) {
       alert(error instanceof Error ? error.message : "Error al crear el pedido.");
@@ -170,7 +141,7 @@ const NewOrderPage = () => {
 
       <h3>Productos:</h3>
       {products.length > 0 ? (
-        <OrderedProducts products={products} onChange={setOrderItems} />
+        <OrderedProducts products={products} onChange={(draft) => setOrderItems(draft)} />
       ) : (
         <p>Cargando productos...</p>
       )}

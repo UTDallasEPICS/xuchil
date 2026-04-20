@@ -1,6 +1,13 @@
 // ordersService: thin wrapper around existing ordersClient functions
 import { sendRequest } from '@/utils/request';
-import {OrderCreate, OrderRead, OrderReadSchema} from "@/lib/schemas";
+import {
+  OrderCreate,
+  OrderItemCreate,
+  OrderItemRead,
+  OrderItemReadSchema,
+  OrderRead,
+  OrderReadSchema
+} from "@/lib/schemas";
 
 async function getAllOrders(): Promise<OrderRead[]> {
   const res = await sendRequest({ method: 'GET', url: '/api/orders' });
@@ -22,6 +29,11 @@ async function createOrder(payload: OrderCreate): Promise<OrderRead> {
   return OrderReadSchema.parse(await res.json());
 }
 
+async function createOrderItem(payload: OrderItemCreate): Promise<OrderItemRead> {
+  const res = await sendRequest({ method: 'POST', url: '/api/order-items', body: payload });
+  return OrderItemReadSchema.parse(await res.json());
+}
+
 async function deleteOrder(id: number) {
   await sendRequest({ method: 'DELETE', url: `/api/orders/${id}` });
 }
@@ -31,5 +43,6 @@ export default {
   getOrderById,
   updateOrder,
   createOrder,
+  createOrderItem,
   deleteOrder,
 };
