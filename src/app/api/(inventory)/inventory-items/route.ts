@@ -1,11 +1,38 @@
 import {InventoryItemCreateSchema} from "@/lib/schemas";
 import {NextRequest} from "next/server";
 import prisma from "@/lib/db";
-import {fetchSuccess, validationError, serverError, createSuccess} from "@/utils/responses";
+import {fetchSuccess, validationError, serverError, createSuccess, } from "@/utils/responses";
+import {z} from "zod";
+import qs from "qs";
 
 export async function GET(req: NextRequest) {
+  const paginatedFilterSchema = z.strictObject({
+    itemType: z.enum(ItemType),
+    offset: z.coerce.number().int(),
+    limit: z.coerce.number().int(),
+  });
+  const res = paginatedFilterSchema.partial().safeParse(qs.parse(req.nextUrl.search));
+  if (!res.success) {
+    return validationError("inventoryItem", "fetch", res.error);
+  }
+  const { limit, offset, ...where } = res.data as z.infer<typeof paginatedFilterSchema>;
+
   try {
-    const items = await prisma.inventoryItem.findMany({});
+    const items = await prisma.inventoryItem.findMany({
+      where,
+      skip: offset,
+      take: limit,
+      orderBy: { id: "asc" },
+      include: {
+        inventoryLots: true,
+        product: {
+          unit: true,
+        },
+        rawMaterial: {
+          unit: true,
+        },
+      },
+    });
     return fetchSuccess(items);
   } catch (e) {
     return serverError("inventoryItem", "fetch", e);
@@ -21,6 +48,15 @@ export const POST = async (req: NextRequest) => {
     }
     const newItem = await prisma.inventoryItem.create({
       data: res.data,
+      include: {
+        inventoryLots: true,
+        product: {
+          unit: true,
+        },
+        rawMaterial: {
+          unit: true,
+        },
+      },
     });
     return createSuccess(newItem);
   } catch (e) {

@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import prisma from "@/lib/db";
 import { idError, notFoundError, serverError, fetchSuccess, updateSuccess, deleteSuccess, validationError } from "@/utils/responses";
 import { InventoryItemCreateSchema } from "@/lib/schemas";
-import { Prisma } from "@prisma/client";
+import {Prisma} from "@prisma/client";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -11,7 +11,18 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     if (Number.isNaN(idParsed)) {
       return idError("inventoryItem");
     }
-    const item = await prisma.inventoryItem.findUnique({ where: { id: idParsed }});
+    const item = await prisma.inventoryItem.findUnique({
+      where: { id: idParsed },
+      include: {
+        inventoryLots: true,
+        product: {
+          unit: true,
+        },
+        rawMaterial: {
+          unit: true,
+        },
+      },
+    });
     if (!item) {
       return notFoundError("inventoryItem");
     }
@@ -36,6 +47,15 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const updatedItem = await prisma.inventoryItem.update({
       where: { id: idParsed },
       data: res.data,
+      include: {
+        inventoryLots: true,
+        product: {
+          unit: true,
+        },
+        rawMaterial: {
+          unit: true,
+        },
+      },
     });
     return updateSuccess(updatedItem);
   } catch (e) {

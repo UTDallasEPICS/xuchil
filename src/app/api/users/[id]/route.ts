@@ -22,7 +22,6 @@ export const GET = withAuthWorker(async (req: NextRequest, { params }: { params:
       where: {
         id: idParsed
       },
-      omit: { passwordHash: true }
     });
     if (!user) {
       return notFoundError("user");
@@ -75,9 +74,6 @@ export const PUT = withAuthWorker(
           passwordHash: res.data.password && (await bcrypt.hash(res.data.password, 10)),
           isAdmin: res.data.isAdmin,
           isGuest: res.data.isGuest,
-        },
-        omit: {
-          passwordHash: true,
         },
       });
       return updateSuccess(updatedItem);

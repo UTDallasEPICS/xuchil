@@ -3,24 +3,11 @@ import prisma from "@/lib/db";
 import { z } from "zod";
 import { fetchSuccess, validationError, serverError, createSuccess } from "@/utils/responses";
 import { OrderCreateSchema } from "@/lib/schemas";
-import { withAuthWorker, qsToObject } from "@/utils/handlers";
+import { withAuthWorker } from "@/utils/handlers";
 
 export async function GET(req: NextRequest) {
   try {
-    const paginatedFilterSchema = z.strictObject({
-      offset: z.coerce.number().int().optional(),
-      limit: z.coerce.number().int().optional(),
-    });
-    const res = paginatedFilterSchema.safeParse(qsToObject(req.nextUrl.searchParams));
-    if (!res.success) {
-      return validationError("order", "fetch", res.error);
-    }
-    const { limit, offset, ...where } = res.data as z.infer<typeof paginatedFilterSchema>;
-
     const items = await prisma.order.findMany({
-      where: where,
-      skip: offset,
-      take: limit,
       include: {
         orderItems: true,
       }

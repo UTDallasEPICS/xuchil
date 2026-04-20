@@ -181,7 +181,6 @@ model ProcessStepExecution {
 
   processExecution          ProcessExecution           @relation(fields: [processExecutionId], references: [id])
   step                      ProcessTemplateStep        @relation(fields: [stepId], references: [id])
-  inventoryMovements        InventoryMovement[]
   processStepMaterialUsages ProcessStepMaterialUsage[]
   processStepWorkers        ProcessStepWorker[]
 }
@@ -210,16 +209,13 @@ model ProcessStepWorker {
 }
 
 model InventoryItem {
-  id            Int      @id @default(autoincrement())
+  id            Int            @id @default(autoincrement())
   itemType      ItemType
-  rawMaterialId Int?     @unique
-  productId     Int?     @unique
-  quantity      Decimal
-expiryAt      DateTime?
-  rawMaterial        RawMaterial?        @relation(fields: [rawMaterialId], references: [id])
-  product            Product?            @relation(fields: [productId], references: [id])
-  inventoryMovements InventoryMovement[]
-  inventoryLots      InventoryLot[]
+  rawMaterialId Int?           @unique
+  productId     Int?           @unique
+  rawMaterial   RawMaterial?   @relation(fields: [rawMaterialId], references: [id])
+  product       Product?       @relation(fields: [productId], references: [id])
+  inventoryLots InventoryLot[]
 }
 
 model InventoryLot {
@@ -249,10 +245,6 @@ model InventoryMovement {
   relatedStepMaterialUsage ProcessStepMaterialUsage? @relation(fields: [relatedStepMaterialUsageId], references: [id])
   relatedProcessExecution  ProcessExecution?         @relation(fields: [relatedProcessExecutionId], references: [id])
   relatedOrder             Order?                    @relation(fields: [relatedOrderId], references: [id])
-  processStepExecution     ProcessStepExecution?     @relation(fields: [processStepExecutionId], references: [id])
-  processStepExecutionId   Int?
-  inventoryItem            InventoryItem?            @relation(fields: [inventoryItemId], references: [id])
-  inventoryItemId          Int?
 }
 
 model Order {

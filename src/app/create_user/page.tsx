@@ -109,7 +109,7 @@ const CreateUser = () => {
         message: "El nuevo usuario ha sido registrado exitosamente.",
         error: false,
       });
-    } catch (e: any) {
+    } catch (e) {
       return setModal({
         open: true,
         title: "Error al crear usuario",
@@ -131,7 +131,6 @@ const CreateUser = () => {
   };
 
   const handlePhotoClear = (e) => {
-    e.preventDefault();
     setPhoto(null);
     setPreview(null)
     setPhotoKey(k => k + 1);
@@ -220,6 +219,7 @@ const CreateUser = () => {
           }
           {photo &&
               <Button
+                  type="button"
                   size="small"
                   action="secondary"
                   onClick={handlePhotoClear}

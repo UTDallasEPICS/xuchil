@@ -5,12 +5,22 @@ import {
   ProductRead,
   ProductReadSchema, RawMaterialCreate,
   RawMaterialRead,
-  RawMaterialReadSchema
+  RawMaterialReadSchema, UnitRead, UnitReadSchema
 } from "@/lib/schemas";
+
+async function getAllUnits(): Promise<UnitRead[]> {
+  const res = await sendRequest({ method: 'GET', url: '/api/units' });
+  return (await res.json()).map((item: unknown) => UnitReadSchema.parse(item));
+}
 
 async function getAllProducts(): Promise<ProductRead[]> {
   const res = await sendRequest({ method: 'GET', url: '/api/products' });
   return (await res.json()).map((item: unknown) => ProductReadSchema.parse(item));
+}
+
+async function getProductById(id: number): Promise<ProductRead> {
+  const res = await sendRequest({ method: 'GET', url: `/api/products/${id}` });
+  return ProductReadSchema.parse(await res.json());
 }
 
 async function getAllProductCategories(): Promise<ProductCategoryRead[]> {
@@ -23,20 +33,38 @@ async function getAllRawMaterials(): Promise<RawMaterialRead[]> {
   return (await res.json()).map((item: unknown) => RawMaterialReadSchema.parse(item));
 }
 
-async function createProduct(payload: ProductCreate): Promise<ProductRead> {
-  const res = await sendRequest({ method: 'POST', url: `/api/products`, body: payload });
-  return ProductReadSchema.parse(await res.json());
-}
-
-async function createRawMaterial(payload: RawMaterialCreate): Promise<RawMaterialRead> {
-  const res = await sendRequest({ method: 'POST', url: `/api/rawmaterials`, body: payload });
+async function getRawMaterialById(id: number): Promise<RawMaterialRead> {
+  const res = await sendRequest({ method: 'GET', url: `/api/rawmaterials/${id}` });
   return RawMaterialReadSchema.parse(await res.json());
 }
 
-export {
+async function createProduct(payload: ProductCreate): Promise<ProductRead> {
+  const productRes = await sendRequest({ method: 'POST', url: `/api/products`, body: payload });
+  const product = ProductReadSchema.parse(await productRes.json());
+  await sendRequest({ method: 'POST', url: '/api/inventory-items', body: {
+    itemType: 'PRODUCT',
+    productId: product.id,
+  }})
+  return product;
+}
+
+async function createRawMaterial(payload: RawMaterialCreate): Promise<RawMaterialRead> {
+  const materialRes = await sendRequest({ method: 'POST', url: `/api/rawmaterials`, body: payload });
+  const material = RawMaterialReadSchema.parse(await materialRes.json());
+  await sendRequest({ method: 'POST', url: '/api/inventory-items', body: {
+    itemType: 'RAW',
+    rawMaterialId: material.id,
+  }});
+  return material;
+}
+
+export default {
+  getAllUnits,
   getAllProducts,
   getAllProductCategories,
   getAllRawMaterials,
+  getProductById,
+  getRawMaterialById,
   createProduct,
   createRawMaterial,
 }

@@ -20,7 +20,7 @@ interface DeliveryTypeProps {
 const iconSizes: Record<Size, number> = { sm: 18, md: 26, lg: 32 };
 
 const DeliveryType: FC<DeliveryTypeProps> = ({
-  variant = "personal",
+  variant = "PERSONAL",
   type = "badge",
   size = "md",
   quantity,

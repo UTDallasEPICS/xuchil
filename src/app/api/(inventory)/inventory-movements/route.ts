@@ -3,24 +3,27 @@ import prisma from "@/lib/db";
 import { z } from "zod";
 import { fetchSuccess, validationError, serverError, createSuccess } from "@/utils/responses";
 import { InventoryMovementCreateSchema } from "@/lib/schemas";
-import { withAuthWorker, qsToObject } from "@/utils/handlers";
+import { withAuthWorker } from "@/utils/handlers";
+import qs from "qs";
 
 export async function GET(req: NextRequest) {
   try {
     const paginatedFilterSchema = z.strictObject({
-      offset: z.coerce.number().int().optional(),
-      limit: z.coerce.number().int().optional(),
+      inventoryLotId: z.coerce.number().int(),
+      offset: z.coerce.number().int(),
+      limit: z.coerce.number().int(),
     });
-    const res = paginatedFilterSchema.safeParse(qsToObject(req.nextUrl.searchParams));
+    const res = paginatedFilterSchema.partial().safeParse(qs.parse(req.nextUrl.search));
     if (!res.success) {
       return validationError("inventoryMovement", "fetch", res.error);
     }
     const { limit, offset, ...where } = res.data as z.infer<typeof paginatedFilterSchema>;
 
     const items = await prisma.inventoryMovement.findMany({
-      where: where,
+      where,
       skip: offset,
       take: limit,
+      orderBy: { id: "asc" },
     });
     return fetchSuccess(items);
   } catch (e) {

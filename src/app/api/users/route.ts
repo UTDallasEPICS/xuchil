@@ -17,7 +17,7 @@ export const GET = withAuthWorker(async (req: NextRequest) => {
       limit: z.coerce.number().int(),
       sort: z.strictObject({
         name: z.enum(["asc", "desc"]).optional(),
-      }).optional()
+      })
     });
     const res = paginatedFilterSchema.partial().safeParse(qs.parse(req.nextUrl.search));
     if (!res.success) {
@@ -31,7 +31,6 @@ export const GET = withAuthWorker(async (req: NextRequest) => {
         // workers can only see guests, admins can see all users
         ...(!session.isAdmin && { isGuest: true }),
       },
-      omit: { passwordHash: true },
       skip: offset,
       take: limit,
       orderBy: sort ?? { id: "asc" },
@@ -72,9 +71,6 @@ export const POST = withAuthWorker(
           passwordHash: await bcrypt.hash(res.data.password, 10),
           isAdmin: res.data.isAdmin,
           isGuest: res.data.isGuest,
-        },
-        omit: {
-          passwordHash: true,
         },
       });
       return createSuccess(newItem);

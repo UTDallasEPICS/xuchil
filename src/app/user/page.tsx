@@ -63,24 +63,19 @@ const UserProfile = () => {
   };
 
 //when clicked downloaded excel file of the workers pay based of how much they worked
-  const workerHours = async() => {
+  const workerHours = async () => {
 
     try {
- //left off here
+      //left off here
 
 
+    } catch (err) {
 
-    }catch(err) {
-
-      console.log("err",err)
+      console.log("err", err)
     }
 
 
-
-
-
   }
-
 
 
   if (!role || !userData) return null;
@@ -99,34 +94,34 @@ const UserProfile = () => {
           </Button>
         </div>
 
-      {role === "admin" && (
-        <div className={styles.actionButtonLeft}>
-          <Button
-            size="small"
-            action="primary"
-            onClick={() => router.push("/create_user")}
-          >
-            Crear usuario
-          </Button>
-          <Button
-            size="small"
-            action="secondary"
-            onClick={workerHours}
-            style = {{marginLeft: "3px"}}
-          >
-            worker hours
+        {role === "admin" && (
+            <div className={styles.actionButtonLeft}>
+              <Button
+                  size="small"
+                  action="primary"
+                  onClick={() => router.push("/create_user")}
+              >
+                Crear usuario
+              </Button>
+              <Button
+                  size="small"
+                  action="secondary"
+                  onClick={workerHours}
+                  style={{marginLeft: "3px"}}
+              >
+                worker hours
 
-          </Button>
-<div style = {{marginTop: "3px"}}>
-          <Button
-          size = "small"
-          action = "secondary"
-          onClick = {() => router.push("/analytics")}>
-            Analytics
-          </Button>
-          </div>
-        </div>
-      )}
+              </Button>
+              <div style={{marginTop: "3px"}}>
+                <Button
+                    size="small"
+                    action="secondary"
+                    onClick={() => router.push("/analytics")}>
+                  Analytics
+                </Button>
+              </div>
+            </div>
+        )}
 
         <div className={styles.headerContainer}>
           <h1>Perfil de usuario</h1>
@@ -148,10 +143,10 @@ const UserProfile = () => {
               <p className={styles.infoLabel}>Correo electrónico:</p>
               <p className={styles.infoValue}>{userData.email}</p>
 
-            <p className={styles.infoLabel}>Teléfono:</p>
-            <p className={styles.infoValue}>{userData.phone}</p>
+              <p className={styles.infoLabel}>Teléfono:</p>
+              <p className={styles.infoValue}>{userData.phone}</p>
+            </div>
           </div>
-        </div>
 
           <div className={styles.logoutWrapper}>
             <Button

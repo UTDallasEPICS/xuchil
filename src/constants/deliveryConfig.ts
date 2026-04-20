@@ -1,19 +1,19 @@
 import styles from "@/styles/DeliveryType.module.css";
 
 export const deliveryVariants = {
-  personal: {
+  PERSONAL: {
     iconSrc: "/Personal.svg",
     alt: "Ícono de entrega personal",
     label: "Entrega personal",
     containerClass: styles.personal,
   },
-  mail: {
+  MAIL: {
     iconSrc: "/Mail.svg",
     alt: "Ícono de entrega por correo",
     label: "Envío por correo",
     containerClass: styles.mail,
   },
-  consignment: {
+  CONSIGNMENT: {
     iconSrc: "/Consignment.svg",
     alt: "Ícono de producto en consignación",
     label: "En consignación",

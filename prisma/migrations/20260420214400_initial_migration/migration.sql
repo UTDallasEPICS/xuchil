@@ -136,27 +136,36 @@ CREATE TABLE "InventoryItem" (
     "itemType" TEXT NOT NULL,
     "rawMaterialId" INTEGER,
     "productId" INTEGER,
-    "quantity" DECIMAL NOT NULL,
-    "expiryAt" DATETIME,
     CONSTRAINT "InventoryItem_rawMaterialId_fkey" FOREIGN KEY ("rawMaterialId") REFERENCES "RawMaterial" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
     CONSTRAINT "InventoryItem_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product" ("id") ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 -- CreateTable
+CREATE TABLE "InventoryLot" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "inventoryItemId" INTEGER NOT NULL,
+    "lotCode" TEXT,
+    "quantity" DECIMAL NOT NULL,
+    "receivedAt" DATETIME NOT NULL,
+    "expiryAt" DATETIME,
+    CONSTRAINT "InventoryLot_inventoryItemId_fkey" FOREIGN KEY ("inventoryItemId") REFERENCES "InventoryItem" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+-- CreateTable
 CREATE TABLE "InventoryMovement" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "itemId" INTEGER NOT NULL,
+    "inventoryLotId" INTEGER NOT NULL,
     "quantityChange" DECIMAL NOT NULL,
     "reason" TEXT NOT NULL,
     "relatedStepMaterialUsageId" INTEGER,
+    "relatedProcessExecutionId" INTEGER,
     "relatedOrderId" INTEGER,
     "note" TEXT,
     "movedAt" DATETIME NOT NULL,
-    "processStepExecutionId" INTEGER,
-    CONSTRAINT "InventoryMovement_itemId_fkey" FOREIGN KEY ("itemId") REFERENCES "InventoryItem" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "InventoryMovement_inventoryLotId_fkey" FOREIGN KEY ("inventoryLotId") REFERENCES "InventoryLot" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "InventoryMovement_relatedStepMaterialUsageId_fkey" FOREIGN KEY ("relatedStepMaterialUsageId") REFERENCES "ProcessStepMaterialUsage" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
-    CONSTRAINT "InventoryMovement_relatedOrderId_fkey" FOREIGN KEY ("relatedOrderId") REFERENCES "Order" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
-    CONSTRAINT "InventoryMovement_processStepExecutionId_fkey" FOREIGN KEY ("processStepExecutionId") REFERENCES "ProcessStepExecution" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+    CONSTRAINT "InventoryMovement_relatedProcessExecutionId_fkey" FOREIGN KEY ("relatedProcessExecutionId") REFERENCES "ProcessExecution" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT "InventoryMovement_relatedOrderId_fkey" FOREIGN KEY ("relatedOrderId") REFERENCES "Order" ("id") ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -214,6 +223,12 @@ CREATE INDEX "ProcessPause_processExecutionId_idx" ON "ProcessPause"("processExe
 
 -- CreateIndex
 CREATE INDEX "ProcessStepMaterialUsage_stepExecutionId_idx" ON "ProcessStepMaterialUsage"("stepExecutionId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "InventoryItem_rawMaterialId_key" ON "InventoryItem"("rawMaterialId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "InventoryItem_productId_key" ON "InventoryItem"("productId");
 
 -- CreateIndex
 CREATE INDEX "Order_deliveryDate_idx" ON "Order"("deliveryDate");
