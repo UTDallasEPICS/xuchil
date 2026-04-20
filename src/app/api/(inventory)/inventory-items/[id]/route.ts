@@ -16,10 +16,14 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       include: {
         inventoryLots: true,
         product: {
-          unit: true,
+          include: {
+            unit: true
+          }
         },
         rawMaterial: {
-          unit: true,
+          include: {
+            unit: true
+          }
         },
       },
     });
@@ -50,10 +54,14 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       include: {
         inventoryLots: true,
         product: {
-          unit: true,
+          include: {
+            unit: true
+          }
         },
         rawMaterial: {
-          unit: true,
+          include: {
+            unit: true
+          }
         },
       },
     });

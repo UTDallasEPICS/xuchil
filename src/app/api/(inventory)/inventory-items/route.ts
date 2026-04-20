@@ -4,6 +4,7 @@ import prisma from "@/lib/db";
 import {fetchSuccess, validationError, serverError, createSuccess, } from "@/utils/responses";
 import {z} from "zod";
 import qs from "qs";
+import {ItemType} from "@prisma/client";
 
 export async function GET(req: NextRequest) {
   const paginatedFilterSchema = z.strictObject({
@@ -26,10 +27,14 @@ export async function GET(req: NextRequest) {
       include: {
         inventoryLots: true,
         product: {
-          unit: true,
+          include: {
+            unit: true
+          }
         },
         rawMaterial: {
-          unit: true,
+          include: {
+            unit: true
+          }
         },
       },
     });
@@ -51,10 +56,14 @@ export const POST = async (req: NextRequest) => {
       include: {
         inventoryLots: true,
         product: {
-          unit: true,
+          include: {
+            unit: true
+          }
         },
         rawMaterial: {
-          unit: true,
+          include: {
+            unit: true
+          }
         },
       },
     });
