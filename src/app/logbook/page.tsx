@@ -11,6 +11,7 @@ import {
 import * as logbookService from "@/lib/services/logbookService";
 import userService from "@/lib/services/userClient";
 import styles from "./LogbookPage.module.css";
+import Dashboard from "./dashboard/page";
 
 const Logbook = () => {
   const [isAdminMode, setIsAdminMode] = useState(false);
@@ -164,6 +165,11 @@ const Logbook = () => {
         {loading && <p>Cargando…</p>}
         {error && <p style={{color: "red"}}>{error}</p>}
       </div>
+      
+      <Dashboard 
+        currentUser={currentUser} isAdminMode={isAdminMode}
+        selectedProduct={selectedProduct} selectedUser={selectedUser} selectedMonth={selectedMonth}
+      />
 
       <div className={styles.tableWrapper}>
         <DynamicTable

@@ -216,14 +216,14 @@ export function fetchProductVariants(productId: string): ProductVariant[] {
         { 
           id: 16, 
           title: "Rastreo de mercancía", 
-          estimatedTime: 0, 
+          estimatedTime: 1, 
           hasInput: false,
           description: "Realizar el seguimiento del envío." 
         },
         { 
           id: 17, 
           title: "Entrega y envío", 
-          estimatedTime: 0, 
+          estimatedTime: 1, 
           hasInput: false,
           description: "Entregar el producto al cliente o al transportista." 
         },
@@ -326,14 +326,14 @@ export function fetchProductVariants(productId: string): ProductVariant[] {
         { 
           id: 14, 
           title: "Rastreo de mercancía", 
-          estimatedTime: 0, 
+          estimatedTime: 1, 
           hasInput: false,
           description: "Realizar el seguimiento del envío." 
         },
         { 
           id: 15, 
           title: "Entrega y envío", 
-          estimatedTime: 0, 
+          estimatedTime: 1, 
           hasInput: false,
           description: "Entregar el producto al cliente o transportista." 
         },

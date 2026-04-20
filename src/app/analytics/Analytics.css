@@ -1,0 +1,92 @@
+.page {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 20px 0;
+    font-family: Arial, sans-serif;
+  }
+  
+  
+  .title {
+    margin: 0 0 20px;
+    font-size: 22px;
+    font-weight: 500;
+    color: #222;
+  }
+  
+  .card-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 28px;
+ 
+  }
+  
+  .card {
+    flex: 1;
+    background-color: #e8dddd;
+    border-radius: 24px;
+    padding: 18px 16px;
+    min-height: 110px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    
+  }
+  
+  .card-value {
+    font-size: 17px;
+    font-weight: 500;
+    color: #222;
+  }
+  
+  .card-label {
+    font-size: 15px;
+    color: #333;
+  }
+  
+  
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  
+  .section-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 500;
+    color: #222;
+  }
+  
+  .filter-group {
+    display: flex;
+    gap: 8px;
+  }
+  
+  .empty-message {
+    text-align: center;
+    margin-top: 12px;
+    font-size: 14px;
+    color: #444;
+  }
+  
+  .trending-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  
+  .trending-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #f6eded;
+    border-bottom: 2px solid #222;
+    padding-bottom: 12px;
+  }
+  
+  

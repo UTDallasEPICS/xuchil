@@ -7,18 +7,19 @@ import {serverError} from "@/utils/responses";
 export async function POST(req: Request) {
   try {
     const {email, password} = await req.json();
-
+  
     if (!email || !password) {
       return NextResponse.json(
         {error: "Email and password are required"},
         {status: 400}
       );
     }
-
     // Find user by email
     const user = await prisma.user.findUnique({
       where: {email},
     });
+
+    
 
     if (!user) {
       return NextResponse.json(
@@ -26,9 +27,13 @@ export async function POST(req: Request) {
         {status: 401}
       );
     }
+    
+
+    
 
     // Verify password
     const passwordMatch = await bcrypt.compare(password, user.passwordHash);
+
     if (!passwordMatch) {
       return NextResponse.json(
         {error: "Invalid email or password"},

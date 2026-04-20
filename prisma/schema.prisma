@@ -215,7 +215,7 @@ model InventoryItem {
   rawMaterialId Int?     @unique
   productId     Int?     @unique
   quantity      Decimal
-
+expiryAt      DateTime?
   rawMaterial        RawMaterial?        @relation(fields: [rawMaterialId], references: [id])
   product            Product?            @relation(fields: [productId], references: [id])
   inventoryMovements InventoryMovement[]
