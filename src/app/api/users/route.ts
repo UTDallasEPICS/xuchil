@@ -23,7 +23,7 @@ export const GET = withAuthWorker(async (req: NextRequest) => {
     if (!res.success) {
       return validationError("user", "fetch", res.error);
     }
-    const { limit, offset, sort, ...where } = res.data as z.infer<typeof paginatedFilterSchema>;
+    const { limit, offset, sort, ...where } = res.data;
 
     const items = await prisma.user.findMany({
       where: {

@@ -150,22 +150,19 @@ model ProcessExecution {
   notes           String?
 
   process               ProcessTemplate        @relation(fields: [processId], references: [id])
-  processPauses         ProcessPause[]
   processStepExecutions ProcessStepExecution[]
   inventoryMovements    InventoryMovement[]
 
-  @@index([processId])
+  @@index([status])
 }
 
 model ProcessPause {
-  id                 Int       @id @default(autoincrement())
-  processExecutionId Int
-  startedAt          DateTime
-  endedAt            DateTime?
+  id                     Int       @id @default(autoincrement())
+  processStepExecutionId Int
+  startedAt              DateTime
+  endedAt                DateTime?
 
-  processExecution ProcessExecution @relation(fields: [processExecutionId], references: [id])
-
-  @@index([processExecutionId])
+  processStepExecution ProcessStepExecution @relation(fields: [processStepExecutionId], references: [id])
 }
 
 model ProcessStepExecution {
@@ -183,6 +180,7 @@ model ProcessStepExecution {
   step                      ProcessTemplateStep        @relation(fields: [stepId], references: [id])
   processStepMaterialUsages ProcessStepMaterialUsage[]
   processStepWorkers        ProcessStepWorker[]
+  processPauses             ProcessPause[]
 }
 
 model ProcessStepMaterialUsage {
@@ -195,8 +193,6 @@ model ProcessStepMaterialUsage {
   stepExecution      ProcessStepExecution @relation(fields: [stepExecutionId], references: [id])
   rawMaterial        RawMaterial          @relation(fields: [rawMaterialId], references: [id])
   inventoryMovements InventoryMovement[]
-
-  @@index([stepExecutionId])
 }
 
 model ProcessStepWorker {
@@ -245,6 +241,8 @@ model InventoryMovement {
   relatedStepMaterialUsage ProcessStepMaterialUsage? @relation(fields: [relatedStepMaterialUsageId], references: [id])
   relatedProcessExecution  ProcessExecution?         @relation(fields: [relatedProcessExecutionId], references: [id])
   relatedOrder             Order?                    @relation(fields: [relatedOrderId], references: [id])
+
+  @@index([inventoryLotId])
 }
 
 model Order {
@@ -259,10 +257,6 @@ model Order {
   notes              String?
   inventoryMovements InventoryMovement[]
   orderItems         OrderItem[]
-
-  @@index([deliveryDate])
-  @@index([status])
-  @@index([deliveryVariant])
 }
 
 model OrderItem {

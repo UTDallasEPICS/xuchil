@@ -1,6 +1,17 @@
 // stepExecutionService: actions for step-executions
 import { sendRequest } from '@/utils/request';
+import {ProcessExecutionRead, ProcessExecutionReadSchema} from "@/lib/schemas";
 
-export async function postAction(stepExecutionId: number, action: string, body?: unknown) {
-  return await sendRequest({ method: 'POST', url: `/api/step-executions/${stepExecutionId}/${action}`, credentials: 'include', body });
+async function getAllProcessExecutions(query?: { pending?: boolean}): Promise<ProcessExecutionRead[]> {
+  const res = await sendRequest({
+    method: 'GET',
+    url: '/api/process-executions',
+    query,
+  });
+
+  return (await res.json()).map((item: unknown) => ProcessExecutionReadSchema.parse(item));
+}
+
+export default {
+  getAllProcessExecutions,
 }

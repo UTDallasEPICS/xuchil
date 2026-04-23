@@ -1,27 +1,11 @@
 import { NextRequest } from "next/server";
 import prisma from "@/lib/db";
-import { z } from "zod";
 import { fetchSuccess, validationError, serverError, createSuccess } from "@/utils/responses";
 import { ProcessPauseCreateSchema } from "@/lib/schemas";
-import { qsToObject } from "@/utils/handlers";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
-    const paginatedFilterSchema = z.strictObject({
-      offset: z.coerce.number().int().optional(),
-      limit: z.coerce.number().int().optional(),
-    });
-    const res = paginatedFilterSchema.safeParse(qsToObject(req.nextUrl.searchParams));
-    if (!res.success) {
-      return validationError("processPause", "fetch", res.error);
-    }
-    const { limit, offset, ...where } = res.data as z.infer<typeof paginatedFilterSchema>;
-
-    const items = await prisma.processPause.findMany({
-      where: where,
-      skip: offset,
-      take: limit,
-    });
+    const items = await prisma.processPause.findMany({});
     return fetchSuccess(items);
   } catch (e) {
     return serverError("processPause", "fetch", e);

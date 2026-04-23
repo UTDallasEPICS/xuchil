@@ -11,7 +11,17 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     if (Number.isNaN(idParsed)) {
       return idError("processTemplate");
     }
-    const item = await prisma.processTemplate.findUnique({ where: { id: idParsed }});
+    const item = await prisma.processTemplate.findUnique({
+      where: { id: idParsed },
+      include: {
+        processTemplateSteps: {
+          orderBy: { position: "asc" },
+          include: {
+            processTemplateStepMaterials: true
+          },
+        }
+      }
+    });
     if (!item) {
       return notFoundError("processTemplate");
     }
@@ -33,7 +43,18 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if (!res.success) {
       return validationError("processTemplate", "update", res.error);
     }
-    const updatedItem = await prisma.processTemplate.update({ where: { id: idParsed }, data: res.data });
+    const updatedItem = await prisma.processTemplate.update({
+      where: { id: idParsed },
+      data: res.data,
+      include: {
+        processTemplateSteps: {
+          orderBy: { position: "asc" },
+          include: {
+            processTemplateStepMaterials: true
+          },
+        }
+      }
+    });
     return updateSuccess(updatedItem);
   } catch (e) {
     return serverError("processTemplate", "update", e);

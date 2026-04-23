@@ -4,7 +4,6 @@ import styles from "../styles/PendingTaskCard.module.css";
 interface PendingTaskCardProps {
   productName: string;
   startDate: string;
-  startedBy: string;
   currentStep: string;
   currentStepNumber: number;
   totalSteps: number;
@@ -13,7 +12,6 @@ interface PendingTaskCardProps {
 const PendingTaskCard: React.FC<PendingTaskCardProps> = ({
   productName,
   startDate,
-  startedBy,
   currentStep,
   currentStepNumber,
   totalSteps,
@@ -24,10 +22,6 @@ const PendingTaskCard: React.FC<PendingTaskCardProps> = ({
         <h3 className={styles.header}>{productName}</h3>
         <h4 className={styles.subheader}>Fecha:</h4>
         <p className={styles.text}>{startDate}</p>
-
-        <h4 className={styles.subheader}>Comenzado por:</h4>
-        <p className={styles.text}>{startedBy}</p>
-
         <h4 className={styles.subheader}>Paso Actual:</h4>
         <p className={styles.text}>{currentStep}</p>
       </div>

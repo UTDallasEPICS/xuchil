@@ -17,7 +17,7 @@ const DEFAULT_PACKAGE_TYPES = ["Bolsa", "Caja", "Frasco", "Sobre"];
 const PACKAGE_TYPES_STORAGE_KEY = "xuchil.packageTypes";
 
 const ProcessResultsPage: React.FC = () => {
-  const { productId, variantId } = useParams();
+  const { productId, stepId } = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
   const runIdParam = searchParams.get("runId");

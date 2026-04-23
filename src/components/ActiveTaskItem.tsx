@@ -11,7 +11,7 @@ interface ActiveTaskItemProps {
     currentStepName: string;
     currentStepNumber: number;
     totalSteps: number;
-    status: "IN_PROGRESS" | "PAUSED";
+    status: "IN_PROGRESS" | "PAUSED" | "PLANNED";
     stepExecutionId: number | null;
     startedAt?: string | null;
     openRoute: string;
@@ -113,7 +113,7 @@ const ActiveTaskItem: React.FC<ActiveTaskItemProps> = ({
             </div>
 
             <div className={styles.actions}>
-                {status === "IN_PROGRESS" ? (
+                {(status === "IN_PROGRESS" || status === "PLANNED")? (
                     <button
                         className={`${styles.actionBtn} ${styles.pauseBtn}`}
                         onClick={handlePause}

@@ -3,24 +3,39 @@ import prisma from "@/lib/db";
 import { z } from "zod";
 import { fetchSuccess, validationError, serverError, createSuccess } from "@/utils/responses";
 import { ProcessExecutionCreateSchema } from "@/lib/schemas";
-import { qsToObject } from "@/utils/handlers";
+import qs from "qs";
+import {ProcessStatus} from "@prisma/client";
 
 export async function GET(req: NextRequest) {
   try {
     const paginatedFilterSchema = z.strictObject({
-      offset: z.coerce.number().int().optional(),
-      limit: z.coerce.number().int().optional(),
+      pending: z.coerce.boolean(),
+      offset: z.coerce.number().int(),
+      limit: z.coerce.number().int(),
     });
-    const res = paginatedFilterSchema.safeParse(qsToObject(req.nextUrl.searchParams));
+    const res = paginatedFilterSchema.partial().safeParse(qs.parse(req.nextUrl.search));
     if (!res.success) {
       return validationError("processExecution", "fetch", res.error);
     }
-    const { limit, offset, ...where } = res.data as z.infer<typeof paginatedFilterSchema>;
-
+    const { limit, offset, pending } = res.data;
     const items = await prisma.processExecution.findMany({
-      where: where,
+      where: {
+        ...(pending !== undefined && {
+          status: { [pending ? "in":"notIn"]: [ProcessStatus.PLANNED, ProcessStatus.IN_PROGRESS, ProcessStatus.PAUSED] }
+        })
+      },
       skip: offset,
       take: limit,
+      orderBy: { id: "asc" },
+      include: {
+        processStepExecutions: {
+          orderBy: {
+            step: {
+              position: "asc",
+            }
+          }
+        }
+      }
     });
     return fetchSuccess(items);
   } catch (e) {
@@ -35,7 +50,18 @@ export async function POST(req: NextRequest) {
     if (!res.success) {
       return validationError("processExecution", "create", res.error);
     }
-    const newItem = await prisma.processExecution.create({ data: res.data });
+    const newItem = await prisma.processExecution.create({
+      data: res.data,
+      include: {
+        processStepExecutions: {
+          orderBy: {
+            step: {
+              position: "asc",
+            }
+          }
+        }
+      }
+    });
     return createSuccess(newItem);
   } catch (e) {
     return serverError("processExecution", "create", e);

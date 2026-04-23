@@ -7,7 +7,9 @@ import HeaderXuchil from "@/components/HeaderXuchil";
 import Button from "@/components/Button";
 import ActiveTaskItem from "@/components/ActiveTaskItem";
 import styles from "./ProcessControl.module.css";
-import * as processesService from "@/lib/services/templateClient";
+import executionClient from "@/lib/services/executionClient";
+import templateClient from "@/lib/services/templateClient";
+import productClient from "@/lib/services/productClient";
 
 interface ActiveTask {
   processRunId: number;
@@ -15,7 +17,7 @@ interface ActiveTask {
   currentStepName: string;
   currentStepNumber: number;
   totalSteps: number;
-  status: "IN_PROGRESS" | "PAUSED";
+  status: "IN_PROGRESS" | "PAUSED" | "PLANNED";
   stepExecutionId: number | null;
   startedAt: string | null;
   openRoute: string;
@@ -28,49 +30,42 @@ const ProcessControl = () => {
 
   const loadActiveTasks = useCallback(async () => {
     try {
-      const runsRaw = await processesService.fetchPendingRuns();
-      const runs = Array.isArray(runsRaw) ? runsRaw as unknown[] : [];
+      const runs = await executionClient.getAllProcessExecutions({pending:true})
 
-      const mapped: ActiveTask[] = runs.map((run: unknown) => {
-        const r = run as Record<string, unknown>;
-        const orderedStepsRaw = r.stepExecutions;
-        const orderedSteps = Array.isArray(orderedStepsRaw) ? [...orderedStepsRaw as unknown[]] : [];
+      const mapped: ActiveTask[] = await Promise.all(runs.map(async (r) => {
+        const processTemplate = await templateClient.getProcessTemplateById(r.processId);
+        const product = await productClient.getProductById(processTemplate.productId);
+
         const allStepsDone =
-          orderedSteps.length > 0 &&
-          orderedSteps.every((step) => {
-            const s = step as Record<string, unknown>;
-            const status = s.status;
-            return typeof status === "string" && status === "DONE";
+          r.processStepExecutions.length > 0 &&
+          r.processStepExecutions.every((step) => {
+            return step.status === "DONE" || step.status === "SKIPPED";
           });
-        const currentStepIndex = orderedSteps.findIndex((step) => {
-          const s = step as Record<string, unknown>;
-          const status = s.status;
-          return typeof status === "string" && (status === "IN_PROGRESS" || status === "PENDING" || status === "BLOCKED");
+        const currentStepIndex = r.processStepExecutions.findIndex((step) => {
+          const status = step.status;
+          return (status === "IN_PROGRESS" || status === "PENDING");
         });
-        const safeIndex = currentStepIndex >= 0 ? currentStepIndex : 0;
-        const currentStep = orderedSteps[safeIndex] as Record<string, unknown> | undefined;
-        const productVariant = r.productVariant as Record<string, unknown> | undefined;
-        const productId = productVariant && typeof productVariant.productId === "number" ? productVariant.productId : r.productVariantId as number | undefined;
+        const stepExecution = r.processStepExecutions[currentStepIndex];
         const openRoute = allStepsDone
-          ? `/process-control/new-production/${productId}/${r.productVariantId}/results?runId=${r.id}`
-          : `/process-control/new-production/${productId}/${r.productVariantId}/${safeIndex + 1}`;
+          ? `/process-control/new-production/${product.id}/results?runId=${r.id}`
+          : `/process-control/new-production/${product.id}/${currentStepIndex + 1}`;
 
-        const currentStepName = allStepsDone ? "Captura de resultados" : (currentStep && currentStep.templateStep && typeof (currentStep.templateStep as Record<string, unknown>).name === "string") ? (currentStep.templateStep as Record<string, unknown>).name as string : "Sin paso";
-        const productName = productVariant && typeof productVariant.name === "string" ? productVariant.name as string : "Producto";
+        const templateStep = await templateClient.getProcessTemplateStepById(stepExecution.stepId);
+        const currentStepName = allStepsDone ? "Captura de resultados" : templateStep.name;
 
         return {
-          processRunId: (r.id as number) ?? 0,
-          productName,
+          processRunId: r.id,
+          productName: product.name,
           currentStepName,
-          currentStepNumber: allStepsDone ? orderedSteps.length : safeIndex + 1,
-          totalSteps: orderedSteps.length || 0,
-          status: (r.status === "PAUSED") ? "PAUSED" : "IN_PROGRESS",
-          stepExecutionId: currentStep && typeof currentStep.id === "number" ? currentStep.id as number : null,
-          startedAt: currentStep && typeof currentStep.startedAt === "string" ? currentStep.startedAt as string : null,
+          currentStepNumber: allStepsDone ? r.processStepExecutions.length : currentStepIndex + 1,
+          totalSteps: r.processStepExecutions.length || 0,
+          status: r.status as "IN_PROGRESS" | "PAUSED" | "PLANNED",
+          stepExecutionId: stepExecution.id,
+          startedAt: stepExecution.startedAt ?? null,
           openRoute,
           isResultsStage: allStepsDone,
         };
-      });
+      }));
 
       setActiveTasks(mapped);
     } catch (e) {

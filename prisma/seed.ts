@@ -264,8 +264,6 @@ async function main() {
     data: {
       itemType: ItemType.RAW,
       rawMaterialId: flour.id,
-      quantity: 100,
-      expiryAt: new Date("2026-04-24T10:00:00.000Z"),
     },
   });
 
@@ -273,8 +271,6 @@ async function main() {
     data: {
       itemType: ItemType.RAW,
       rawMaterialId: water.id,
-      quantity: 200,
-      expiryAt: new Date("2026-04-30T10:00:00.000Z"),
     },
   });
 
@@ -282,8 +278,6 @@ async function main() {
     data: {
       itemType: ItemType.RAW,
       rawMaterialId: yeast.id,
-      quantity: 25,
-      expiryAt: new Date("2026-04-16T09:15:42.000Z"),
     },
   });
 
@@ -291,8 +285,6 @@ async function main() {
     data: {
       itemType: ItemType.RAW,
       rawMaterialId: salt.id,
-      quantity: 65,
-      expiryAt: new Date("2026-05-10T12:00:00.000Z"),
     },
   });
 
@@ -300,8 +292,6 @@ async function main() {
     data: {
       itemType: ItemType.RAW,
       rawMaterialId: sugar.id,
-      quantity: 45,
-      expiryAt: new Date("2026-04-18T14:23:11.000Z"),
     },
   });
 
@@ -309,8 +299,6 @@ async function main() {
     data: {
       itemType: ItemType.RAW,
       rawMaterialId: butter.id,
-      quantity: 30,
-      expiryAt: new Date("2026-04-14T21:47:05.000Z"),
     },
   });
 
@@ -318,8 +306,6 @@ async function main() {
     data: {
       itemType: ItemType.RAW,
       rawMaterialId: milk.id,
-      quantity: 80,
-      expiryAt: new Date("2026-04-20T08:30:00.000Z"),
     },
   });
 
@@ -327,8 +313,6 @@ async function main() {
     data: {
       itemType: ItemType.RAW,
       rawMaterialId: eggs.id,
-      quantity: 48,
-      expiryAt: new Date("2026-04-17T03:32:58.000Z"),
     },
   });
 
@@ -336,8 +320,6 @@ async function main() {
     data: {
       itemType: ItemType.RAW,
       rawMaterialId: lemonJuice.id,
-      quantity: 22,
-      expiryAt: new Date("2026-04-15T17:06:29.000Z"),
     },
   });
 
@@ -345,8 +327,6 @@ async function main() {
     data: {
       itemType: ItemType.RAW,
       rawMaterialId: orangeConcentrate.id,
-      quantity: 55,
-      expiryAt: new Date("2026-04-19T11:20:00.000Z"),
     },
   });
 
@@ -354,8 +334,6 @@ async function main() {
     data: {
       itemType: ItemType.PRODUCT,
       productId: sourdough.id,
-      quantity: 10,
-      expiryAt: new Date("2026-04-18T12:00:00.000Z"),
     },
   });
 
@@ -363,8 +341,6 @@ async function main() {
     data: {
       itemType: ItemType.PRODUCT,
       productId: lemonade.id,
-      quantity: 15,
-      expiryAt: new Date("2026-04-17T16:00:00.000Z"),
     },
   });
 
@@ -372,8 +348,6 @@ async function main() {
     data: {
       itemType: ItemType.PRODUCT,
       productId: baguette.id,
-      quantity: 18,
-      expiryAt: new Date("2026-04-16T13:00:00.000Z"),
     },
   });
 
@@ -381,8 +355,6 @@ async function main() {
     data: {
       itemType: ItemType.PRODUCT,
       productId: dinnerRolls.id,
-      quantity: 24,
-      expiryAt: new Date("2026-04-20T14:00:00.000Z"),
     },
   });
 
@@ -390,8 +362,6 @@ async function main() {
     data: {
       itemType: ItemType.PRODUCT,
       productId: orangeJuice.id,
-      quantity: 12,
-      expiryAt: new Date("2026-04-19T15:30:00.000Z"),
     },
   });
 
