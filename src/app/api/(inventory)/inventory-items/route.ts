@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
   if (!res.success) {
     return validationError("inventoryItem", "fetch", res.error);
   }
-  const { limit, offset, ...where } = res.data as z.infer<typeof paginatedFilterSchema>;
+  const { limit, offset, ...where } = res.data;
 
   try {
     const items = await prisma.inventoryItem.findMany({

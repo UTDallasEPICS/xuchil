@@ -222,7 +222,7 @@ model InventoryLot {
   receivedAt      DateTime
   expiryAt        DateTime?
 
-  inventoryItem      InventoryItem?      @relation(fields: [inventoryItemId], references: [id])
+  inventoryItem      InventoryItem       @relation(fields: [inventoryItemId], references: [id])
   inventoryMovements InventoryMovement[]
 }
 

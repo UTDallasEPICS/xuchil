@@ -2,7 +2,7 @@ import React from 'react';
 import styles from '@/styles/ProductCard.module.css';
 
 export interface ProductCardProps {
-  photo: string;
+  photo: string | null;
   name: string;
   quantity: number | string;
   units: string;
@@ -17,7 +17,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   onClick,
 }) => (
   <div className={styles.card} onClick={onClick}>
-    <img src={photo} alt={name} className={styles.photo} />
+    <img src={photo ?? undefined} alt={name} className={styles.photo} />
     <div className={styles.info}>
       <h3 className={styles.name}>{name}</h3>
     </div>

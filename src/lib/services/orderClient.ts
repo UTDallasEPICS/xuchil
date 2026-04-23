@@ -38,7 +38,7 @@ async function deleteOrder(id: number) {
   await sendRequest({ method: 'DELETE', url: `/api/orders/${id}` });
 }
 
-export default {
+const orderClient = {
   getAllOrders,
   getOrderById,
   updateOrder,
@@ -46,3 +46,5 @@ export default {
   createOrderItem,
   deleteOrder,
 };
+
+export default orderClient;
