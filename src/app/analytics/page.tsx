@@ -119,7 +119,7 @@ const transformOrders = (orders: RawOrder[], filterType: FilterType): OrderPoint
     orders.forEach((order) => {
       if (order.status !== "DELIVERED") return
       if (!order.deliveredAt) return
-  
+
       const deliveredDate = new Date(order.deliveredAt)
       const diffTime = today.getTime() - deliveredDate.getTime()
       const diffDays = diffTime / (1000 * 60 * 60 * 24)
@@ -239,7 +239,7 @@ export default function Analytics() {
     const inventory_lot = async () => { 
     try { 
 
-      const response = await fetch("oldapi/inventory")
+      const response = await fetch("api/inventory-items")
 
       const data = await response.json()
 
@@ -272,16 +272,18 @@ export default function Analytics() {
   
       try {
   
-        const response = await fetch("/oldapi/orders")
+        const response = await fetch("/api/orders")
 
   
         const rawOrders: RawOrder[] = await response.json()
+
   
         const transformed = transformOrders(rawOrders,chartFilter)
 
         const sorted = transformed.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()) //sorts by date
-        
+ 
         const trend = transformTrendingItems(rawOrders,chartFilter)
+     
         setChartOrders(sorted)
         setTrendingItems(trend)
         

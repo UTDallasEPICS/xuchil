@@ -8,7 +8,7 @@ import {
   productFilterOptions,
   userFilterOptions,
 } from "@/constants/filterOptions";
-import * as logbookService from "@/lib/services/logbookService";
+// import * as logbookService from "@/lib/services/logbookService";
 import userService from "@/lib/services/userClient";
 import styles from "./LogbookPage.module.css";
 import Dashboard from "./dashboard/page";

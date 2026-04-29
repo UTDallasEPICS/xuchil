@@ -6,11 +6,7 @@ declare global {
 }
 
 const prisma = global.prisma || new PrismaClient({
-  omit: {
-    user: {
-      passwordHash: true,
-    }
-  }
+ 
 });
 
 if (process.env.NODE_ENV !== 'production') {

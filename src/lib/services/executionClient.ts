@@ -15,3 +15,19 @@ async function getAllProcessExecutions(query?: { pending?: boolean}): Promise<Pr
 export default {
   getAllProcessExecutions,
 }
+ export const postAction = async (stepExecutionId: number, action: string, body?: object) => {
+        const response = await fetch(`/api/steps/${stepExecutionId}/actions`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ action, ...body }),
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to execute action: ${response.statusText}`);
+        }
+
+        return response.json();
+    };
+

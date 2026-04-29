@@ -5,7 +5,7 @@ import Button from "@/components/Button";
 import HeaderXuchil from "@/components/HeaderXuchil";
 import Modal from "@/components/Modal";
 import styles from "./User.module.css";
-
+import * as authService from "@/lib/services/authClient";
 import Excel from "scripts/excel";
 
 const UserProfile = () => {
@@ -20,12 +20,14 @@ const UserProfile = () => {
     async function loadProfile() {
       try {
         const response = await fetch("/api/users/me", { credentials: "include" });
+
+
         if (!response.ok) {
           router.push("/login");
           return;
         }
   
-        const authUser = await response.json();
+        const user = await response.json();
         if (!mounted) return;
 
         let position = "Operador";

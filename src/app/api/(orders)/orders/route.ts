@@ -6,9 +6,14 @@ import { withAuthWorker } from "@/utils/handlers";
 
 export async function GET(req: NextRequest) {
   try {
+
     const items = await prisma.order.findMany({
       include: {
-        orderItems: true,
+        orderItems: {
+          include: {
+            product: true
+          }
+        }
       }
     });
     return fetchSuccess(items);

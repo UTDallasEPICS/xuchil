@@ -291,23 +291,8 @@ export const InventoryItemReadSchema = z.object({
 export type InventoryItemCreate = z.infer<typeof InventoryItemCreateSchema>;
 export type InventoryItemRead = z.infer<typeof InventoryItemReadSchema>;
 
-export const InventoryLotCreateSchema = z.strictObject({
-  inventoryItemId: z.number().int(),
-  lotCode: z.string().optional(),
-  quantity: z.number(),
-  receivedAt: DateTimeString,
-  expiryAt: DateTimeString.optional(),
-});
-export const InventoryLotReadSchema = z.object({
-  id: z.number().int(),
-  inventoryItemId: z.number().int(),
-  lotCode: z.string().nullable().optional(),
-  quantity: z.number(),
-  receivedAt: DateTimeString,
-  expiryAt: DateTimeString.nullable().optional(),
-});
-export type InventoryLotCreate = z.infer<typeof InventoryLotCreateSchema>;
-export type InventoryLotRead = z.infer<typeof InventoryLotReadSchema>;
+
+
 
 // InventoryMovement
 export const InventoryMovementCreateSchema = z.strictObject({
