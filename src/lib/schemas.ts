@@ -8,8 +8,9 @@ import {
   MovementReason,
 } from "@prisma/client";
 
-const DateTimeString = z.iso.datetime({offset:true});
-const LocalDateString = z.iso.datetime({offset:true}).transform((val) => {
+const InputDateTimeString = z.iso.datetime({offset:true}).transform((val) => new Date(val));
+const OutputDateTimeString = z.iso.datetime();
+const LocalDateString = z.iso.datetime().transform((val) => {
   const d = new Date(val);
   if (Number.isNaN(d.getTime())) return "";
   const dd = String(d.getDate()).padStart(2, "0");
@@ -39,9 +40,7 @@ export const ProductCategoryReadSchema = z.object({
   name: z.string(),
   imgUrl: z.url().nullable().optional(),
 });
-export type ProductCategoryCreate = z.infer<
-  typeof ProductCategoryCreateSchema
->;
+export type ProductCategoryCreate = z.infer<typeof ProductCategoryCreateSchema>;
 export type ProductCategoryRead = z.infer<typeof ProductCategoryReadSchema>;
 
 // Product
@@ -108,20 +107,18 @@ export type UserCreate = z.infer<typeof UserCreateSchema>;
 export type UserRestrictedUpdate = z.infer<typeof UserRestrictedUpdateSchema>;
 export type UserRead = z.infer<typeof UserReadSchema>;
 
-// ProcessTemplate
-export const ProcessTemplateCreateSchema = z.strictObject({
-  productId: z.number().int(),
-  name: z.string(),
+// ProcessTemplateStepMaterial
+export const ProcessTemplateStepMaterialCreateSchema = z.strictObject({
+  stepId: z.number().int(),
+  rawMaterialId: z.number().int(),
 });
-export const ProcessTemplateReadSchema = z.object({
+export const ProcessTemplateStepMaterialReadSchema = z.object({
   id: z.number().int(),
-  productId: z.number().int(),
-  name: z.string(),
+  stepId: z.number().int(),
+  rawMaterialId: z.number().int(),
 });
-export type ProcessTemplateCreate = z.infer<
-  typeof ProcessTemplateCreateSchema
->;
-export type ProcessTemplateRead = z.infer<typeof ProcessTemplateReadSchema>;
+export type ProcessTemplateStepMaterialCreate = z.infer<typeof ProcessTemplateStepMaterialCreateSchema>;
+export type ProcessTemplateStepMaterialRead = z.infer<typeof ProcessTemplateStepMaterialReadSchema>;
 
 // ProcessTemplateStep
 export const ProcessTemplateStepCreateSchema = z.strictObject({
@@ -138,30 +135,64 @@ export const ProcessTemplateStepReadSchema = z.object({
   name: z.string(),
   idealDurationMin: z.number().int().nullable().optional(),
   instructions: z.string().nullable().optional(),
+  processTemplateStepMaterials: ProcessTemplateStepMaterialReadSchema.array(),
 });
-export type ProcessTemplateStepCreate = z.infer<
-  typeof ProcessTemplateStepCreateSchema
->;
-export type ProcessTemplateStepRead = z.infer<
-  typeof ProcessTemplateStepReadSchema
->;
+export type ProcessTemplateStepCreate = z.infer<typeof ProcessTemplateStepCreateSchema>;
+export type ProcessTemplateStepRead = z.infer<typeof ProcessTemplateStepReadSchema>;
 
-// ProcessTemplateStepMaterial
-export const ProcessTemplateStepMaterialCreateSchema = z.strictObject({
-  stepId: z.number().int(),
-  rawMaterialId: z.number().int(),
+// ProcessTemplate
+export const ProcessTemplateCreateSchema = z.strictObject({
+  productId: z.number().int(),
+  name: z.string(),
 });
-export const ProcessTemplateStepMaterialReadSchema = z.object({
+export const ProcessTemplateReadSchema = z.object({
   id: z.number().int(),
-  stepId: z.number().int(),
-  rawMaterialId: z.number().int(),
+  productId: z.number().int(),
+  name: z.string(),
+  processTemplateSteps: ProcessTemplateStepReadSchema.array(),
 });
-export type ProcessTemplateStepMaterialCreate = z.infer<
-  typeof ProcessTemplateStepMaterialCreateSchema
->;
-export type ProcessTemplateStepMaterialRead = z.infer<
-  typeof ProcessTemplateStepMaterialReadSchema
->;
+export type ProcessTemplateCreate = z.infer<typeof ProcessTemplateCreateSchema>;
+export type ProcessTemplateRead = z.infer<typeof ProcessTemplateReadSchema>;
+
+// ProcessPause
+export const ProcessPauseCreateSchema = z.strictObject({
+  processStepExecutionId: z.number().int(),
+  startedAt: InputDateTimeString,
+  endedAt: InputDateTimeString.optional(),
+});
+export const ProcessPauseReadSchema = z.object({
+  id: z.number().int(),
+  processStepExecutionId: z.number().int(),
+  startedAt: OutputDateTimeString,
+  endedAt: OutputDateTimeString.nullable().optional(),
+});
+export type ProcessPauseCreate = z.input<typeof ProcessPauseCreateSchema>;
+export type ProcessPauseRead = z.output<typeof ProcessPauseReadSchema>;
+
+// ProcessStepExecution
+export const ProcessStepExecutionCreateSchema = z.strictObject({
+  processExecutionId: z.number().int(),
+  stepId: z.number().int(),
+  status: z.enum(StepStatus).optional(),
+  startedAt: InputDateTimeString.optional(),
+  finishedAt: InputDateTimeString.optional(),
+  actualDurationMin: z.number().int().optional(),
+  inputQty: z.number().optional(),
+  notes: z.string().optional(),
+});
+export const ProcessStepExecutionReadSchema = z.object({
+  id: z.number().int(),
+  processExecutionId: z.number().int(),
+  stepId: z.number().int(),
+  status: z.enum(StepStatus),
+  startedAt: OutputDateTimeString.nullable().optional(),
+  finishedAt: OutputDateTimeString.nullable().optional(),
+  actualDurationMin: z.number().int().nullable().optional(),
+  inputQty: z.number().nullable().optional(),
+  notes: z.string().nullable().optional(),
+});
+export type ProcessStepExecutionCreate = z.input<typeof ProcessStepExecutionCreateSchema>;
+export type ProcessStepExecutionRead = z.output<typeof ProcessStepExecutionReadSchema>;
 
 // ProcessExecution
 export const ProcessExecutionCreateSchema = z.strictObject({
@@ -169,8 +200,8 @@ export const ProcessExecutionCreateSchema = z.strictObject({
   batchCode: z.string(),
   plannedQuantity: z.number().optional(),
   status: z.enum(ProcessStatus).optional(),
-  startedAt: DateTimeString,
-  finishedAt: DateTimeString.optional(),
+  startedAt: InputDateTimeString,
+  finishedAt: InputDateTimeString.optional(),
   outputQuantity: z.number().optional(),
   scrapQuantity: z.number().optional(),
   notes: z.string().optional(),
@@ -181,60 +212,15 @@ export const ProcessExecutionReadSchema = z.object({
   batchCode: z.string(),
   plannedQuantity: z.number().nullable().optional(),
   status: z.enum(ProcessStatus),
-  startedAt: DateTimeString,
-  finishedAt: DateTimeString.nullable().optional(),
+  startedAt: OutputDateTimeString,
+  finishedAt: OutputDateTimeString.nullable().optional(),
   outputQuantity: z.number().nullable().optional(),
   scrapQuantity: z.number().nullable().optional(),
   notes: z.string().nullable().optional(),
+  processStepExecutions: ProcessStepExecutionReadSchema.array(),
 });
-export type ProcessExecutionCreate = z.infer<
-  typeof ProcessExecutionCreateSchema
->;
-export type ProcessExecutionRead = z.infer<typeof ProcessExecutionReadSchema>;
-
-// ProcessPause
-export const ProcessPauseCreateSchema = z.strictObject({
-  processExecutionId: z.number().int(),
-  startedAt: DateTimeString,
-  endedAt: DateTimeString.optional(),
-});
-export const ProcessPauseReadSchema = z.object({
-  id: z.number().int(),
-  processExecutionId: z.number().int(),
-  startedAt: DateTimeString,
-  endedAt: DateTimeString.nullable().optional(),
-});
-export type ProcessPauseCreate = z.infer<typeof ProcessPauseCreateSchema>;
-export type ProcessPauseRead = z.infer<typeof ProcessPauseReadSchema>;
-
-// ProcessStepExecution
-export const ProcessStepExecutionCreateSchema = z.strictObject({
-  processExecutionId: z.number().int(),
-  stepId: z.number().int(),
-  status: z.enum(StepStatus).optional(),
-  startedAt: DateTimeString.optional(),
-  finishedAt: DateTimeString.optional(),
-  actualDurationMin: z.number().int().optional(),
-  inputQty: z.number().optional(),
-  notes: z.string().optional(),
-});
-export const ProcessStepExecutionReadSchema = z.object({
-  id: z.number().int(),
-  processExecutionId: z.number().int(),
-  stepId: z.number().int(),
-  status: z.enum(StepStatus),
-  startedAt: DateTimeString.nullable().optional(),
-  finishedAt: DateTimeString.nullable().optional(),
-  actualDurationMin: z.number().int().nullable().optional(),
-  inputQty: z.number().nullable().optional(),
-  notes: z.string().nullable().optional(),
-});
-export type ProcessStepExecutionCreate = z.infer<
-  typeof ProcessStepExecutionCreateSchema
->;
-export type ProcessStepExecutionRead = z.infer<
-  typeof ProcessStepExecutionReadSchema
->;
+export type ProcessExecutionCreate = z.input<typeof ProcessExecutionCreateSchema>;
+export type ProcessExecutionRead = z.output<typeof ProcessExecutionReadSchema>;
 
 // ProcessStepMaterialUsage
 export const ProcessStepMaterialUsageCreateSchema = z.strictObject({
@@ -252,12 +238,8 @@ export const ProcessStepMaterialUsageReadSchema = z.object({
   unitId: z.number().int(),
   notes: z.string().nullable().optional(),
 });
-export type ProcessStepMaterialUsageCreate = z.infer<
-  typeof ProcessStepMaterialUsageCreateSchema
->;
-export type ProcessStepMaterialUsageRead = z.infer<
-  typeof ProcessStepMaterialUsageReadSchema
->;
+export type ProcessStepMaterialUsageCreate = z.infer< typeof ProcessStepMaterialUsageCreateSchema >;
+export type ProcessStepMaterialUsageRead = z.infer< typeof ProcessStepMaterialUsageReadSchema >;
 
 // ProcessStepWorker
 export const ProcessStepWorkerCreateSchema = z.strictObject({
@@ -269,30 +251,44 @@ export const ProcessStepWorkerReadSchema = z.object({
   stepExecutionId: z.number().int(),
   workerId: z.number().int(),
 });
-export type ProcessStepWorkerCreate = z.infer<
-  typeof ProcessStepWorkerCreateSchema
->;
-export type ProcessStepWorkerRead = z.infer<
-  typeof ProcessStepWorkerReadSchema
->;
+export type ProcessStepWorkerCreate = z.infer<typeof ProcessStepWorkerCreateSchema>;
+export type ProcessStepWorkerRead = z.infer<typeof ProcessStepWorkerReadSchema>;
+
+// InventoryLot
+export const InventoryLotCreateSchema = z.strictObject({
+  inventoryItemId: z.number().int(),
+  lotCode: z.string().optional(),
+  quantity: z.number(),
+  receivedAt: InputDateTimeString,
+  expiryAt: InputDateTimeString.optional(),
+});
+export const InventoryLotReadSchema = z.object({
+  id: z.number().int(),
+  inventoryItemId: z.number().int(),
+  lotCode: z.string().nullable().optional(),
+  quantity: z.number(),
+  receivedAt: OutputDateTimeString,
+  expiryAt: OutputDateTimeString.nullable().optional(),
+});
+export type InventoryLotCreate = z.input<typeof InventoryLotCreateSchema>;
+export type InventoryLotRead = z.output<typeof InventoryLotReadSchema>;
 
 // InventoryItem
 export const InventoryItemCreateSchema = z.strictObject({
   itemType: z.enum(ItemType),
   rawMaterialId: z.number().int().optional(),
   productId: z.number().int().optional(),
-  quantity: z.number(),
 });
 export const InventoryItemReadSchema = z.object({
   id: z.number().int(),
   itemType: z.enum(ItemType),
   rawMaterialId: z.number().int().nullable().optional(),
   productId: z.number().int().nullable().optional(),
-  quantity: z.number(),
+  rawMaterial: RawMaterialReadSchema.nullish(),
+  product: ProductReadSchema.nullish(),
+  inventoryLots: z.array(InventoryLotReadSchema)
 });
-export type InventoryItemCreate = z.infer<
-  typeof InventoryItemCreateSchema
->;
+export type InventoryItemCreate = z.infer<typeof InventoryItemCreateSchema>;
 export type InventoryItemRead = z.infer<typeof InventoryItemReadSchema>;
 
 export const InventoryLotCreateSchema = z.strictObject({
@@ -322,7 +318,7 @@ export const InventoryMovementCreateSchema = z.strictObject({
   relatedProcessExecutionId: z.number().int().optional(),
   relatedOrderId: z.number().int().optional(),
   note: z.string().optional(),
-  movedAt: DateTimeString,
+  movedAt: InputDateTimeString,
 });
 export const InventoryMovementReadSchema = z.object({
   id: z.number().int(),
@@ -333,14 +329,10 @@ export const InventoryMovementReadSchema = z.object({
   relatedProcessExecutionId: z.number().int().nullable().optional(),
   relatedOrderId: z.number().int().nullable().optional(),
   note: z.string().nullable().optional(),
-  movedAt: DateTimeString,
+  movedAt: OutputDateTimeString,
 });
-export type InventoryMovementCreate = z.infer<
-  typeof InventoryMovementCreateSchema
->;
-export type InventoryMovementRead = z.infer<
-  typeof InventoryMovementReadSchema
->;
+export type InventoryMovementCreate = z.input< typeof InventoryMovementCreateSchema >;
+export type InventoryMovementRead = z.output< typeof InventoryMovementReadSchema >;
 
 // OrderItem
 export const OrderItemCreateSchema = z.strictObject({
@@ -361,10 +353,10 @@ export type OrderItemRead = z.infer<typeof OrderItemReadSchema>;
 export const OrderCreateSchema = z.strictObject({
   clientName: z.string(),
   address: z.string().optional(),
-  deliveryDate: DateTimeString,
+  deliveryDate: InputDateTimeString,
   deliveryVariant: z.enum(DeliveryVariant).optional(),
   status: z.enum(OrderStatus).optional(),
-  deliveredAt: DateTimeString.optional(),
+  deliveredAt: InputDateTimeString.optional(),
   consignmentPartner: z.string().optional(),
   notes: z.string().optional(),
 });
@@ -380,5 +372,5 @@ export const OrderReadSchema = z.object({
   notes: z.string().nullable().optional(),
   orderItems: OrderItemReadSchema.array(),
 });
-export type OrderCreate = z.infer<typeof OrderCreateSchema>;
-export type OrderRead = z.infer<typeof OrderReadSchema>;
+export type OrderCreate = z.input<typeof OrderCreateSchema>;
+export type OrderRead = z.output<typeof OrderReadSchema>;

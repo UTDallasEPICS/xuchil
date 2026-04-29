@@ -4,32 +4,18 @@ import { useRouter } from "next/navigation";
 import Button from "@/components/Button";
 import HeaderXuchil from "@/components/HeaderXuchil";
 import Modal from "@/components/Modal";
+import * as authService from "@/lib/services/authClient";
 
 const Login = () => {
   const router = useRouter();
 
-  const [user, setUser] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showErrorModal, setShowErrorModal] = useState(false);
   
   const handleLogin = async () => {
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: user,
-          password,
-        }),
-      });
-
-      if (!response.ok) {
-        setShowErrorModal(true);
-        return;
-      }
-
+      await authService.login(email, password);
       router.push("/process-control");
     } catch {
       setShowErrorModal(true);
@@ -79,8 +65,8 @@ const Login = () => {
           <input
             type="text"
             placeholder="Usuario"
-            value={user}
-            onChange={(e) => setUser(e.target.value)}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             style={{
               width: "70%",
               padding: "10px",

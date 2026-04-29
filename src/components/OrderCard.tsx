@@ -2,19 +2,16 @@
 import { FC } from "react";
 import { useRouter } from "next/navigation";
 import DeliveryType from "@/components/DeliveryType";
-import { Order } from "@/types/Order";
 import styles from "@/styles/OrderCard.module.css";
+import {OrderRead} from "@/lib/schemas";
 
-type Props = Order;
+type Props = OrderRead;
 
 const OrderCard: FC<Props> = ({
   id,
-  clientName,
   address,
   deliveryDate,
   deliveryVariant,
-  delivered,
-  products,
 }) => {
   const router = useRouter();
   const handleClick = () => router.push(`/orders/deliveries/${id}`);

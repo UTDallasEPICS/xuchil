@@ -6,67 +6,53 @@ import XuchilHeader from "@/components/HeaderXuchil";
 import DynamicTable from "@/components/DynamicTable";
 import { movementColumns } from "@/constants/tableData";
 import styles from "./DetailPage.module.css";
+import inventoryClient from "@/lib/services/inventoryClient";
+import {InventoryMovementRead} from "@/lib/schemas";
 
 type DetailItem = {
   name: string;
-  presentation?: string;
   quantity: number;
   units: string;
-  lots: Array<{ id: number }>;
 };
 
 export default function InventoryDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [item, setItem] = useState<DetailItem | null>(null);
-  const [movimientos, setMovimientos] = useState<Array<{ movimiento: string; fecha: string }>>([]);
+  const [movements, setMovements] = useState<InventoryMovementRead[] | null>(null);
 
   useEffect(() => {
     let mounted = true;
 
     async function load() {
-      const itemResponse = await fetch(`/api/inventory/items/${id}`, { credentials: "include" });
-      if (!itemResponse.ok) return;
-      const data = await itemResponse.json();
+      const item = await inventoryClient.getInventoryItemById(Number(id));
 
-      const qty = (data.inventoryLots || []).reduce(
-        (sum: number, lot: any) => sum + Number(lot.qtyOnHand || 0),
+      const qty = (item.inventoryLots).reduce(
+          (sum: number, lot) => sum + lot.quantity,
         0
       );
 
       const mappedItem: DetailItem = {
-        name: data.itemType === "RAW"
-          ? data.rawMaterial?.name ?? "Materia prima"
-          : data.productVariant?.product?.name ?? "Producto",
-        presentation: data.itemType === "RAW"
-          ? undefined
-          : data.productVariant?.name ?? data.productVariant?.presentation ?? "",
+        name: item.itemType === "RAW"
+          ? item.rawMaterial!.name
+          : item.product!.name,
         quantity: qty,
-        units:
-          data.rawMaterial?.defaultUnit?.name ||
-          data.productVariant?.defaultUnit?.name ||
-          data.inventoryLots?.[0]?.unit?.name ||
-          "",
-        lots: data.inventoryLots || [],
+        units: item.itemType === "RAW"
+          ? item.rawMaterial!.unit.name
+          : item.product!.unit.name,
       };
 
-      const movementRows: Array<{ movimiento: string; fecha: string }> = [];
-      for (const lot of mappedItem.lots) {
-        const movementResponse = await fetch(`/api/inventory/lots/${lot.id}/movements`, { credentials: "include" });
-        if (!movementResponse.ok) continue;
-        const movements = await movementResponse.json();
-        movements.forEach((movement: any) => {
-          movementRows.push({
-            movimiento: `${movement.direction} ${movement.qty} (${movement.reason})`,
-            fecha: movement.movedAt
-              ? new Date(movement.movedAt).toLocaleDateString("es-MX")
-              : "",
-          });
-        });
-      }
+      const movementsByLot = await Promise.all(item.inventoryLots.map(async lot => {
+        const movements = await inventoryClient.getAllInventoryMovements({
+          inventoryLotId: lot.id,
+        })
+        return movements;
+      }));
 
       if (!mounted) return;
       setItem(mappedItem);
-      setMovimientos(movementRows);
+      const flattedMovements = movementsByLot.flat();
+      flattedMovements.sort((a, b) => new Date(b.movedAt).getTime() - new Date(a.movedAt).getTime());
+      setMovements(movementsByLot.flat());
     }
 
     load();
@@ -76,18 +62,39 @@ export default function InventoryDetailPage() {
     };
   }, [id]);
 
+  if (movements === null) return null;
   if (!item) return <p>Producto no encontrado</p>;
+
+  const formatMovedAt = (movedAt: string) => {
+    const date = new Date(movedAt);
+    return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+  }
 
   return (
     <div className={styles.wrapper}>
       <XuchilHeader />
       <h1 className={styles.title}>
-        {item.name} <br />({item.presentation})
+        {item.name}
       </h1>
       <p className={styles.subtitle}>
         En inventario: <strong>{item.quantity} {item.units}</strong>
       </p>
-      <DynamicTable columns={movementColumns} data={movimientos} />
+      <DynamicTable columns={[
+        {key: "direction", label: "Dirección"},
+        {key: "quantity", label: "Cantidad"},
+        {key: "reason", label: "Motivo"},
+        {key: "movedAt", label: "Fecha"},
+        {key: "note", label: "Nota"},
+      ]} data={
+        movements.map(m => ({
+          direction: (m.quantityChange > 0 ? "IN" : "OUT"),
+          quantity: Math.abs(m.quantityChange).toString(),
+          reason: m.reason,
+          movedAt: formatMovedAt(m.movedAt),
+          note: m.note ?? "",
+        }))
+      }
+      />
     </div>
   );
 }

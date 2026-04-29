@@ -7,6 +7,9 @@ import HeaderXuchil from "@/components/HeaderXuchil";
 import Button from "@/components/Button";
 import ActiveTaskItem from "@/components/ActiveTaskItem";
 import styles from "./ProcessControl.module.css";
+import executionClient from "@/lib/services/executionClient";
+import templateClient from "@/lib/services/templateClient";
+import productClient from "@/lib/services/productClient";
 
 interface ActiveTask {
   processRunId: number;
@@ -14,7 +17,7 @@ interface ActiveTask {
   currentStepName: string;
   currentStepNumber: number;
   totalSteps: number;
-  status: "IN_PROGRESS" | "PAUSED";
+  status: "IN_PROGRESS" | "PAUSED" | "PLANNED";
   stepExecutionId: number | null;
   startedAt: string | null;
   openRoute: string;
@@ -27,37 +30,42 @@ const ProcessControl = () => {
 
   const loadActiveTasks = useCallback(async () => {
     try {
-      const res = await fetch("/api/process-runs/pending", { credentials: "include" });
-      if (!res.ok) return;
-      const runs = await res.json();
+      const runs = await executionClient.getAllProcessExecutions({pending:true})
 
-      const mapped: ActiveTask[] = runs.map((run: any) => {
-        const orderedSteps = [...(run.stepExecutions || [])];
+      const mapped: ActiveTask[] = await Promise.all(runs.map(async (r) => {
+        const processTemplate = await templateClient.getProcessTemplateById(r.processId);
+        const product = await productClient.getProductById(processTemplate.productId);
+
         const allStepsDone =
-          orderedSteps.length > 0 &&
-          orderedSteps.every((step: any) => step.status === "DONE");
-        const currentStepIndex = orderedSteps.findIndex(
-          (step: any) => step.status === "IN_PROGRESS" || step.status === "PENDING" || step.status === "BLOCKED"
-        );
-        const safeIndex = currentStepIndex >= 0 ? currentStepIndex : 0;
-        const currentStep = orderedSteps[safeIndex];
+          r.processStepExecutions.length > 0 &&
+          r.processStepExecutions.every((step) => {
+            return step.status === "DONE" || step.status === "SKIPPED";
+          });
+        const currentStepIndex = r.processStepExecutions.findIndex((step) => {
+          const status = step.status;
+          return (status === "IN_PROGRESS" || status === "PENDING");
+        });
+        const stepExecution = r.processStepExecutions[currentStepIndex];
         const openRoute = allStepsDone
-          ? `/process-control/new-production/${run.productVariant?.productId}/${run.productVariantId}/results?runId=${run.id}`
-          : `/process-control/new-production/${run.productVariant?.productId}/${run.productVariantId}/${safeIndex + 1}`;
+          ? `/process-control/new-production/${product.id}/results?runId=${r.id}`
+          : `/process-control/new-production/${product.id}/${currentStepIndex + 1}`;
+
+        const templateStep = await templateClient.getProcessTemplateStepById(stepExecution.stepId);
+        const currentStepName = allStepsDone ? "Captura de resultados" : templateStep.name;
 
         return {
-          processRunId: run.id,
-          productName: run.productVariant?.name || "Producto",
-          currentStepName: allStepsDone ? "Captura de resultados" : currentStep?.templateStep?.name || "Sin paso",
-          currentStepNumber: allStepsDone ? orderedSteps.length : safeIndex + 1,
-          totalSteps: orderedSteps.length || 0,
-          status: run.status === "PAUSED" ? "PAUSED" : "IN_PROGRESS",
-          stepExecutionId: currentStep?.id ?? null,
-          startedAt: currentStep?.startedAt ?? null,
+          processRunId: r.id,
+          productName: product.name,
+          currentStepName,
+          currentStepNumber: allStepsDone ? r.processStepExecutions.length : currentStepIndex + 1,
+          totalSteps: r.processStepExecutions.length || 0,
+          status: r.status as "IN_PROGRESS" | "PAUSED" | "PLANNED",
+          stepExecutionId: stepExecution.id,
+          startedAt: stepExecution.startedAt ?? null,
           openRoute,
           isResultsStage: allStepsDone,
         };
-      });
+      }));
 
       setActiveTasks(mapped);
     } catch (e) {

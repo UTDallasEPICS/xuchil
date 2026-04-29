@@ -1,6 +1,56 @@
-import {deleteHandler, findByIdHandler, updateHandler} from "@/utils/handlers";
-import {UnitCreateSchema} from "@/lib/schemas";
+import { NextRequest } from "next/server";
+import prisma from "@/lib/db";
+import { z } from "zod";
+import { idError, notFoundError, serverError, validationError, updateSuccess, deleteSuccess, fetchSuccess } from "@/utils/responses";
+import { UnitCreateSchema } from "@/lib/schemas";
+import { withAuthAdmin } from "@/utils/handlers";
 
-export const GET = findByIdHandler("unit");
-export const PUT = updateHandler("unit", UnitCreateSchema);
-export const DELETE = deleteHandler("unit");
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await params;
+    const idParsed = parseInt(id);
+    if (Number.isNaN(idParsed)) {
+      return idError("unit");
+    }
+    const item = await prisma.unit.findUnique({ where: { id: idParsed } });
+    if (!item) {
+      return notFoundError("unit");
+    }
+    return fetchSuccess(item);
+  } catch (e) {
+    return serverError("unit", "fetch", e);
+  }
+}
+
+export const PUT = withAuthAdmin(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+  try {
+    const { id } = await params;
+    const idParsed = parseInt(id);
+    if (Number.isNaN(idParsed)) {
+      return idError("unit");
+    }
+    const body = await req.json();
+    const res = UnitCreateSchema.partial().safeParse(body);
+    if (!res.success) {
+      return validationError("unit", "update", res.error);
+    }
+    const updatedItem = await prisma.unit.update({ where: { id: idParsed }, data: res.data });
+    return updateSuccess(updatedItem);
+  } catch (e) {
+    return serverError("unit", "update", e);
+  }
+});
+
+export const DELETE = withAuthAdmin(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+  try {
+    const { id } = await params;
+    const idParsed = parseInt(id);
+    if (Number.isNaN(idParsed)) {
+      return idError("unit");
+    }
+    await prisma.unit.delete({ where: { id: idParsed } });
+    return deleteSuccess();
+  } catch (e) {
+    return serverError("unit", "delete", e);
+  }
+});

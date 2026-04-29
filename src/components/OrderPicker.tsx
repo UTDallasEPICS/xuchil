@@ -6,16 +6,16 @@ import { Trash } from "lucide-react";
 import ProductPicker from "@/components/ProductPicker";
 import QuantityPicker from "@/components/QuantityPicker";
 import DeleteModal from "@/components/DeleteModal";
-import { Product } from "@/types/Product";
+import {ProductRead} from "@/lib/schemas";
 
 export interface OrderPickerValue {
-  productId: string;
+  productId: number;
   quantity: number;
 }
 
 interface OrderPickerProps {
   index: number;
-  products: Product[];
+  products: ProductRead[];
   onDelete: () => void;
   value?: OrderPickerValue;
   onChange?: (value: OrderPickerValue) => void;

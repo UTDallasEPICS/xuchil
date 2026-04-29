@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 import { JWTPayload, SignJWT, jwtVerify } from 'jose';
 
 export default interface SessionPayload {
-  userId: number | null
+  userId: number
   isAdmin: boolean
   isGuest: boolean
 }
@@ -30,7 +30,7 @@ export async function decrypt(session: string | undefined = '') {
       algorithms: ['HS256'],
     });
     return payload as unknown as SessionPayload;
-  } catch (error) {
+  } catch {
     console.log('Failed to verify session');
     return null;
   }

@@ -1,20 +1,22 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import HeaderXuchil from "@/components/HeaderXuchil";
 import Button from "@/components/Button";
 import Modal from "@/components/Modal";
+import userService from "@/lib/services/userClient";
+import { uploadFile } from "@/lib/services/uploadClient";
 
 const EditProfile = () => {
   const router = useRouter();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [userData, setUserData] = useState<any>(null);
   const [name, setName] = useState("");
-  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [avatar, setAvatar] = useState("");
+  // keep raw file and preview URL
+  const [avatar, setAvatar] = useState<File | null>(null);
+  const [photoUrl, setPhotoUrl] = useState("");
   const [avatarPreview, setAvatarPreview] = useState("");
+  const [avatarKey, setAvatarKey] = useState<number>(0);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   useEffect(() => {
@@ -22,33 +24,19 @@ const EditProfile = () => {
 
     async function loadProfile() {
       try {
-        const response = await fetch("/api/users/me", { credentials: "include" });
-        if (!response.ok) {
+        const user = await userService.getCurrentUser();
+        if (!user) {
           router.push("/login");
           return;
         }
 
-        const authUser = await response.json();
         if (!mounted) return;
 
-        const fullName = authUser.worker?.fullName ?? "";
-        const nameParts = fullName.split(" ");
-
-        const mapped = {
-          name: fullName,
-          email: authUser.email ?? "",
-          phone: authUser.worker?.phone ?? "",
-          avatar: authUser.worker?.profilePhotoUrl ?? "",
-          position: authUser.worker?.role?.name ?? "",
-          hours: "",
-        };
-
-        setUserData(mapped);
-        setName(nameParts[0] || "");
-        setLastName(nameParts.slice(1).join(" ") || "");
-        setEmail(mapped.email);
-        setPhone(mapped.phone);
-        setAvatarPreview(mapped.avatar || "/user-placeholder.svg");
+        setName(user.name);
+        setEmail(user.email ?? "");
+        setPhone(user.phone ?? "");
+        setPhotoUrl(user.imgUrl ?? "");
+        setAvatarPreview(user.imgUrl ?? "");
       } catch {
         router.push("/login");
       }
@@ -59,54 +47,36 @@ const EditProfile = () => {
     return () => {
       mounted = false;
     };
-  }, []);
-
-  const handleImageUploadClick = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  };
+  }, [router]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (!file.type.match('image.*')) {
-        alert('Por favor selecciona una imagen (JPEG, PNG, etc.)');
-        return;
-      }
-
       if (file.size > 2 * 1024 * 1024) {
         alert('La imagen es demasiado grande (máximo 2MB)');
         return;
       }
 
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        setAvatarPreview(result);
-        setAvatar(result);
-      };
-      reader.readAsDataURL(file);
+      setAvatar(file);
+      setAvatarPreview(URL.createObjectURL(file));
     }
   };
 
+  const handleImageClear = () => {
+    setAvatar(null);
+    setAvatarPreview(photoUrl);
+    setAvatarKey(avatarKey => avatarKey + 1);
+  }
+
   const handleSave = async () => {
     try {
-      const response = await fetch("/api/users/me", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          fullName: `${name} ${lastName}`.trim(),
-          phone,
-          profilePhotoUrl: avatar || avatarPreview,
-        }),
+      const imgUrl = avatar ? (await uploadFile(avatar)).path : undefined;
+      await userService.updateCurrentUser({
+        name: name.trim(),
+        email,
+        phone,
+        imgUrl,
       });
-
-      if (!response.ok) {
-        return;
-      }
 
       setShowSuccessModal(true);
     } catch {
@@ -145,7 +115,7 @@ const EditProfile = () => {
           boxSizing: "border-box",
         }}
       >
-        <img
+        {avatarPreview && <img
           src={avatarPreview}
           alt="Foto de perfil"
           style={{
@@ -157,13 +127,13 @@ const EditProfile = () => {
             textAlign: "center",
             objectFit: "cover",
           }}
-        />
+        />}
 
         <input
           type="file"
           id="avatar-upload"
-          ref={fileInputRef}
           accept="image/*"
+          key={avatarKey}
           onChange={handleImageChange}
           style={{ display: "none" }}
         />
@@ -171,10 +141,10 @@ const EditProfile = () => {
         <Button
           size="small"
           action="secondary"
-          onClick={handleImageUploadClick}
+          onClick={handleImageClear}
           style={{ marginBottom: "20px" }}
         >
-          Subir Foto
+          Borrar Foto
         </Button>
 
         <div
@@ -186,26 +156,11 @@ const EditProfile = () => {
             boxSizing: "border-box",
           }}
         >
-          <label>Nombre:</label>
+          <label>Nombre y Apellidos:</label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "10px",
-              borderRadius: "10px",
-              border: "1px solid #333",
-              marginBottom: "12px",
-              boxSizing: "border-box",
-            }}
-          />
-
-          <label>Apellido:</label>
-          <input
-            type="text"
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
             style={{
               width: "100%",
               padding: "10px",

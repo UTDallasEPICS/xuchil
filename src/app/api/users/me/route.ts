@@ -13,7 +13,6 @@ export async function GET() {
       where: {
         id: payload.userId,
       },
-      omit: {passwordHash: true}
     })
     return NextResponse.json(user);
   } catch (error) {
@@ -37,9 +36,6 @@ export const PUT = async (req: NextRequest) => {
         phone: res.data.phone,
         imgUrl: res.data.imgUrl,
         passwordHash: res.data.password && (await bcrypt.hash(res.data.password, 10)),
-      },
-      omit: {
-        passwordHash: true,
       },
     });
     return updateSuccess(updatedItem);

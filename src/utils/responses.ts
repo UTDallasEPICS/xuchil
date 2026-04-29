@@ -32,3 +32,7 @@ export function notFoundError(name: string): NextResponse {
 export function serverError(name: string, verb: string, error: unknown) {
   return NextResponse.json({error: `Failed to ${verb} ${name}`, details: error}, {status: 500});
 }
+
+export function forbiddenError(): NextResponse {
+  return new NextResponse(null, {status:403})
+}

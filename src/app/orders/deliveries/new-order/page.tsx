@@ -8,34 +8,25 @@ import DeliveryType from "@/components/DeliveryType";
 import TextField from "@/components/TextField";
 import DatePicker from "@/components/DatePicker";
 import OrderedProducts from "@/components/OrderedProducts";
-import { Product } from "@/types/Product";
 import { deliveryVariants } from "@/constants/deliveryConfig";
 import styles from "./NewOrder.module.css";
+import productClient from "@/lib/services/productClient";
+import orderClient from "@/lib/services/orderClient";
+import {ProductRead} from "@/lib/schemas";
 
 type OrderItemDraft = {
-  productId: string;
+  productId: number;
   quantity: number;
 };
 
-function mapDeliveryVariantToApi(variant: keyof typeof deliveryVariants) {
-  switch (variant) {
-    case "personal":
-      return "PERSONAL" as const;
-    case "consignment":
-      return "CONSIGNMENT" as const;
-    default:
-      return "MAIL" as const;
-  }
-}
-
 const NewOrderPage = () => {
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<ProductRead[]>([]);
   const [clientName, setClientName] = useState("");
   const [deliveryDate, setDeliveryDate] = useState<Date | null>(null);
   const [address, setAddress] = useState("");
   const [deliveryVariant, setDeliveryVariant] = useState<
     keyof typeof deliveryVariants
-  >("mail");
+  >("MAIL");
   const [orderItems, setOrderItems] = useState<OrderItemDraft[]>([]);
 
   const router = useRouter();
@@ -44,23 +35,15 @@ const NewOrderPage = () => {
     let mounted = true;
 
     async function loadProducts() {
-      const response = await fetch("/api/product-variants", { credentials: "include" });
-      if (!response.ok) return;
-      const data = await response.json();
-      if (!mounted) return;
+      try {
+        const data = await productClient.getAllProducts();
+        if (!Array.isArray(data)) return;
+        if (!mounted) return;
 
-      setProducts(
-        data.map((variant: any) => ({
-          id: String(variant.id),
-          name: variant.product?.name ?? "Producto",
-          presentation: variant.name ?? variant.presentation ?? "",
-          image: variant.imageUrl ?? "/globe.svg",
-          quantity: 0,
-          units: variant.defaultUnit?.name ?? "",
-          categoryId: String(variant.product?.categoryId ?? ""),
-          variantId: String(variant.id),
-        }))
-      );
+        setProducts(data);
+      } catch (error) {
+        console.error("Failed to load product variants:", error);
+      }
     }
 
     loadProducts();
@@ -88,45 +71,30 @@ const NewOrderPage = () => {
 
     const validItems = orderItems
       .map((item) => ({
-        productVariantId: parseInt(item.productId, 10),
+        productId: item.productId,
         quantity: item.quantity,
       }))
-      .filter((item) => !Number.isNaN(item.productVariantId) && item.quantity > 0);
+      .filter((item) => !Number.isNaN(item.productId) && item.quantity > 0);
     if (validItems.length === 0) {
       alert("Agrega al menos un producto al pedido.");
       return;
     }
 
-    const payload = {
-      clientName: clientName.trim(),
-      addressText: address.trim(),
-      deliveryDate: deliveryDate.toISOString(),
-      deliveryVariant: mapDeliveryVariantToApi(deliveryVariant),
-      orderItems: validItems.map((item) => ({
-        productVariantId: item.productVariantId,
-        quantity: item.quantity,
-        unitId: null,
-        notes: null,
-      })),
-      status: "SCHEDULED" as const,
-      deliveredAt: null,
-      consignmentPartner: null,
-      notes: null,
-    };
-
     try {
-      const response = await fetch("/api/orders", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+      const order = await orderClient.createOrder({
+        clientName: clientName.trim(),
+        address: address.trim(),
+        deliveryDate: deliveryDate.toISOString(),
+        deliveryVariant: deliveryVariant,
+        status: "SCHEDULED" as const,
       });
-
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(err.error || "No se pudo crear el pedido.");
-      }
-
+      await Promise.all(validItems.map(async (item) => {
+        await orderClient.createOrderItem({
+          orderId: order.id,
+          productId: item.productId,
+          quantity: item.quantity,
+        });
+      }));
       router.replace("/orders/deliveries");
     } catch (error) {
       alert(error instanceof Error ? error.message : "Error al crear el pedido.");
@@ -173,7 +141,7 @@ const NewOrderPage = () => {
 
       <h3>Productos:</h3>
       {products.length > 0 ? (
-        <OrderedProducts products={products} onChange={setOrderItems} />
+        <OrderedProducts products={products} onChange={(draft) => setOrderItems(draft)} />
       ) : (
         <p>Cargando productos...</p>
       )}

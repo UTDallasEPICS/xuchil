@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import DynamicTable from "@/components/DynamicTable";
 import FilterButton from "@/components/FilterButton";
 import {
@@ -8,7 +8,8 @@ import {
   productFilterOptions,
   userFilterOptions,
 } from "@/constants/filterOptions";
-import { fetchMyTasks, fetchProcessRuns } from "@/app/oldapi/logbook";
+import * as logbookService from "@/lib/services/logbookService";
+import userService from "@/lib/services/userClient";
 import styles from "./LogbookPage.module.css";
 import Dashboard from "./dashboard/page";
 
@@ -21,12 +22,12 @@ const Logbook = () => {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [rowsWorker, setRowsWorker] = useState<any[]>([]);
-  const [rowsAdmin, setRowsAdmin] = useState<any[]>([]);
+  type TableRow = Record<string, string | { text: string; idProceso: string }>;
+  const [rowsWorker, setRowsWorker] = useState<TableRow[]>([]);
+  const [rowsAdmin, setRowsAdmin] = useState<TableRow[]>([]);
 
   function monthLabelToRange(label: string) {
     if (!label || label.toLowerCase() === "cualquiera") return {};
-    const locale = "es-MX";
     const date = new Date();
     const monthIndex = new Date(Date.parse(`${label} 1, ${date.getFullYear()}`)).getMonth();
     const from = new Date(date.getFullYear(), monthIndex, 1);
@@ -40,11 +41,9 @@ const Logbook = () => {
 
     async function loadSession() {
       try {
-        const response = await fetch("/api/users/me", { credentials: "include" });
-        if (!response.ok) return;
-        const data = await response.json();
+        const data = await userService.getCurrentUser();
         if (!mounted) return;
-        setIsAdminMode(!!data.isAdmin);
+        setIsAdminMode(Boolean(data.isAdmin));
         setCurrentUser(data.worker?.fullName ?? data.email ?? "");
       } catch {
         return;
@@ -65,52 +64,60 @@ const Logbook = () => {
       try {
         const { dateFrom, dateTo } = monthLabelToRange(selectedMonth.label);
         if (!isAdminMode) {
-          const data = await fetchMyTasks({ dateFrom, dateTo });
-          // Client-side filter by product label; my-tasks endpoint also accepts productVariantId
-          const filtered = data.filter((t: any) => {
-            const productName = t.processRun?.productVariant?.name || "";
-            const matchProducto = selectedProduct.label === "Todos" ||
-              productName.toLowerCase().includes(selectedProduct.label.toLowerCase());
-            return matchProducto;
+          const data = await logbookService.fetchMyTasks({ dateFrom, dateTo });
+          const items = Array.isArray(data) ? data as unknown[] : [];
+          const filtered = items.filter((t: unknown) => {
+            const tRec = t as Record<string, unknown>;
+            const processRun = tRec.processRun as Record<string, unknown> | undefined;
+            const productVariant = processRun?.productVariant as Record<string, unknown> | undefined;
+            const productName = productVariant && typeof productVariant.name === "string" ? productVariant.name : "";
+            return selectedProduct.label === "Todos" || productName.toLowerCase().includes(selectedProduct.label.toLowerCase());
           });
-          setRowsWorker(filtered.map((t: any) => ({
-            tarea: t.templateStep?.name ?? "Tarea",
-            fecha: t.startedAt ? new Date(t.startedAt).toLocaleDateString("es-MX") : "",
-            usuario: currentUser,
-            // IMPORTANT: we keep "idProceso" for compatibility with DynamicTable,
-            // but pass the StepExecutionId; the detail page discrimina por modo.
-            detalles: { text: "Ver", idProceso: t.id },
-          })));
+          setRowsWorker(filtered.map((t: unknown) => {
+            const tRec = t as Record<string, unknown>;
+            const templateStep = tRec.templateStep as Record<string, unknown> | undefined;
+            return ({
+              tarea: templateStep && typeof templateStep.name === "string" ? templateStep.name : "Tarea",
+              fecha: typeof tRec.startedAt === "string" ? new Date(tRec.startedAt).toLocaleDateString("es-MX") : "",
+              usuario: currentUser,
+              detalles: { text: "Ver", idProceso: String(typeof tRec.id === "number" ? tRec.id : (tRec.id ?? "")) },
+            });
+          }));
         } else {
-          const params: any = { dateFrom, dateTo };
-          // If your user filter has value=id, pass workerId to backend (it supports it)
-          if ((selectedUser as any)?.value) params.workerId = (selectedUser as any).value;
-          const data = await fetchProcessRuns(params);
-          // Client-side filter by product name as safeguard
-          const filtered = data.filter((r: any) => {
-            const productName = r.productVariant?.name || "";
-            return selectedProduct.label === "Todos" ||
-              productName.toLowerCase().includes(selectedProduct.label.toLowerCase());
+          const params: Record<string, string | number | undefined> = { dateFrom: dateFrom as string | undefined, dateTo: dateTo as string | undefined };
+          const selUserVal = ((selectedUser as unknown) as Record<string, unknown>)?.value as string | number | undefined;
+          if (selUserVal !== undefined) params.workerId = selUserVal;
+          const data = await logbookService.fetchProcessRuns(params);
+          const items = Array.isArray(data) ? data as unknown[] : [];
+          const filtered = items.filter((r: unknown) => {
+            const rRec = r as Record<string, unknown>;
+            const productVariant = rRec.productVariant as Record<string, unknown> | undefined;
+            const productName = productVariant && typeof productVariant.name === "string" ? productVariant.name : "";
+            return selectedProduct.label === "Todos" || productName.toLowerCase().includes(selectedProduct.label.toLowerCase());
           });
-          setRowsAdmin(filtered.map((r: any) => ({
-            producto: r.productVariant?.name ?? "—",
-            lote: r.batchCode ?? "—",
-            fechas: [r.startedAt, r.finishedAt]
-              .filter(Boolean)
-              .map((d: string) => new Date(d).toLocaleDateString("es-MX"))
-              .join(" - "),
-            detalles: { text: "Ver", idProceso: r.id }, // processRunId
-          })));
+          setRowsAdmin(filtered.map((r: unknown) => {
+            const rRec = r as Record<string, unknown>;
+            const productVariant = rRec.productVariant as Record<string, unknown> | undefined;
+            const started = typeof rRec.startedAt === "string" ? new Date(rRec.startedAt).toLocaleDateString("es-MX") : "";
+            const finished = typeof rRec.finishedAt === "string" ? new Date(rRec.finishedAt).toLocaleDateString("es-MX") : "";
+            return ({
+              producto: productVariant && typeof productVariant.name === "string" ? productVariant.name : "—",
+              lote: typeof rRec.batchCode === "string" ? rRec.batchCode : "—",
+              fechas: [started, finished].filter(Boolean).join(" - "),
+              detalles: { text: "Ver", idProceso: String(typeof rRec.id === "number" ? rRec.id : (rRec.id ?? "")) },
+            });
+          }));
         }
-      } catch (e: any) {
-        setError(e?.message ?? "Error al cargar datos");
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedProduct, selectedUser, selectedMonth]);
+      } catch (e) {
+        const errMsg = e instanceof Error ? e.message : String(e);
+        setError(errMsg || "Error al cargar datos");
+       } finally {
+         setLoading(false);
+       }
+     }
+     load();
+     // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, [selectedProduct, selectedUser, selectedMonth]);
 
   const userColumns = [
     { key: "tarea",    label: "Tarea" },
@@ -167,7 +174,7 @@ const Logbook = () => {
       <div className={styles.tableWrapper}>
         <DynamicTable
           columns={isAdminMode ? adminColumns : userColumns}
-          data={isAdminMode ? rowsAdmin : rowsWorker}
+          data={isAdminMode ? (rowsAdmin as any) : (rowsWorker as any)}
           isAdminMode={isAdminMode}
         />
       </div>

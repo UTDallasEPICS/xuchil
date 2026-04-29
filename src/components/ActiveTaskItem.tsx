@@ -4,13 +4,14 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FaPlay, FaPause, FaExternalLinkAlt } from "react-icons/fa";
 import styles from "../styles/ActiveTaskItem.module.css";
+import * as stepExecutionService from "@/lib/services/executionClient";
 
 interface ActiveTaskItemProps {
     productName: string;
     currentStepName: string;
     currentStepNumber: number;
     totalSteps: number;
-    status: "IN_PROGRESS" | "PAUSED";
+    status: "IN_PROGRESS" | "PAUSED" | "PLANNED";
     stepExecutionId: number | null;
     startedAt?: string | null;
     openRoute: string;
@@ -58,13 +59,7 @@ const ActiveTaskItem: React.FC<ActiveTaskItemProps> = ({
         if (!stepExecutionId || isLoading) return;
         setIsLoading(true);
         try {
-            const opts: RequestInit = {
-                method: "POST",
-                credentials: "include",
-                headers: { "Content-Type": "application/json" },
-            };
-            if (body) opts.body = JSON.stringify(body);
-            await fetch(`/api/step-executions/${stepExecutionId}/${action}`, opts);
+            await stepExecutionService.postAction(stepExecutionId, action, body);
             onActionComplete?.();
         } catch (e) {
             console.error(`Action ${action} error:`, e);
@@ -118,7 +113,7 @@ const ActiveTaskItem: React.FC<ActiveTaskItemProps> = ({
             </div>
 
             <div className={styles.actions}>
-                {status === "IN_PROGRESS" ? (
+                {(status === "IN_PROGRESS" || status === "PLANNED")? (
                     <button
                         className={`${styles.actionBtn} ${styles.pauseBtn}`}
                         onClick={handlePause}

@@ -4,10 +4,10 @@ import React, { useEffect, useMemo, useState } from "react";
 import styles from "@/styles/OrderedProducts.module.css";
 import { Plus } from "lucide-react";
 import OrderPicker, { OrderPickerValue } from "@/components/OrderPicker";
-import { Product } from "@/types/Product";
+import {ProductRead} from "@/lib/schemas";
 
 interface OrderedProductsProps {
-  products: Product[];
+  products: ProductRead[];
   value?: OrderPickerValue[];
   onChange?: (items: OrderPickerValue[]) => void;
 }

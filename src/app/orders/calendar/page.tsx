@@ -5,17 +5,17 @@ import { ChevronLeft, ChevronRight, X as CloseIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import DeliveryType from "@/components/DeliveryType";
 import BottomButton from "@/components/BottomButton";
-import { fetchOrdersClient } from "@/lib/ordersClient";
-import { Order } from "@/types/Order";
 import OrderCard from "@/components/OrderCard";
 import { keyFromLocalDate, parseMXDateLocal } from "@/utils/date";
 
 import styles from "./Calendar.module.css";
+import {OrderRead} from "@/lib/schemas";
+import orderClient from "@/lib/services/orderClient";
 
 type DayCell = {
   date: Date;
   isCurrentMonth: boolean;
-  orders: Order[];
+  orders: OrderRead[];
 };
 
 function getMonthKey(date: Date) {
@@ -24,7 +24,7 @@ function getMonthKey(date: Date) {
 
 function buildCalendarMatrix(
   baseDate: Date,
-  ordersByDate: Map<string, Order[]>
+  ordersByDate: Map<string, OrderRead[]>
 ): DayCell[][] {
   const first = new Date(baseDate.getFullYear(), baseDate.getMonth(), 1);
   const last = new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 0);
@@ -71,8 +71,8 @@ function buildCalendarMatrix(
   return matrix;
 }
 
-type VariantCount = Record<Order["deliveryVariant"], number>;
-function groupByVariant(orders: Order[]): VariantCount {
+type VariantCount = Record<OrderRead["deliveryVariant"], number>;
+function groupByVariant(orders: OrderRead[]): VariantCount {
   return orders.reduce<VariantCount>((acc, o) => {
     acc[o.deliveryVariant] = (acc[o.deliveryVariant] ?? 0) + 1;
     return acc;
@@ -82,10 +82,10 @@ function groupByVariant(orders: Order[]): VariantCount {
 const Calendar = () => {
   const router = useRouter();
   const [viewDate, setViewDate] = useState<Date>(new Date());
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<OrderRead[]>([]);
   const [loading, setLoading] = useState(true);
-  const ordersCache = useRef<Map<string, Order[]>>(new Map());
-  const [selectedOrders, setSelectedOrders] = useState<Order[] | null>(null);
+  const ordersCache = useRef<Map<string, OrderRead[]>>(new Map());
+  const [selectedOrders, setSelectedOrders] = useState<OrderRead[] | null>(null);
   const [selectedDate,   setSelectedDate]   = useState<Date | null>(null);
   const hasOrders = !!(selectedOrders && selectedOrders.length);
 
@@ -97,7 +97,7 @@ const Calendar = () => {
   useEffect(() => {
     let mounted = true;
     setLoading(true);
-    fetchOrdersClient()
+    orderClient.getAllOrders()
       .then((data) => mounted && setOrders(data))
       .catch((err) => console.error("Failed to load orders", err))
       .finally(() => mounted && setLoading(false));
@@ -122,7 +122,7 @@ const Calendar = () => {
   }, [viewDate, orders]);
 
   const ordersByDate = useMemo(() => {
-    const map = new Map<string, Order[]>();
+    const map = new Map<string, OrderRead[]>();
     monthOrders.forEach((o) => {
       const d = parseMXDateLocal(o.deliveryDate);
       const k = keyFromLocalDate(d);
@@ -239,7 +239,7 @@ const Calendar = () => {
                                   >
                                     <DeliveryType
                                       type="icon"
-                                      variant={variant as Order["deliveryVariant"]}
+                                      variant={variant as OrderRead["deliveryVariant"]}
                                       quantity={qty}
                                       size="sm"
                                       onClick={() => {

@@ -1,340 +1,366 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import HeaderXuchil from "@/components/HeaderXuchil";
 import Button from "@/components/Button";
 import styles from "./Templates.module.css";
-
-interface TemplateStep {
-    id: number;
-    position: number;
-    name: string;
-    idealDurationMin: number | null;
-    requiresInput: boolean;
-    instructions: string | null;
-}
-
-interface Template {
-    id: number;
-    productVariantId: number;
-    version: number;
-    name: string;
-    isActive: boolean;
-    notes: string | null;
-    templateSteps: TemplateStep[];
-    productVariant?: { name: string; product?: { name: string } };
-}
-
-interface Variant {
-    id: number;
-    name: string;
-    product: { name: string };
-}
+import templateClient from "@/lib/services/templateClient";
+import productClient from "@/lib/services/productClient";
+import {
+  ProcessTemplateRead,
+  ProcessTemplateStepMaterialRead,
+  ProcessTemplateStepRead,
+  ProductRead,
+  RawMaterialRead,
+} from "@/lib/schemas";
 
 const TemplatesPage = () => {
-    const router = useRouter();
-    const [templates, setTemplates] = useState<Template[]>([]);
-    const [variants, setVariants] = useState<Variant[]>([]);
-    const [expandedId, setExpandedId] = useState<number | null>(null);
-    const [editingStepId, setEditingStepId] = useState<number | null>(null);
-    const [showNewTemplate, setShowNewTemplate] = useState(false);
-    const [showNewStep, setShowNewStep] = useState<number | null>(null);
+  const router = useRouter();
+  const [templates, setTemplates] = useState<ProcessTemplateRead[]>([]);
+  const [products, setProducts] = useState<ProductRead[]>([]);
+  const [rawMaterials, setRawMaterials] = useState<RawMaterialRead[]>([]);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [showNewTemplate, setShowNewTemplate] = useState(false);
+  const [editingTemplateId, setEditingTemplateId] = useState<number | null>(null);
+  const [editingStepId, setEditingStepId] = useState<number | null>(null);
+  const [editingMaterialId, setEditingMaterialId] = useState<number | null>(null);
+  const [showNewStepForTemplateId, setShowNewStepForTemplateId] = useState<number | null>(null);
+  const [showNewMaterialForStepId, setShowNewMaterialForStepId] = useState<number | null>(null);
 
-    // New template form
-    const [newTplVariantId, setNewTplVariantId] = useState("");
-    const [newTplName, setNewTplName] = useState("");
+  const [newTplProductId, setNewTplProductId] = useState("");
+  const [newTplName, setNewTplName] = useState("");
 
-    // New step form
-    const [newStepName, setNewStepName] = useState("");
-    const [newStepDuration, setNewStepDuration] = useState("");
-    const [newStepInstructions, setNewStepInstructions] = useState("");
-    const [newStepRequiresInput, setNewStepRequiresInput] = useState(false);
+  const [editTplProductId, setEditTplProductId] = useState("");
+  const [editTplName, setEditTplName] = useState("");
 
-    // Edit step form
-    const [editStepName, setEditStepName] = useState("");
-    const [editStepDuration, setEditStepDuration] = useState("");
-    const [editStepInstructions, setEditStepInstructions] = useState("");
-    const [editStepRequiresInput, setEditStepRequiresInput] = useState(false);
+  const [newStepPosition, setNewStepPosition] = useState("");
+  const [newStepName, setNewStepName] = useState("");
+  const [newStepDuration, setNewStepDuration] = useState("");
+  const [newStepInstructions, setNewStepInstructions] = useState("");
 
-    const loadTemplates = useCallback(async () => {
-        const res = await fetch("/api/process-templates", { credentials: "include" });
-        if (!res.ok) return;
-        const data = await res.json();
+  const [editStepPosition, setEditStepPosition] = useState("");
+  const [editStepName, setEditStepName] = useState("");
+  const [editStepDuration, setEditStepDuration] = useState("");
+  const [editStepInstructions, setEditStepInstructions] = useState("");
 
-        // Load detail for each template to get steps
-        const detailed: Template[] = await Promise.all(
-            data.map(async (tpl: any) => {
-                const detailRes = await fetch(`/api/process-templates/${tpl.id}`, { credentials: "include" });
-                if (detailRes.ok) {
-                    return await detailRes.json();
-                }
-                return { ...tpl, templateSteps: [] };
-            })
-        );
+  const [newMaterialRawMaterialId, setNewMaterialRawMaterialId] = useState("");
+  const [editMaterialRawMaterialId, setEditMaterialRawMaterialId] = useState("");
 
-        setTemplates(detailed);
-    }, []);
+  const loadTemplates = useCallback(async () => {
+    const data = await templateClient.getAllProcessTemplates();
+    setTemplates(data);
+  }, []);
 
-    const loadVariants = useCallback(async () => {
-        const res = await fetch("/api/product-variants", { credentials: "include" });
-        if (res.ok) {
-            const data = await res.json();
-            setVariants(data);
-        }
-    }, []);
+  const loadProducts = useCallback(async () => {
+    setProducts(await productClient.getAllProducts());
+  }, []);
 
-    useEffect(() => {
-        loadTemplates();
-        loadVariants();
-    }, [loadTemplates, loadVariants]);
+  const loadRawMaterials = useCallback(async () => {
+    setRawMaterials(await productClient.getAllRawMaterials());
+  }, []);
 
-    const handleCreateTemplate = async () => {
-        if (!newTplVariantId || !newTplName.trim()) return;
-        const res = await fetch("/api/process-templates", {
-            method: "POST",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                productVariantId: parseInt(newTplVariantId),
-                name: newTplName.trim(),
-                isActive: true,
-            }),
-        });
-        if (res.ok) {
-            setShowNewTemplate(false);
-            setNewTplName("");
-            setNewTplVariantId("");
-            loadTemplates();
-        } else {
-            const err = await res.json().catch(() => ({}));
-            alert(err.error || "Error al crear plantilla");
-        }
-    };
+  useEffect(() => {
+    void loadTemplates();
+    void loadProducts();
+    void loadRawMaterials();
+  }, [loadTemplates, loadProducts, loadRawMaterials]);
 
-    const handleToggleActive = async (tpl: Template) => {
-        await fetch(`/api/process-templates/${tpl.id}`, {
-            method: "PUT",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                productVariantId: tpl.productVariantId,
-                name: tpl.name,
-                isActive: !tpl.isActive,
-            }),
-        });
-        loadTemplates();
-    };
+  const productById = useMemo(() => new Map(products.map((p) => [p.id, p])), [products]);
+  const rawMaterialById = useMemo(() => new Map(rawMaterials.map((m) => [m.id, m])), [rawMaterials]);
 
-    const handleAddStep = async (templateId: number) => {
-        if (!newStepName.trim()) return;
+  const refresh = async () => {
+    await loadTemplates();
+  };
 
-        // Find the template to get processTemplateId for the step
-        const tpl = templates.find((t) => t.id === templateId);
-        if (!tpl) return;
+  const startEditTemplate = (tpl: ProcessTemplateRead) => {
+    setEditingTemplateId(tpl.id);
+    setEditTplProductId(String(tpl.productId));
+    setEditTplName(tpl.name);
+  };
 
-        const res = await fetch(`/api/templates/${templateId}/steps`, {
-            method: "POST",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                processTemplateId: templateId,
-                name: newStepName.trim(),
-                idealDurationMin: newStepDuration ? parseInt(newStepDuration) : null,
-                instructions: newStepInstructions.trim() || null,
-                requiresInput: newStepRequiresInput,
-            }),
-        });
-        if (res.ok) {
-            setShowNewStep(null);
-            setNewStepName("");
-            setNewStepDuration("");
-            setNewStepInstructions("");
-            setNewStepRequiresInput(false);
-            loadTemplates();
-        } else {
-            const err = await res.json().catch(() => ({}));
-            alert(err.error || "Error al agregar paso");
-        }
-    };
+  const saveTemplate = async (tplId: number) => {
+    await templateClient.updateProcessTemplate(tplId, {
+      productId: Number(editTplProductId),
+      name: editTplName.trim(),
+    });
+    setEditingTemplateId(null);
+    await refresh();
+  };
 
-    const handleStartEditStep = (step: TemplateStep) => {
-        setEditingStepId(step.id);
-        setEditStepName(step.name);
-        setEditStepDuration(step.idealDurationMin?.toString() || "");
-        setEditStepInstructions(step.instructions || "");
-        setEditStepRequiresInput(step.requiresInput);
-    };
+  const createTemplate = async () => {
+    await templateClient.createProcessTemplate({
+      productId: Number(newTplProductId),
+      name: newTplName.trim(),
+    });
+    setShowNewTemplate(false);
+    setNewTplProductId("");
+    setNewTplName("");
+    await refresh();
+  };
 
-    const handleSaveStep = async (step: TemplateStep) => {
-        const res = await fetch(`/api/template-steps/${step.id}`, {
-            method: "PUT",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                processTemplateId: step.position, // Keep existing
-                name: editStepName.trim(),
-                position: step.position,
-                idealDurationMin: editStepDuration ? parseInt(editStepDuration) : null,
-                instructions: editStepInstructions.trim() || null,
-                requiresInput: editStepRequiresInput,
-            }),
-        });
-        if (res.ok) {
-            setEditingStepId(null);
-            loadTemplates();
-        }
-    };
+  const deleteTemplate = async (tplId: number) => {
+    if (!confirm("¿Eliminar esta plantilla?")) return;
+    await templateClient.deleteProcessTemplate(tplId);
+    await refresh();
+  };
 
-    const handleDeleteStep = async (stepId: number) => {
-        if (!confirm("¿Eliminar este paso?")) return;
-        await fetch(`/api/template-steps/${stepId}`, {
-            method: "DELETE",
-            credentials: "include",
-        });
-        loadTemplates();
-    };
+  const startEditStep = (step: ProcessTemplateStepRead) => {
+    setEditingStepId(step.id);
+    setEditStepPosition(String(step.position));
+    setEditStepName(step.name);
+    setEditStepDuration(step.idealDurationMin == null ? "" : String(step.idealDurationMin));
+    setEditStepInstructions(step.instructions ?? "");
+  };
 
-    const getVariantLabel = (tpl: Template) => {
-        const v = variants.find((v) => v.id === tpl.productVariantId);
-        if (v) return `${v.product?.name || ""} — ${v.name}`;
-        return `Variante #${tpl.productVariantId}`;
-    };
+  const createStep = async (templateId: number) => {
+    const nextPosition = Number(newStepPosition);
+    await templateClient.createProcessTemplateStep({
+      processId: templateId,
+      position: nextPosition,
+      name: newStepName.trim(),
+      idealDurationMin: newStepDuration ? Number(newStepDuration) : undefined,
+      instructions: newStepInstructions.trim() || undefined,
+    });
+    setShowNewStepForTemplateId(null);
+    setNewStepPosition("");
+    setNewStepName("");
+    setNewStepDuration("");
+    setNewStepInstructions("");
+    await refresh();
+  };
 
-    return (
-        <div className="page">
-            <HeaderXuchil />
-            <div className={styles.container}>
-                <div className={styles.headerRow}>
-                    <h1>Plantillas de proceso</h1>
-                    <Button size="small" action="secondary" onClick={() => setShowNewTemplate(!showNewTemplate)}>
-                        + Nueva plantilla
-                    </Button>
+  const saveStep = async (step: ProcessTemplateStepRead) => {
+    await templateClient.updateProcessTemplateStep(step.id, {
+      processId: step.processId,
+      position: Number(editStepPosition),
+      name: editStepName.trim(),
+      idealDurationMin: editStepDuration ? Number(editStepDuration) : undefined,
+      instructions: editStepInstructions.trim() || undefined,
+    });
+    setEditingStepId(null);
+    await refresh();
+  };
+
+  const deleteStep = async (stepId: number) => {
+    if (!confirm("¿Eliminar este paso?")) return;
+    await templateClient.deleteProcessTemplateStep(stepId);
+    await refresh();
+  };
+
+  const startEditMaterial = (material: ProcessTemplateStepMaterialRead) => {
+    setEditingMaterialId(material.id);
+    setEditMaterialRawMaterialId(String(material.rawMaterialId));
+  };
+
+  const createMaterial = async (stepId: number) => {
+    await templateClient.createProcessTemplateStepMaterial({
+      stepId,
+      rawMaterialId: Number(newMaterialRawMaterialId),
+    });
+    setShowNewMaterialForStepId(null);
+    setNewMaterialRawMaterialId("");
+    await refresh();
+  };
+
+  const saveMaterial = async (material: ProcessTemplateStepMaterialRead) => {
+    await templateClient.updateProcessTemplateStepMaterial(material.id, {
+      stepId: material.stepId,
+      rawMaterialId: Number(editMaterialRawMaterialId),
+    });
+    setEditingMaterialId(null);
+    await refresh();
+  };
+
+  const deleteMaterial = async (materialId: number) => {
+    if (!confirm("¿Eliminar este material?")) return;
+    await templateClient.deleteProcessTemplateStepMaterial(materialId);
+    await refresh();
+  };
+
+  const getProductLabel = (productId: number) => productById.get(productId)?.name ?? `Producto #${productId}`;
+
+  return (
+    <div className="page">
+      <HeaderXuchil />
+      <div className={styles.container}>
+        <div className={styles.headerRow}>
+          <h1>Plantillas de proceso</h1>
+          <Button size="small" action="secondary" onClick={() => setShowNewTemplate((v) => !v)}>
+            + Nueva plantilla
+          </Button>
+        </div>
+
+        {showNewTemplate && (
+          <div className={styles.formCard}>
+            <h3>Nueva plantilla</h3>
+            <label>Producto</label>
+            <select className={styles.select} value={newTplProductId} onChange={(e) => setNewTplProductId(e.target.value)}>
+              <option value="">Seleccionar...</option>
+              {products.map((product) => (
+                <option key={product.id} value={product.id}>
+                  {product.name}
+                </option>
+              ))}
+            </select>
+            <label>Nombre</label>
+            <input className={styles.input} value={newTplName} onChange={(e) => setNewTplName(e.target.value)} />
+            <div className={styles.formActions}>
+              <Button size="small" action="primary" onClick={createTemplate}>Crear</Button>
+              <Button size="small" action="secondary" onClick={() => setShowNewTemplate(false)}>Cancelar</Button>
+            </div>
+          </div>
+        )}
+
+        {templates.map((tpl) => (
+          <div key={tpl.id} className={styles.templateCard}>
+            <div className={styles.templateHeader} onClick={() => setExpandedId((current) => (current === tpl.id ? null : tpl.id))}>
+              <div className={styles.templateInfo}>
+                <span className={styles.templateName}>{tpl.name}</span>
+                <span className={styles.variantLabel}>{getProductLabel(tpl.productId)}</span>
+              </div>
+              <div className={styles.templateActions}>
+                <span className={styles.stepCount}>{tpl.processTemplateSteps.length} pasos</span>
+                <span className={styles.chevron}>{expandedId === tpl.id ? "▲" : "▼"}</span>
+              </div>
+            </div>
+
+            {expandedId === tpl.id && (
+              <div className={styles.templateBody}>
+                <div className={styles.formActions}>
+                  <Button size="small" action="secondary" onClick={() => startEditTemplate(tpl)}>Editar plantilla</Button>
+                  <Button size="small" action="secondary" onClick={() => deleteTemplate(tpl.id)}>Eliminar plantilla</Button>
                 </div>
 
-                {showNewTemplate && (
-                    <div className={styles.formCard}>
-                        <h3>Nueva plantilla</h3>
-                        <label>Variante de producto:</label>
-                        <select value={newTplVariantId} onChange={(e) => setNewTplVariantId(e.target.value)} className={styles.select}>
-                            <option value="">Seleccionar...</option>
-                            {variants.map((v) => (
-                                <option key={v.id} value={v.id}>
-                                    {v.product?.name} — {v.name}
-                                </option>
-                            ))}
-                        </select>
-                        <label>Nombre:</label>
-                        <input
-                            value={newTplName}
-                            onChange={(e) => setNewTplName(e.target.value)}
-                            placeholder="Ej: Proceso estándar v1"
-                            className={styles.input}
-                        />
-                        <div className={styles.formActions}>
-                            <Button size="small" action="primary" onClick={handleCreateTemplate}>Crear</Button>
-                            <Button size="small" action="secondary" onClick={() => setShowNewTemplate(false)}>Cancelar</Button>
-                        </div>
+                {editingTemplateId === tpl.id && (
+                  <div className={styles.formCard}>
+                    <h4>Editar plantilla</h4>
+                    <label>Producto</label>
+                    <select className={styles.select} value={editTplProductId} onChange={(e) => setEditTplProductId(e.target.value)}>
+                      {products.map((product) => (
+                        <option key={product.id} value={product.id}>{product.name}</option>
+                      ))}
+                    </select>
+                    <label>Nombre</label>
+                    <input className={styles.input} value={editTplName} onChange={(e) => setEditTplName(e.target.value)} />
+                    <div className={styles.formActions}>
+                      <Button size="small" action="primary" onClick={() => saveTemplate(tpl.id)}>Guardar</Button>
+                      <Button size="small" action="secondary" onClick={() => setEditingTemplateId(null)}>Cancelar</Button>
                     </div>
+                  </div>
                 )}
 
-                {templates.length === 0 && !showNewTemplate && (
-                    <p className={styles.emptyText}>No hay plantillas configuradas. Crea una para empezar.</p>
-                )}
-
-                {templates.map((tpl) => (
-                    <div key={tpl.id} className={`${styles.templateCard} ${!tpl.isActive ? styles.inactive : ""}`}>
-                        <div className={styles.templateHeader} onClick={() => setExpandedId(expandedId === tpl.id ? null : tpl.id)}>
-                            <div className={styles.templateInfo}>
-                                <span className={styles.templateName}>{tpl.name}</span>
-                                <span className={styles.variantLabel}>{getVariantLabel(tpl)}</span>
+                <h4>Pasos</h4>
+                {tpl.processTemplateSteps.length === 0 && <p className={styles.noSteps}>Sin pasos definidos.</p>}
+                <ol className={styles.stepList}>
+                  {tpl.processTemplateSteps
+                    .slice()
+                    .sort((a, b) => a.position - b.position)
+                    .map((step) => (
+                      <li key={step.id} className={styles.stepItem}>
+                        {editingStepId === step.id ? (
+                          <div className={styles.stepEditForm}>
+                            <input className={styles.input} value={editStepPosition} onChange={(e) => setEditStepPosition(e.target.value)} type="number" placeholder="Posición" />
+                            <input className={styles.input} value={editStepName} onChange={(e) => setEditStepName(e.target.value)} placeholder="Nombre" />
+                            <input className={styles.input} value={editStepDuration} onChange={(e) => setEditStepDuration(e.target.value)} type="number" placeholder="Duración ideal (min)" />
+                            <input className={styles.input} value={editStepInstructions} onChange={(e) => setEditStepInstructions(e.target.value)} placeholder="Instrucciones" />
+                            <div className={styles.formActions}>
+                              <Button size="small" action="primary" onClick={() => saveStep(step)}>Guardar</Button>
+                              <Button size="small" action="secondary" onClick={() => setEditingStepId(null)}>Cancelar</Button>
                             </div>
-                            <div className={styles.templateActions}>
-                                <span className={`${styles.badge} ${tpl.isActive ? styles.activeBadge : styles.inactiveBadge}`}>
-                                    {tpl.isActive ? "Activa" : "Inactiva"}
-                                </span>
-                                <span className={styles.stepCount}>{tpl.templateSteps?.length || 0} pasos</span>
-                                <span className={styles.chevron}>{expandedId === tpl.id ? "▲" : "▼"}</span>
+                          </div>
+                        ) : (
+                          <div>
+                            <div className={styles.stepRow}>
+                              <div className={styles.stepInfo}>
+                                <strong>{step.position}. {step.name}</strong>
+                                {step.idealDurationMin != null && <span className={styles.stepDuration}>{step.idealDurationMin} min</span>}
+                                {step.instructions && <span className={styles.stepInstr}>{step.instructions}</span>}
+                              </div>
+                              <div className={styles.stepActions}>
+                                <button className={styles.linkBtn} onClick={() => startEditStep(step)}>Editar</button>
+                                <button className={styles.linkBtn} onClick={() => deleteStep(step.id)}>Eliminar</button>
+                              </div>
                             </div>
-                        </div>
 
-                        {expandedId === tpl.id && (
-                            <div className={styles.templateBody}>
-                                <div className={styles.toggleRow}>
-                                    <button className={styles.linkBtn} onClick={() => handleToggleActive(tpl)}>
-                                        {tpl.isActive ? "Desactivar" : "Activar"}
-                                    </button>
-                                </div>
-
-                                <h4>Pasos:</h4>
-                                {tpl.templateSteps?.length === 0 && (
-                                    <p className={styles.noSteps}>Sin pasos definidos.</p>
-                                )}
-                                <ol className={styles.stepList}>
-                                    {(tpl.templateSteps || [])
-                                        .sort((a, b) => a.position - b.position)
-                                        .map((step) => (
-                                            <li key={step.id} className={styles.stepItem}>
-                                                {editingStepId === step.id ? (
-                                                    <div className={styles.stepEditForm}>
-                                                        <input value={editStepName} onChange={(e) => setEditStepName(e.target.value)} className={styles.input} placeholder="Nombre del paso" />
-                                                        <input value={editStepDuration} onChange={(e) => setEditStepDuration(e.target.value)} type="number" className={styles.input} placeholder="Duración (min)" />
-                                                        <input value={editStepInstructions} onChange={(e) => setEditStepInstructions(e.target.value)} className={styles.input} placeholder="Instrucciones" />
-                                                        <label className={styles.checkLabel}>
-                                                            <input type="checkbox" checked={editStepRequiresInput} onChange={(e) => setEditStepRequiresInput(e.target.checked)} />
-                                                            Requiere cantidad
-                                                        </label>
-                                                        <div className={styles.formActions}>
-                                                            <button className={styles.saveBtn} onClick={() => handleSaveStep(step)}>Guardar</button>
-                                                            <button className={styles.linkBtn} onClick={() => setEditingStepId(null)}>Cancelar</button>
-                                                        </div>
-                                                    </div>
-                                                ) : (
-                                                    <div className={styles.stepRow}>
-                                                        <div className={styles.stepInfo}>
-                                                            <strong>{step.name}</strong>
-                                                            {step.idealDurationMin && <span className={styles.stepDuration}>{step.idealDurationMin} min</span>}
-                                                            {step.instructions && <span className={styles.stepInstr}>{step.instructions}</span>}
-                                                        </div>
-                                                        <div className={styles.stepActions}>
-                                                            <button className={styles.linkBtn} onClick={() => handleStartEditStep(step)}>Editar</button>
-                                                            <button className={styles.linkBtn} onClick={() => handleDeleteStep(step.id)}>Eliminar</button>
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </li>
-                                        ))}
-                                </ol>
-
-                                {showNewStep === tpl.id ? (
-                                    <div className={styles.stepEditForm}>
-                                        <h4>Agregar paso</h4>
-                                        <input value={newStepName} onChange={(e) => setNewStepName(e.target.value)} className={styles.input} placeholder="Nombre del paso" />
-                                        <input value={newStepDuration} onChange={(e) => setNewStepDuration(e.target.value)} type="number" className={styles.input} placeholder="Duración ideal (min)" />
-                                        <input value={newStepInstructions} onChange={(e) => setNewStepInstructions(e.target.value)} className={styles.input} placeholder="Instrucciones (opcional)" />
-                                        <label className={styles.checkLabel}>
-                                            <input type="checkbox" checked={newStepRequiresInput} onChange={(e) => setNewStepRequiresInput(e.target.checked)} />
-                                            Requiere ingresar cantidad
-                                        </label>
+                            <div className={styles.materialsList}>
+                              <h5>Materiales</h5>
+                              {step.processTemplateStepMaterials.length === 0 && <p className={styles.noSteps}>Sin materiales.</p>}
+                              <ul>
+                                {step.processTemplateStepMaterials.map((material) => (
+                                  <li key={material.id}>
+                                    {editingMaterialId === material.id ? (
+                                      <div className={styles.formCard}>
+                                        <select className={styles.select} value={editMaterialRawMaterialId} onChange={(e) => setEditMaterialRawMaterialId(e.target.value)}>
+                                          {rawMaterials.map((raw) => (
+                                            <option key={raw.id} value={raw.id}>{raw.name}</option>
+                                          ))}
+                                        </select>
                                         <div className={styles.formActions}>
-                                            <Button size="small" action="primary" onClick={() => handleAddStep(tpl.id)}>Agregar</Button>
-                                            <Button size="small" action="secondary" onClick={() => setShowNewStep(null)}>Cancelar</Button>
+                                          <Button size="small" action="primary" onClick={() => saveMaterial(material)}>Guardar</Button>
+                                          <Button size="small" action="secondary" onClick={() => setEditingMaterialId(null)}>Cancelar</Button>
                                         </div>
-                                    </div>
-                                ) : (
-                                    <button className={styles.addStepBtn} onClick={() => setShowNewStep(tpl.id)}>+ Agregar paso</button>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                ))}
+                                      </div>
+                                    ) : (
+                                      <div className={styles.stepRow}>
+                                        <span>{rawMaterialById.get(material.rawMaterialId)?.name}</span>
+                                        <div className={styles.stepActions}>
+                                          <button className={styles.linkBtn} onClick={() => startEditMaterial(material)}>Editar</button>
+                                          <button className={styles.linkBtn} onClick={() => deleteMaterial(material.id)}>Eliminar</button>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </li>
+                                ))}
+                              </ul>
 
-                <button className={styles.backBtn} onClick={() => router.push("/process-control")}>
-                    ← Volver
-                </button>
-            </div>
-        </div>
-    );
+                              {showNewMaterialForStepId === step.id ? (
+                                <div className={styles.formCard}>
+                                  <select className={styles.select} value={newMaterialRawMaterialId} onChange={(e) => setNewMaterialRawMaterialId(e.target.value)}>
+                                    <option value="">Seleccionar material...</option>
+                                    {rawMaterials.map((raw) => (
+                                      <option key={raw.id} value={raw.id}>{raw.name}</option>
+                                    ))}
+                                  </select>
+                                  <div className={styles.formActions}>
+                                    <Button size="small" action="primary" onClick={() => createMaterial(step.id)}>Agregar</Button>
+                                    <Button size="small" action="secondary" onClick={() => setShowNewMaterialForStepId(null)}>Cancelar</Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <button className={styles.addStepBtn} onClick={() => setShowNewMaterialForStepId(step.id)}>+ Agregar material</button>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </li>
+                    ))}
+                </ol>
+
+                {showNewStepForTemplateId === tpl.id ? (
+                  <div className={styles.stepEditForm}>
+                    <h4>Agregar paso</h4>
+                    <input className={styles.input} value={newStepPosition} onChange={(e) => setNewStepPosition(e.target.value)} type="number" placeholder="Posición" />
+                    <input className={styles.input} value={newStepName} onChange={(e) => setNewStepName(e.target.value)} placeholder="Nombre" />
+                    <input className={styles.input} value={newStepDuration} onChange={(e) => setNewStepDuration(e.target.value)} type="number" placeholder="Duración ideal (min)" />
+                    <input className={styles.input} value={newStepInstructions} onChange={(e) => setNewStepInstructions(e.target.value)} placeholder="Instrucciones" />
+                    <div className={styles.formActions}>
+                      <Button size="small" action="primary" onClick={() => createStep(tpl.id)}>Agregar</Button>
+                      <Button size="small" action="secondary" onClick={() => setShowNewStepForTemplateId(null)}>Cancelar</Button>
+                    </div>
+                  </div>
+                ) : (
+                  <button className={styles.addStepBtn} onClick={() => setShowNewStepForTemplateId(tpl.id)}>+ Agregar paso</button>
+                )}
+              </div>
+            )}
+          </div>
+        ))}
+
+        <button className={styles.backBtn} onClick={() => router.push("/process-control")}>← Volver</button>
+      </div>
+    </div>
+  );
 };
 
 export default TemplatesPage;

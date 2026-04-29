@@ -3,16 +3,16 @@
 import React, { useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import styles from "@/styles/ProductPicker.module.css";
-import { Product } from "@/types/Product"
+import {ProductRead} from "@/lib/schemas";
 
 interface ProductPickerProps {
-  products: Product[];
-  valueId?: string;
-  onChange?: (p: Product) => void;
+  products: ProductRead[];
+  valueId?: number;
+  onChange?: (p: ProductRead) => void;
 }
 
 const ProductPicker: React.FC<ProductPickerProps> = ({ products, valueId, onChange }) => {
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(products[0] ?? null);
+  const [selectedProduct, setSelectedProduct] = useState<ProductRead | null>(products[0] ?? null);
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
@@ -27,7 +27,7 @@ const ProductPicker: React.FC<ProductPickerProps> = ({ products, valueId, onChan
     onChange?.(resolved);
   }, [products, valueId, onChange]);
 
-  const handleSelectProduct = (product: Product) => {
+  const handleSelectProduct = (product: ProductRead) => {
     setSelectedProduct(product);
     setIsOpen(false);
     onChange?.(product);
@@ -44,13 +44,13 @@ const ProductPicker: React.FC<ProductPickerProps> = ({ products, valueId, onChan
         {selectedProduct ? (
           <>
             <img
-              src={selectedProduct.image}
+              src={selectedProduct.imgUrl ?? undefined}
               alt={selectedProduct.name}
               className={styles.productImage}
             />
 
             <span className={styles.label}>
-              {selectedProduct.name} ({selectedProduct.presentation})
+              {selectedProduct.name}
             </span>
           </>
         ) : (
@@ -72,10 +72,9 @@ const ProductPicker: React.FC<ProductPickerProps> = ({ products, valueId, onChan
               className={styles.productItem}
               onClick={() => handleSelectProduct(p)}
             >
-              <img src={p.image} alt={p.name} className={styles.productImage} />
+              <img src={p.imgUrl ?? undefined} alt={p.name} className={styles.productImage} />
               <div className={styles.productInfo}>
                 <strong>{p.name}</strong>
-                <span>{p.presentation}</span>
               </div>
             </div>
           ))}

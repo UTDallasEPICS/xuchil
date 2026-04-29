@@ -6,12 +6,12 @@ import ProductCard from "@/components/ProductCard";
 import styles from "../InventoryPage.module.css";
 import { Search, SlidersHorizontal } from "lucide-react";
 import { useRouter } from "next/navigation";
+import inventoryClient from "@/lib/services/inventoryClient";
 
 type InventoryProductRow = {
     id: number;
     name: string;
     image: string;
-    presentation: string;
     quantity: number;
     units: string;
 };
@@ -25,36 +25,26 @@ export default function ProductsInventoryPage() {
         let mounted = true;
 
         async function load() {
-            const response = await fetch("/api/inventory/summary?item_type=PRODUCT", { credentials: "include" });
-            if (!response.ok) return;
-            const data = await response.json();
+            const productItems = await inventoryClient.getAllInventoryItems({ itemType: "PRODUCT" });
             if (!mounted) return;
 
-            const mapped = data.map((item: any) => {
-                const qty = (item.inventoryLots || []).reduce(
-                    (sum: number, lot: any) => sum + Number(lot.qtyOnHand || 0),
+            const mapped = productItems.map((item) => {
+                const qty = item.inventoryLots.reduce(
+                    (sum: number, lot) => sum + Number(lot.quantity),
                     0
                 );
-                const units =
-                    item.productVariant?.defaultUnit?.name ||
-                    item.inventoryLots?.[0]?.unit?.name ||
-                    "";
-
                 return {
                     id: item.id,
-                    name: item.productVariant?.product?.name ?? "Producto",
-                    image: item.productVariant?.imageUrl ?? "/globe.svg",
-                    presentation: item.productVariant?.name ?? item.productVariant?.presentation ?? "",
+                    name: item.product!.name,
+                    image: item.product!.imgUrl ?? "/globe.svg",
                     quantity: qty,
-                    units,
+                    units: item.product!.unit.name,
                 };
             });
 
             setProducts(mapped);
         }
-
         load();
-
         return () => {
             mounted = false;
         };

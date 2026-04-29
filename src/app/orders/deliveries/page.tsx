@@ -5,8 +5,6 @@ import { useRouter } from "next/navigation";
 import OrderCard from "@/components/OrderCard";
 import FilterButton from "@/components/FilterButton";
 import BottomButton from "@/components/BottomButton";
-import { Order } from "@/types/Order";
-import { fetchOrdersClient } from "@/lib/ordersClient";
 import {
   dateFilterOptions,
   sortFilterOptions,
@@ -14,6 +12,8 @@ import {
 } from "@/constants/filterOptions";
 import { FilterOption } from "@/types/FilterOption";
 import styles from "./Deliveries.module.css";
+import {OrderRead} from "@/lib/schemas";
+import orderClient from "@/lib/services/orderClient";
 
 function parseMXDate(raw: string): Date | null {
   if (!raw) return null;
@@ -27,7 +27,7 @@ function getISOWeek(date: Date) {
   const yearStart = new Date(Date.UTC(tmp.getUTCFullYear(), 0, 1));
   return Math.floor(((+tmp - +yearStart) / 86400000 + 1) / 7);
 }
-const compareDates = (a: Order, b: Order, asc = true) => {
+const compareDates = (a: OrderRead, b: OrderRead, asc = true) => {
   const da = parseMXDate(a.deliveryDate);
   const db = parseMXDate(b.deliveryDate);
   if (!da && !db) return 0;
@@ -42,13 +42,13 @@ const Deliveries = () => {
   const [deliveryFilter, setDeliveryFilter] = useState<FilterOption>(deliveryFilterOptions[0]);
   const router = useRouter();
 
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<OrderRead[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let mounted = true;
     setLoading(true);
-    fetchOrdersClient()
+    orderClient.getAllOrders()
       .then((data) => mounted && setOrders(data))
       .catch((err) => console.error("Failed to load orders", err))
       .finally(() => mounted && setLoading(false));

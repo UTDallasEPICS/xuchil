@@ -6,6 +6,8 @@ import HeaderXuchil from "@/components/HeaderXuchil";
 import Button from "@/components/Button";
 import Modal from "@/components/Modal";
 import styles from "./NewProcess.module.css";
+import * as productsService from "@/lib/services/productClient";
+import * as processesService from "@/lib/services/templateClient";
 
 interface ProcessStep {
   id: number;
@@ -54,11 +56,9 @@ const NewProcessPage = () => {
 
     async function loadVariants() {
       try {
-        const res = await fetch("/api/product-variants", { credentials: "include" });
-        if (!res.ok) return;
-        const data = await res.json();
+        const data = await productsService.fetchProductVariants();
         if (!mounted) return;
-        setVariants(data);
+        setVariants(Array.isArray(data) ? data as ProductVariantOption[] : []);
       } catch (error) {
         console.error("Failed to load product variants:", error);
       }
@@ -89,8 +89,8 @@ const NewProcessPage = () => {
     }
   };
 
-  const updateStep = (stepId: number, field: keyof ProcessStep, value: any) => {
-    setSteps(steps.map(step => 
+  const updateStep = (stepId: number, field: keyof ProcessStep, value: unknown) => {
+    setSteps(steps.map(step =>
       step.id === stepId ? { ...step, [field]: value } : step
     ));
   };
@@ -105,9 +105,9 @@ const NewProcessPage = () => {
     }
   };
 
-  const updateRawMaterial = (index: number, field: keyof RawMaterial, value: any) => {
+  const updateRawMaterial = (index: number, field: keyof RawMaterial, value: unknown) => {
     const updated = [...rawMaterials];
-    updated[index] = { ...updated[index], [field]: value };
+    updated[index] = { ...updated[index], [field]: value } as RawMaterial;
     setRawMaterials(updated);
   };
 
@@ -191,17 +191,7 @@ const NewProcessPage = () => {
         })),
       };
 
-      const response = await fetch("/api/process-templates/create-with-steps", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(err.error || "No se pudo crear el proceso.");
-      }
+      await processesService.createTemplateWithSteps(payload);
 
       setModal({
         open: true,
