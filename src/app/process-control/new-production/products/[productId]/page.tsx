@@ -36,7 +36,7 @@ const ProductTemplateDetailPage = () => {
   if (templates === null) return null;
 
   const handleProcessCreation = async (templateId: number) => {
-    const execution = await executionClient.startProcess(templateId);
+    const execution = await executionClient.createExecutionsFromTemplate(templateId);
     router.push(`/process-control/${execution.id}/${execution.processStepExecutions[0].id}`);
   }
 

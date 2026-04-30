@@ -168,11 +168,7 @@ const ProcessStepPage = () => {
     const execId = stepExecIdRef.current;
     if (!execId) return;
     try {
-      const updated = await executionClient.updateProcessStepExecution(execId, {status: "PENDING"});
-      await executionClient.createProcessPause({
-        processStepExecutionId: execId,
-        startedAt: (new Date()).toISOString(),
-      });
+      const updated = await executionClient.pauseStepExecution(currentStepExecution);
       setCurrentStepExecution(updated);
       setStepStatus(updated.status);
     } catch (e) {
@@ -184,20 +180,8 @@ const ProcessStepPage = () => {
     const execId = stepExecIdRef.current;
     if (!execId) return;
 
-    const now = new Date().toISOString();
-    const pauses = await executionClient.getAllProcessPauses({processStepExecutionId: execId});
-    if (pauses.length > 0 && pauses[0].finishedAt == null) {
-      try {
-        await executionClient.updateProcessPause(pauses[0].id, {
-          endedAt: now,
-        });
-      } catch (e) {
-        console.error("Failed to record pause:", e);
-      }
-    }
-
     try {
-      const updated = await executionClient.updateProcessStepExecution(execId, {status: "IN_PROGRESS"});
+      const updated = await executionClient.resumeStepExecution(currentStepExecution);
       setCurrentStepExecution(updated);
       setStepStatus(updated.status);
       setHasStarted(true);

@@ -15,6 +15,7 @@ import {
   ProcessStepMaterialUsageReadSchema,
 } from "@/lib/schemas";
 import templateClient from "@/lib/services/templateClient";
+import executionClient from "@/lib/services/executionClient";
 
 async function getAllProcessExecutions(query?: { pending?: boolean }): Promise<ProcessExecutionRead[]> {
   const res = await sendRequest({
@@ -44,7 +45,7 @@ async function createProcessStepExecution(payload: ProcessStepExecutionCreate): 
   return ProcessStepExecutionReadSchema.parse(res);
 }
 
-async function startProcess(templateId: number): Promise<ProcessExecutionRead> {
+async function createExecutionsFromTemplate(templateId: number): Promise<ProcessExecutionRead> {
   const template = await templateClient.getProcessTemplateById(templateId);
   const processExecution = await createProcessExecution({
     processId: templateId,
@@ -60,6 +61,24 @@ async function startProcess(templateId: number): Promise<ProcessExecutionRead> {
       )
   );
   return processExecution;
+}
+
+async function pauseStepExecution(step: ProcessStepExecutionRead): Promise<ProcessStepExecutionRead> {
+  const updated = await executionClient.updateProcessStepExecution(step.id, {status: "PENDING"});
+  await executionClient.createProcessPause({
+    processStepExecutionId: step.id,
+    startedAt: (new Date()).toISOString(),
+  });
+  return updated
+}
+
+async function resumeStepExecution(step: ProcessStepExecutionRead): Promise<ProcessStepExecutionRead> {
+  const updated = await executionClient.updateProcessStepExecution(step.id, {status: "IN_PROGRESS"});
+  const pauses = await executionClient.getAllProcessPauses({processStepExecutionId: step.id});
+  await executionClient.updateProcessPause(pauses[0].id, {
+    endedAt: new Date().toISOString(),
+  });
+  return updated
 }
 
 async function getProcessExecutionById(id: number): Promise<ProcessExecutionRead> {
@@ -82,6 +101,14 @@ async function updateProcessExecution(
   });
 
   return ProcessExecutionReadSchema.parse(res);
+}
+
+async function getProcessStepExecutionById(id: number): Promise<ProcessStepExecutionRead> {
+  const res = await sendRequest({
+    method: "GET",
+    url: `/api/process-step-executions/${id}`,
+  })
+  return ProcessStepExecutionReadSchema.parse(res);
 }
 
 async function updateProcessStepExecution(
@@ -139,12 +166,15 @@ export default {
   getAllProcessExecutions,
   getProcessExecutionById,
   createProcessExecution,
+  pauseStepExecution,
+  resumeStepExecution,
   createProcessStepExecution,
   updateProcessExecution,
+  getProcessStepExecutionById,
   updateProcessStepExecution,
   getAllProcessPauses,
   createProcessPause,
   updateProcessPause,
-  startProcess,
+  createExecutionsFromTemplate,
   createMaterialUsage
 }
