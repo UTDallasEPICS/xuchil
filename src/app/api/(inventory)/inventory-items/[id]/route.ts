@@ -14,7 +14,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const item = await prisma.inventoryItem.findUnique({
       where: { id: idParsed },
       include: {
-        inventoryLots: true,
+        inventoryMovements: true,
         product: {
           include: {
             unit: true
@@ -52,7 +52,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       where: { id: idParsed },
       data: res.data,
       include: {
-        inventoryLots: true,
+        inventoryMovements: true,
         product: {
           include: {
             unit: true

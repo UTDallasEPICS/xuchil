@@ -29,15 +29,11 @@ export default function RawInventoryPage() {
       if (!mounted) return;
 
       const mapped = productItems.map((item) => {
-        const qty = item.inventoryLots.reduce(
-            (sum: number, lot) => sum + Number(lot.quantity),
-            0
-        );
         return {
           id: item.id,
           name: item.rawMaterial!.name,
           image: item.rawMaterial!.imgUrl ?? "/globe.svg",
-          quantity: qty,
+          quantity: item.quantity,
           units: item.rawMaterial!.unit.name,
         };
       });

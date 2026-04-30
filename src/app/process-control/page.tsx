@@ -47,8 +47,8 @@ const ProcessControl = () => {
         });
         const stepExecution = r.processStepExecutions[currentStepIndex];
         const openRoute = allStepsDone
-          ? `/process-control/new-production/${product.id}/results?runId=${r.id}`
-          : `/process-control/new-production/${product.id}/${currentStepIndex + 1}`;
+          ? `/process-control/${r.id}/results`
+          : `/process-control/${r.id}/${stepExecution.id}`;
 
         const templateStep = await templateClient.getProcessTemplateStepById(stepExecution.stepId);
         const currentStepName = allStepsDone ? "Captura de resultados" : templateStep.name;
@@ -95,7 +95,6 @@ const ProcessControl = () => {
         <h1>Control de procesos</h1>
       </div>
 
-      {/* Active Tasks Panel */}
       {activeTasks.length > 0 && (
         <div className={styles.activeTasksSection}>
           <h2 className={styles.sectionTitle}>Tareas en proceso</h2>
@@ -113,7 +112,7 @@ const ProcessControl = () => {
 
       <div className={styles.container}>
         <ImageCard imageSrc="/new-process.svg" text="Nueva producción" type="large" route="/process-control/new-production" />
-        <ImageCard imageSrc="/pending-task.svg" text="Tareas pendientes" type="large" route="/process-control/pending-tasks" />
+        <ImageCard imageSrc="/pending-task.svg" text="Estadísticas de tareas pendientes" type="large" route="/process-control/pending-tasks" />
         <ImageCard imageSrc="/file.svg" text="Plantillas de proceso" type="large" route="/process-control/templates" />
       </div>
     </div>

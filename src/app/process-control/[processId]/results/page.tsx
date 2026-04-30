@@ -1,11 +1,15 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useRouter, useParams, useSearchParams } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
+import { ProcessStatus } from "@prisma/client";
 import TextField from "@/components/TextField";
 import BottomButton from "@/components/BottomButton";
 import styles from "./ProcessResults.module.css";
 import HeaderXuchil from "@/components/HeaderXuchil";
+import executionClient from "@/lib/services/executionClient";
+import productClient from "@/lib/services/productClient";
+import templateClient from "@/lib/services/templateClient";
 
 interface UnitOption {
   id: number;
@@ -17,10 +21,9 @@ const DEFAULT_PACKAGE_TYPES = ["Bolsa", "Caja", "Frasco", "Sobre"];
 const PACKAGE_TYPES_STORAGE_KEY = "xuchil.packageTypes";
 
 const ProcessResultsPage: React.FC = () => {
-  const { productId, stepId } = useParams();
+  const { processId } = useParams();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const runIdParam = searchParams.get("runId");
+  const processExecutionId = Number(processId);
 
   // Form state
   const [productQty, setProductQty] = useState("");
@@ -40,7 +43,6 @@ const ProcessResultsPage: React.FC = () => {
   const [resultantQty, setResultantQty] = useState("");
 
   // Data state
-  const [processRunId, setProcessRunId] = useState<number | null>(null);
   const [variantName, setVariantName] = useState("");
   const [units, setUnits] = useState<UnitOption[]>([]);
   const [saving, setSaving] = useState(false);
@@ -79,96 +81,63 @@ const ProcessResultsPage: React.FC = () => {
     async function load() {
       setLoadingRun(true);
       try {
+        if (!processExecutionId || Number.isNaN(processExecutionId)) {
+          return;
+        }
 
-      // Load units
-      try {
-        const unitsRes = await fetch("/api/units", { credentials: "include" });
-        if (unitsRes.ok) {
-          const unitsData = await unitsRes.json();
+        try {
+          const unitsData = await productClient.getAllUnits();
           setUnits(
-            unitsData.map((unit: any) => ({
+            unitsData.map((unit) => ({
               id: unit.id,
               name: unit.name,
-              factorToBase: Number(unit.factorToBase ?? 1),
+              factorToBase: 1,
             }))
           );
+        } catch {
+          setUnits([
+            { id: 1, name: "Kg", factorToBase: 1 },
+            { id: 2, name: "g", factorToBase: 0.001 },
+            { id: 3, name: "L", factorToBase: 1 },
+            { id: 4, name: "ml", factorToBase: 0.001 },
+            { id: 5, name: "unidad", factorToBase: 1 },
+          ]);
         }
-      } catch {
-        // Fallback if units API doesn't exist
-        setUnits([
-          { id: 1, name: "Kg", factorToBase: 1 },
-          { id: 2, name: "g", factorToBase: 0.001 },
-          { id: 3, name: "L", factorToBase: 1 },
-          { id: 4, name: "ml", factorToBase: 0.001 },
-          { id: 5, name: "unidad", factorToBase: 1 },
-        ]);
-      }
 
-      // Load variant info
-      const varRes = await fetch(`/api/product-variants?product_id=${productId}`, { credentials: "include" });
-      if (varRes.ok) {
-        const variants = await varRes.json();
-        const v = variants.find((item: any) => String(item.id) === String(variantId));
-        if (v) {
-          setVariantName(v.name);
-          // Pre-fill content per package from variant's netContent (commented: let user enter it manually)
-          // if (v.netContent) {
-          //   setContentPerPackage(String(Number(v.netContent)));
-          // }
-          // Pre-select the content unit
-          if (v.contentUnitId) {
-            setSelectedUnitId(v.contentUnitId);
-            setPackageContentUnitId(v.contentUnitId);
-            setWasteUnitId(v.contentUnitId);
-          } else if (v.defaultUnitId) {
-            setSelectedUnitId(v.defaultUnitId);
-            setPackageContentUnitId(v.defaultUnitId);
-            setWasteUnitId(v.defaultUnitId);
-          }
+        const execution = await executionClient.getProcessExecutionById(processExecutionId);
+        const template = await templateClient.getProcessTemplateById(execution.processId);
+        const product = await productClient.getProductById(template.productId);
+
+        setVariantName(product.name);
+        setSelectedUnitId(product.unitId);
+        setPackageContentUnitId(product.unitId);
+        setWasteUnitId(product.unitId);
+
+        if (execution.outputQuantity != null) {
+          setProductQty(String(Number(execution.outputQuantity)));
         }
-      }
-
-      // Prefer explicit runId from URL so users can always return to this screen.
-      const runIdFromQuery = Number(runIdParam);
-      let resolvedRunId: number | null = Number.isFinite(runIdFromQuery) && runIdFromQuery > 0
-        ? runIdFromQuery
-        : null;
-
-      // Fallback: find active process run for this variant.
-      if (!resolvedRunId) {
-        const pendingRes = await fetch("/api/process-runs/pending", { credentials: "include" });
-        if (pendingRes.ok) {
-          const runs = await pendingRes.json();
-          const activeRun = runs.find((run: any) => String(run.productVariantId) === String(variantId));
-          if (activeRun) {
-            resolvedRunId = activeRun.id;
-          }
+        if (execution.scrapQuantity != null) {
+          setWasteQty(String(Number(execution.scrapQuantity)));
         }
-      }
-
-      if (resolvedRunId) {
-        setProcessRunId(resolvedRunId);
-
-        // If there was a previous partial capture, preload values.
-        const runRes = await fetch(`/api/process-runs/${resolvedRunId}`, { credentials: "include" });
-        if (runRes.ok) {
-          const run = await runRes.json();
-          if (run.goodOutputQty != null) setProductQty(String(Number(run.goodOutputQty)));
-          if (run.scrapQty != null) setWasteQty(String(Number(run.scrapQty)));
-          if (run.outputUnitId != null) {
-            setSelectedUnitId(Number(run.outputUnitId));
-            setWasteUnitId(Number(run.outputUnitId));
-          }
-          if (run.notes) setObservations(String(run.notes));
+        if (execution.notes) {
+          setObservations(String(execution.notes));
         }
-      }
-
+        if (execution.packageType) {
+          setPackageType(execution.packageType);
+          setWasPackaged(true);
+        }
+        if (execution.contentPerPackage != null) {
+          setContentPerPackage(String(Number(execution.contentPerPackage)));
+          setWasPackaged(true);
+        }
+      } catch (error) {
+        console.error("Failed to load process execution:", error);
       } finally {
         setLoadingRun(false);
       }
     }
     load();
-  }, [productId, variantId, runIdParam]);
+  }, [processExecutionId]);
 
   // Update package preview
   useEffect(() => {
@@ -277,8 +246,8 @@ const validatePositiveNumber = (value: string, fieldName: string) => {
 };
 
 const handleFinishProcess = async () => {
-  if (!processRunId) {
-    alert("No se encontro el proceso activo. Regresa a Control de procesos y vuelve a abrir esta tarea.");
+  if (!processExecutionId || Number.isNaN(processExecutionId)) {
+    alert("No se encontró el proceso activo. Regresa a Control de procesos y vuelve a abrir esta tarea.");
     return;
   }
 
@@ -338,28 +307,17 @@ const handleFinishProcess = async () => {
         ? (parsedWasteQty * wasteFactor) / outputFactor
         : parsedWasteQty;
 
-    const res = await fetch(`/api/process-runs/${processRunId}/finish`, {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        goodOutputQty: parseFloat(finalQty),
-        scrapQty: convertedWasteQty,
-        outputUnitId: selectedUnitId,
-        notes: observations || null,
-        wasPackaged,
-        packageType: wasPackaged ? packageType : null,
-        contentPerPackage: wasPackaged ? parseFloat(contentPerPackage) : null,
-        packageContentUnitId: wasPackaged ? packageContentUnitId : null,
-      }),
+    await executionClient.updateProcessExecution(processExecutionId, {
+      outputQuantity: parseFloat(finalQty),
+      scrapQuantity: convertedWasteQty,
+      notes: observations.trim() ? observations.trim() : undefined,
+      packageType: wasPackaged ? packageType : undefined,
+      contentPerPackage: wasPackaged ? parseFloat(contentPerPackage) : undefined,
+      finishedAt: new Date().toISOString(),
+      status: ProcessStatus.COMPLETED,
     });
 
-    if (res.ok) {
-      router.push("/process-control");
-    } else {
-      const err = await res.json().catch(() => ({}));
-      alert(err.error || "Error al finalizar el proceso");
-    }
+    router.push("/process-control");
   } catch (e) {
     console.error("Error finishing process:", e);
     alert("Error al finalizar el proceso");
@@ -535,9 +493,9 @@ const handleFinishProcess = async () => {
         {saving || loadingRun ? "Guardando..." : "Finalizar produccion"}
       </BottomButton>
 
-      {!loadingRun && !processRunId && (
+      {!loadingRun && !processExecutionId && (
         <p className={styles.warningText}>
-          No se encontro un proceso activo para esta variante.
+          No se encontró el proceso activo para esta tarea.
         </p>
       )}
     </div>

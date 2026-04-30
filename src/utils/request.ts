@@ -3,7 +3,7 @@ import qs from 'qs';
 export interface RequestOptions {
   method: 'GET' | 'POST' | 'PUT' | 'DELETE';
   url: string;
-  query?: Record<string, string | number | boolean | undefined>;
+  query?: unknown;
   body?: unknown;
 }
 

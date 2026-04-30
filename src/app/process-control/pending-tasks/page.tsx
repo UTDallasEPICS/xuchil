@@ -1,10 +1,9 @@
 "use client";
 
-import React, {useEffect, useMemo, useState} from "react";
+import React, {useEffect, useState} from "react";
 import {useRouter} from "next/navigation";
 import dynamic from "next/dynamic";
 import HeaderXuchil from "@/components/HeaderXuchil";
-import PendingTaskCard from "@/components/PendingTaskCard";
 import Button from "@/components/Button";
 import styles from "./PendingTasks.module.css";
 import {PendingTask} from "@/types/PendingTask";
@@ -13,6 +12,7 @@ import {groupTasksByCategory} from "@/utils/dataUtils";
 import {ProcessExecutionRead} from "@/lib/schemas";
 import templateClient from "@/lib/services/templateClient";
 import productClient from "@/lib/services/productClient";
+import executionClient from "@/lib/services/executionClient";
 
 const BoxWhiskerChart = dynamic(() => import("@/components/BoxWhiskerChart"), {
   ssr: false,
@@ -22,14 +22,6 @@ const BoxWhiskerChart = dynamic(() => import("@/components/BoxWhiskerChart"), {
       </div>
   ),
 });
-
-async function loadPendingExecutions(): Promise<ProcessExecutionRead[]> {
-  const res = await fetch("/api/process-executions?pending=true", {credentials: "include"});
-  if (!res.ok) {
-    throw new Error(await res.text());
-  }
-  return res.json();
-}
 
 async function toPendingTask(execution: ProcessExecutionRead): Promise<PendingTask> {
   const processTemplate = await templateClient.getProcessTemplateById(execution.processId);
@@ -54,7 +46,7 @@ async function toPendingTask(execution: ProcessExecutionRead): Promise<PendingTa
     currentStep: currentStepName,
     currentStepNumber: currentStepIndex + 1,
     totalSteps,
-    openRoute: `/process-control/new-production/${execution.processId}/${stepExecution.stepId}`,
+    openRoute: `/process-control/${execution.id}/${stepExecution.stepId}`,
   };
 }
 
@@ -84,7 +76,7 @@ const PendingTasksPage = () => {
     const loadData = async () => {
       try {
         setChartLoading(true);
-        const executions = await loadPendingExecutions();
+        const executions = await executionClient.getAllProcessExecutions({pending: true})
         const mappedTasks = await Promise.all(executions.map(toPendingTask));
         setTasks(mappedTasks);
 
@@ -101,8 +93,6 @@ const PendingTasksPage = () => {
 
     void loadData();
   }, []);
-
-  const emptyTasksMessage = useMemo(() => (tasks.length === 0 ? "No pending tasks" : null), [tasks.length]);
 
   return (
       <div className="page">
@@ -174,34 +164,6 @@ const PendingTasksPage = () => {
                   ))}
             </div>
         )}
-
-        <div className={styles.tasksSection}>
-          <h2 className={styles.sectionTitle}>Pending Tasks List</h2>
-          <div className={styles.container}>
-            {emptyTasksMessage ? (
-                <div className={styles.emptyState}>
-                  <p>{emptyTasksMessage}</p>
-                </div>
-            ) : (
-                tasks.map((task) => (
-                    <div
-                        key={task.id}
-                        onClick={() => router.push(task.openRoute)}
-                        style={{cursor: "pointer"}}
-                        className={styles.cardContainer}
-                    >
-                      <PendingTaskCard
-                          productName={task.productName}
-                          startDate={task.startDate}
-                          currentStep={task.currentStep}
-                          currentStepNumber={task.currentStepNumber}
-                          totalSteps={task.totalSteps}
-                      />
-                    </div>
-                ))
-            )}
-          </div>
-        </div>
       </div>
   );
 };

@@ -29,15 +29,11 @@ export default function ProductsInventoryPage() {
             if (!mounted) return;
 
             const mapped = productItems.map((item) => {
-                const qty = item.inventoryLots.reduce(
-                    (sum: number, lot) => sum + Number(lot.quantity),
-                    0
-                );
                 return {
                     id: item.id,
                     name: item.product!.name,
                     image: item.product!.imgUrl ?? "/globe.svg",
-                    quantity: qty,
+                    quantity: item.quantity,
                     units: item.product!.unit.name,
                 };
             });

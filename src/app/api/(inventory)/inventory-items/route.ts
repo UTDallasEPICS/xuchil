@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
       take: limit,
       orderBy: { id: "asc" },
       include: {
-        inventoryLots: true,
+        inventoryMovements: true,
         product: {
           include: {
             unit: true
@@ -54,7 +54,7 @@ export const POST = async (req: NextRequest) => {
     const newItem = await prisma.inventoryItem.create({
       data: res.data,
       include: {
-        inventoryLots: true,
+        inventoryMovements: true,
         product: {
           include: {
             unit: true

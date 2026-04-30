@@ -4,29 +4,24 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import HeaderXuchil from "@/components/HeaderXuchil";
 import ImageCard from "@/components/ImageCard";
-import { ProductVariant } from "@/types/ProductVariant";
 import styles from "./ProductDetail.module.css";
+import {ProductRead} from "@/lib/schemas";
+import productClient from "@/lib/services/productClient";
 
 const ProductDetailPage = () => {
-  const { productId } = useParams();
-  const [productVariants, setProductVariants] = useState<ProductVariant[]>([]);
+  const { categoryId } = useParams();
+  const [products, setProducts] = useState<ProductRead[]>([]);
 
   useEffect(() => {
     let mounted = true;
 
     async function load() {
-      const response = await fetch(`/api/product-variants?product_id=${productId}`, { credentials: "include" });
-      if (!response.ok) return;
-      const data = await response.json();
+      const data = (
+          await productClient.getAllProducts()
+      ).filter(p => p.categoryId == Number(categoryId))
       if (!mounted) return;
 
-      setProductVariants(
-        data.map((variant: any) => ({
-          id: String(variant.id),
-          name: variant.name,
-          imageSrc: variant.imageUrl || "/globe.svg",
-        }))
-      );
+      setProducts(data);
     }
 
     load();
@@ -34,9 +29,9 @@ const ProductDetailPage = () => {
     return () => {
       mounted = false;
     };
-  }, [productId]);
+  }, [categoryId]);
 
-  if (!productVariants || productVariants.length === 0) {
+  if (!products || products.length === 0) {
     return (
       <div className="page">
         <HeaderXuchil />
@@ -50,13 +45,13 @@ const ProductDetailPage = () => {
       <HeaderXuchil />
       <h1>Elige el tipo de producto en el que vas a trabajar...</h1>
       <div className={styles.container}>
-        {productVariants.map((variant) => (
+        {products.map((product) => (
           <ImageCard
-            key={variant.id}
-            imageSrc={variant.imageSrc}
-            text={variant.name}
+            key={product.id}
+            imageSrc={product.imgUrl ?? '/globe.svg'}
+            text={product.name}
             type="small"
-            route={`/process-control/new-production/${productId}/${variant.id}/1`}
+            route={`/process-control/new-production/products/${product.id}`}
           />
         ))}
       </div>

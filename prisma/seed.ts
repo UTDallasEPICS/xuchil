@@ -7,6 +7,7 @@ import {
   ItemType,
   MovementReason
 } from "@prisma/client";
+import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 
@@ -192,7 +193,7 @@ async function main() {
       email: "admin@example.com",
       phone: "1111111111",
       imgUrl: "https://example.com/admin.jpg",
-      passwordHash: "hashedpassword",
+      passwordHash: await bcrypt.hash("adminpassword", 10),
       isAdmin: true,
       isGuest: false,
     },
@@ -204,7 +205,7 @@ async function main() {
       email: "worker@example.com",
       phone: "2222222222",
       imgUrl: "https://example.com/worker.jpg",
-      passwordHash: "hashedpassword",
+      passwordHash: await bcrypt.hash("workerpassword", 10),
       isAdmin: false,
       isGuest: false,
     },
@@ -368,7 +369,7 @@ async function main() {
   // inventory movements
   await prisma.inventoryMovement.create({
     data: {
-      itemId: flourInventory.id,
+      inventoryItemId: flourInventory.id,
       quantityChange: 100,
       reason: MovementReason.PURCHASE,
       note: "Initial flour stock",
@@ -378,7 +379,7 @@ async function main() {
 
   await prisma.inventoryMovement.create({
     data: {
-      itemId: waterInventory.id,
+      inventoryItemId: waterInventory.id,
       quantityChange: 200,
       reason: MovementReason.PURCHASE,
       note: "Initial water stock",
@@ -388,7 +389,7 @@ async function main() {
 
   await prisma.inventoryMovement.create({
     data: {
-      itemId: yeastInventory.id,
+      inventoryItemId: yeastInventory.id,
       quantityChange: 25,
       reason: MovementReason.PURCHASE,
       note: "Initial yeast stock",
@@ -398,7 +399,7 @@ async function main() {
 
   await prisma.inventoryMovement.create({
     data: {
-      itemId: sugarInventory.id,
+      inventoryItemId: sugarInventory.id,
       quantityChange: 45,
       reason: MovementReason.PURCHASE,
       note: "Initial sugar stock",
@@ -408,7 +409,7 @@ async function main() {
 
   await prisma.inventoryMovement.create({
     data: {
-      itemId: butterInventory.id,
+      inventoryItemId: butterInventory.id,
       quantityChange: 30,
       reason: MovementReason.PURCHASE,
       note: "Initial butter stock",
@@ -418,7 +419,7 @@ async function main() {
 
   await prisma.inventoryMovement.create({
     data: {
-      itemId: breadInventory.id,
+      inventoryItemId: breadInventory.id,
       quantityChange: 10,
       reason: MovementReason.COMPLETION_RUN,
       note: "Initial bread stock",
@@ -428,7 +429,7 @@ async function main() {
 
   await prisma.inventoryMovement.create({
     data: {
-      itemId: lemonadeInventory.id,
+      inventoryItemId: lemonadeInventory.id,
       quantityChange: 15,
       reason: MovementReason.COMPLETION_RUN,
       note: "Initial lemonade stock",
@@ -440,7 +441,6 @@ async function main() {
   const processExecution = await prisma.processExecution.create({
     data: {
       processId: breadProcess.id,
-      batchCode: "BATCH-001",
       plannedQuantity: 20,
       status: ProcessStatus.IN_PROGRESS,
       startedAt: new Date(),
@@ -461,7 +461,7 @@ async function main() {
     },
   });
 
-  const stepExecution2 = await prisma.processStepExecution.create({
+  await prisma.processStepExecution.create({
     data: {
       processExecutionId: processExecution.id,
       stepId: step2.id,
@@ -489,11 +489,11 @@ async function main() {
 
   await prisma.inventoryMovement.create({
     data: {
-      itemId: flourInventory.id,
+      inventoryItemId: flourInventory.id,
       quantityChange: -5,
       reason: MovementReason.CONSUMPTION_STEP,
       relatedStepMaterialUsageId: flourUsage.id,
-      processStepExecutionId: stepExecution1.id,
+      relatedProcessExecutionId: processExecution.id,
       note: "Flour used in batch",
       movedAt: new Date(),
     },
@@ -710,7 +710,7 @@ async function main() {
 
   await prisma.inventoryMovement.create({
     data: {
-      itemId: breadInventory.id,
+      inventoryItemId: breadInventory.id,
       quantityChange: -2,
       reason: MovementReason.OUTBOUND_ORDER,
       relatedOrderId: order1.id,
@@ -721,7 +721,7 @@ async function main() {
 
   await prisma.inventoryMovement.create({
     data: {
-      itemId: breadInventory.id,
+      inventoryItemId: breadInventory.id,
       quantityChange: -4,
       reason: MovementReason.OUTBOUND_ORDER,
       relatedOrderId: order2.id,
@@ -732,7 +732,7 @@ async function main() {
 
   await prisma.inventoryMovement.create({
     data: {
-      itemId: lemonadeInventory.id,
+      inventoryItemId: lemonadeInventory.id,
       quantityChange: -3,
       reason: MovementReason.OUTBOUND_ORDER,
       relatedOrderId: order2.id,
@@ -743,7 +743,7 @@ async function main() {
 
   await prisma.inventoryMovement.create({
     data: {
-      itemId: baguetteInventory.id,
+      inventoryItemId: baguetteInventory.id,
       quantityChange: -6,
       reason: MovementReason.OUTBOUND_ORDER,
       relatedOrderId: order3.id,
@@ -754,7 +754,7 @@ async function main() {
 
   await prisma.inventoryMovement.create({
     data: {
-      itemId: dinnerRollsInventory.id,
+      inventoryItemId: dinnerRollsInventory.id,
       quantityChange: -5,
       reason: MovementReason.OUTBOUND_ORDER,
       relatedOrderId: order3.id,

@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import XuchilHeader from "@/components/HeaderXuchil";
 import DynamicTable from "@/components/DynamicTable";
-import { movementColumns } from "@/constants/tableData";
 import styles from "./DetailPage.module.css";
 import inventoryClient from "@/lib/services/inventoryClient";
 import {InventoryMovementRead} from "@/lib/schemas";
@@ -26,33 +25,19 @@ export default function InventoryDetailPage() {
     async function load() {
       const item = await inventoryClient.getInventoryItemById(Number(id));
 
-      const qty = (item.inventoryLots).reduce(
-          (sum: number, lot) => sum + lot.quantity,
-        0
-      );
-
       const mappedItem: DetailItem = {
         name: item.itemType === "RAW"
           ? item.rawMaterial!.name
           : item.product!.name,
-        quantity: qty,
+        quantity: item.quantity,
         units: item.itemType === "RAW"
           ? item.rawMaterial!.unit.name
           : item.product!.unit.name,
       };
 
-      const movementsByLot = await Promise.all(item.inventoryLots.map(async lot => {
-        const movements = await inventoryClient.getAllInventoryMovements({
-          inventoryLotId: lot.id,
-        })
-        return movements;
-      }));
-
       if (!mounted) return;
       setItem(mappedItem);
-      const flattedMovements = movementsByLot.flat();
-      flattedMovements.sort((a, b) => new Date(b.movedAt).getTime() - new Date(a.movedAt).getTime());
-      setMovements(movementsByLot.flat());
+      setMovements(item.inventoryMovements);
     }
 
     load();

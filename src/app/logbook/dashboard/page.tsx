@@ -25,8 +25,7 @@ interface DashboardProps {
     selectedMonth: any;
 }
 
-export default function Dashboard(
-    { currentUser, isAdminMode, selectedProduct, selectedUser, selectedMonth}: DashboardProps   ) { 
+export default function Dashboard({ currentUser, isAdminMode, selectedProduct, selectedUser, selectedMonth}: DashboardProps) {
     return (
         <div className={styles.container}> 
             <h6 className={styles.dashboardTitle}>Panel</h6>
