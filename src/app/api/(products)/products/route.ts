@@ -8,6 +8,12 @@ export async function GET(req: NextRequest) {
     const items = await prisma.product.findMany({
       include: {
         unit: true,
+        inventoryItem: {
+          include: 
+          {
+            inventoryLots: true
+          }
+        }
       }
     });
     return fetchSuccess(items);

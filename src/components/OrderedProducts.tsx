@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import styles from "@/styles/OrderedProducts.module.css";
 import { Plus } from "lucide-react";
 import OrderPicker, { OrderPickerValue } from "@/components/OrderPicker";
-import {ProductRead} from "@/lib/schemas";
+import { ProductRead } from "@/lib/schemas";
 
 interface OrderedProductsProps {
   products: ProductRead[];
@@ -17,8 +17,12 @@ type InternalOrder = {
   value: OrderPickerValue;
 };
 
-const OrderedProducts: React.FC<OrderedProductsProps> = ({ products, value, onChange }) => {
-  const defaultProductId = products[0]?.id ?? "";
+const OrderedProducts: React.FC<OrderedProductsProps> = ({
+  products,
+  value,
+  onChange,
+}) => {
+  const defaultProductId = products[0]?.id ?? 0;
 
   const initialOrders = useMemo<InternalOrder[]>(() => {
     if (value && value.length > 0) {
@@ -46,12 +50,22 @@ const OrderedProducts: React.FC<OrderedProductsProps> = ({ products, value, onCh
         .map((order) => order.value)
         .filter((item) => item.productId && item.quantity > 0)
     );
-  }, [orders, onChange]);
+  }, [orders]);
 
   const addOrder = () =>
     setOrders((prev) => {
       const nextId = prev.length ? prev[prev.length - 1].id + 1 : 0;
-      return [...prev, { id: nextId, value: { productId: defaultProductId, quantity: 1 } }];
+
+      return [
+        ...prev,
+        {
+          id: nextId,
+          value: {
+            productId: defaultProductId,
+            quantity: 1,
+          },
+        },
+      ];
     });
 
   const removeOrder = (id: number) =>
@@ -59,11 +73,21 @@ const OrderedProducts: React.FC<OrderedProductsProps> = ({ products, value, onCh
 
   const updateOrder = (id: number, nextValue: OrderPickerValue) => {
     setOrders((prev) =>
-      prev.map((order) =>
-        order.id === id
-          ? { ...order, value: nextValue }
-          : order
-      )
+      prev.map((order) => {
+        if (order.id !== id) return order;
+
+        if (
+          order.value.productId === nextValue.productId &&
+          order.value.quantity === nextValue.quantity
+        ) {
+          return order;
+        }
+
+        return {
+          ...order,
+          value: nextValue,
+        };
+      })
     );
   };
 

@@ -6,7 +6,17 @@ import { ProcessStepExecutionCreateSchema } from "@/lib/schemas";
 
 export async function GET(req: NextRequest) {
   try {
-    const items = await prisma.processStepExecution.findMany({});
+  
+    const items = await prisma.processStepExecution.findMany({
+     include: {
+      processStepWorkers: {
+        include: { 
+          worker: true
+        }
+      }
+     }
+    });
+
     return fetchSuccess(items);
   } catch (e) {
     return serverError("processStepExecution", "fetch", e);

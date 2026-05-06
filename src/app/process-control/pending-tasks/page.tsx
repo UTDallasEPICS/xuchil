@@ -23,12 +23,16 @@ const BoxWhiskerChart = dynamic(() => import("@/components/BoxWhiskerChart"), {
   ),
 });
 
-async function loadPendingExecutions(): Promise<ProcessExecutionRead[]> {
-  const res = await fetch("/api/process-executions?pending=true", {credentials: "include"});
+async function loadPendingExecutions(): Promise<ProcessExecutionRead[]> { //this is an api call to get the tasks themsevles
+  const res = await fetch("/api/process-step-executions", {credentials: "include"});
   if (!res.ok) {
     throw new Error(await res.text());
   }
-  return res.json();
+  const data = await res.json()
+  console.log("data",data)
+  return data;
+
+
 }
 
 async function toPendingTask(execution: ProcessExecutionRead): Promise<PendingTask> {
@@ -85,8 +89,9 @@ const PendingTasksPage = () => {
       try {
         setChartLoading(true);
         const executions = await loadPendingExecutions();
-        const mappedTasks = await Promise.all(executions.map(toPendingTask));
-        setTasks(mappedTasks);
+        console.log("executions",executions)
+       
+        setTasks(executions);
 
         const chartRows = (await Promise.all(executions.map(executionToTaskTime)))
             .filter((item) => item != null);

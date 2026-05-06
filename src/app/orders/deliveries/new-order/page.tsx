@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState,useEffect } from "react";
 import { useRouter } from "next/navigation";
 import HeaderXuchil from "@/components/HeaderXuchil";
 import BottomButton from "@/components/BottomButton";
@@ -10,9 +10,7 @@ import DatePicker from "@/components/DatePicker";
 import OrderedProducts from "@/components/OrderedProducts";
 import { deliveryVariants } from "@/constants/deliveryConfig";
 import styles from "./NewOrder.module.css";
-import productClient from "@/lib/services/productClient";
-import orderClient from "@/lib/services/orderClient";
-import {ProductRead} from "@/lib/schemas";
+import { ProductRead } from "@/lib/schemas";
 
 type OrderItemDraft = {
   productId: number;
@@ -20,7 +18,6 @@ type OrderItemDraft = {
 };
 
 const NewOrderPage = () => {
-  const [products, setProducts] = useState<ProductRead[]>([]);
   const [clientName, setClientName] = useState("");
   const [deliveryDate, setDeliveryDate] = useState<Date | null>(null);
   const [address, setAddress] = useState("");
@@ -31,29 +28,29 @@ const NewOrderPage = () => {
 
   const router = useRouter();
 
-  useEffect(() => {
-    let mounted = true;
+  const [products, setProducts] = useState<ProductRead[]>([]);
 
-    async function loadProducts() {
-      try {
-        const data = await productClient.getAllProducts();
-        if (!Array.isArray(data)) return;
-        if (!mounted) return;
 
-        setProducts(data);
-      } catch (error) {
-        console.error("Failed to load product variants:", error);
+useEffect(() => {
+  async function fetchProducts() {
+    try {
+      const res = await fetch("/api/products");
+
+      if (!res.ok) {
+        throw new Error("Failed to fetch products");
       }
-    }
 
-    loadProducts();
+      const data = await res.json();
+      setProducts(data);
+    } catch (error) {
+      console.error(error);
+    } 
+  }
 
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  fetchProducts();
+}, []);
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (!clientName.trim()) {
       alert("El nombre del cliente es obligatorio.");
       return;
@@ -75,30 +72,24 @@ const NewOrderPage = () => {
         quantity: item.quantity,
       }))
       .filter((item) => !Number.isNaN(item.productId) && item.quantity > 0);
+
     if (validItems.length === 0) {
       alert("Agrega al menos un producto al pedido.");
       return;
     }
 
-    try {
-      const order = await orderClient.createOrder({
-        clientName: clientName.trim(),
-        address: address.trim(),
-        deliveryDate: deliveryDate.toISOString(),
-        deliveryVariant: deliveryVariant,
-        status: "SCHEDULED" as const,
-      });
-      await Promise.all(validItems.map(async (item) => {
-        await orderClient.createOrderItem({
-          orderId: order.id,
-          productId: item.productId,
-          quantity: item.quantity,
-        });
-      }));
-      router.replace("/orders/deliveries");
-    } catch (error) {
-      alert(error instanceof Error ? error.message : "Error al crear el pedido.");
-    }
+    const newOrder = {
+      clientName: clientName.trim(),
+      address: address.trim(),
+      deliveryDate: deliveryDate.toISOString(),
+      deliveryVariant,
+      status: "SCHEDULED",
+      orderItems: validItems,
+    };
+
+    console.log("Dummy order created:", newOrder);
+
+    router.replace("/orders/deliveries");
   };
 
   return (
@@ -141,7 +132,10 @@ const NewOrderPage = () => {
 
       <h3>Productos:</h3>
       {products.length > 0 ? (
-        <OrderedProducts products={products} onChange={(draft) => setOrderItems(draft)} />
+        <OrderedProducts
+          products={products}
+          onChange={(draft) => setOrderItems(draft)}
+        />
       ) : (
         <p>Cargando productos...</p>
       )}

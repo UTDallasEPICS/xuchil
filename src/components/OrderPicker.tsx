@@ -6,7 +6,7 @@ import { Trash } from "lucide-react";
 import ProductPicker from "@/components/ProductPicker";
 import QuantityPicker from "@/components/QuantityPicker";
 import DeleteModal from "@/components/DeleteModal";
-import {ProductRead} from "@/lib/schemas";
+import { ProductRead } from "@/lib/schemas";
 
 export interface OrderPickerValue {
   productId: number;
@@ -26,34 +26,43 @@ const OrderPicker: React.FC<OrderPickerProps> = ({
   products,
   onDelete,
   value,
-  onChange,
+
 }) => {
-  const fallbackProductId = products[0]?.id ?? "";
-  const [selectedProductId, setSelectedProductId] = useState(value?.productId ?? fallbackProductId);
+  const fallbackProductId = products[0]?.id ?? 0;
+
+  const [selectedProductId, setSelectedProductId] = useState(
+    value?.productId ?? fallbackProductId
+  );
+
   const [units, setUnits] = useState(value?.quantity ?? 1);
   const [showModal, setShowModal] = useState(false);
 
   React.useEffect(() => {
     if (value) {
-      setSelectedProductId(value.productId);
-      setUnits(value.quantity);
+      if (selectedProductId !== value.productId) {
+        setSelectedProductId(value.productId);
+      }
+
+      if (units !== value.quantity) {
+        setUnits(value.quantity);
+      }
+
       return;
     }
 
     if (!selectedProductId && fallbackProductId) {
       setSelectedProductId(fallbackProductId);
     }
-  }, [value, selectedProductId, fallbackProductId]);
+  }, [value, selectedProductId, units, fallbackProductId]);
 
-  React.useEffect(() => {
-    onChange?.({ productId: selectedProductId, quantity: units });
-  }, [selectedProductId, units, onChange]);
+  
 
   return (
     <>
       <div className={styles.card}>
         <div className={styles.header}>
           <h2>{`Producto ${index}`}</h2>
+
           <button
             type="button"
             className={styles.removeBtn}
@@ -71,6 +80,7 @@ const OrderPicker: React.FC<OrderPickerProps> = ({
         />
 
         <h3 className={styles.unitsLabel}>Unidades:</h3>
+
         <QuantityPicker value={units} onChange={setUnits} min={1} />
       </div>
 

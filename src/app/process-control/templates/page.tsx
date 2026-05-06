@@ -1,192 +1,122 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import HeaderXuchil from "@/components/HeaderXuchil";
 import Button from "@/components/Button";
 import styles from "./Templates.module.css";
-import templateClient from "@/lib/services/templateClient";
-import productClient from "@/lib/services/productClient";
-import {
-  ProcessTemplateRead,
-  ProcessTemplateStepMaterialRead,
-  ProcessTemplateStepRead,
-  ProductRead,
-  RawMaterialRead,
-} from "@/lib/schemas";
 
 const TemplatesPage = () => {
   const router = useRouter();
-  const [templates, setTemplates] = useState<ProcessTemplateRead[]>([]);
-  const [products, setProducts] = useState<ProductRead[]>([]);
-  const [rawMaterials, setRawMaterials] = useState<RawMaterialRead[]>([]);
-  const [expandedId, setExpandedId] = useState<number | null>(null);
-  const [showNewTemplate, setShowNewTemplate] = useState(false);
-  const [editingTemplateId, setEditingTemplateId] = useState<number | null>(null);
-  const [editingStepId, setEditingStepId] = useState<number | null>(null);
-  const [editingMaterialId, setEditingMaterialId] = useState<number | null>(null);
-  const [showNewStepForTemplateId, setShowNewStepForTemplateId] = useState<number | null>(null);
-  const [showNewMaterialForStepId, setShowNewMaterialForStepId] = useState<number | null>(null);
 
+  const [templates, setTemplates] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [expandedId, setExpandedId] = useState(null);
+
+  const [showNewTemplate, setShowNewTemplate] = useState(false);
   const [newTplProductId, setNewTplProductId] = useState("");
   const [newTplName, setNewTplName] = useState("");
 
-  const [editTplProductId, setEditTplProductId] = useState("");
-  const [editTplName, setEditTplName] = useState("");
-
-  const [newStepPosition, setNewStepPosition] = useState("");
-  const [newStepName, setNewStepName] = useState("");
-  const [newStepDuration, setNewStepDuration] = useState("");
-  const [newStepInstructions, setNewStepInstructions] = useState("");
-
-  const [editStepPosition, setEditStepPosition] = useState("");
-  const [editStepName, setEditStepName] = useState("");
-  const [editStepDuration, setEditStepDuration] = useState("");
-  const [editStepInstructions, setEditStepInstructions] = useState("");
-
-  const [newMaterialRawMaterialId, setNewMaterialRawMaterialId] = useState("");
-  const [editMaterialRawMaterialId, setEditMaterialRawMaterialId] = useState("");
+  const [draftSteps, setDraftSteps] = useState([
+    {
+      position: 1,
+      name: "",
+      idealDurationMin: "",
+      instructions: "",
+      materialsText: "",
+    },
+  ]);
 
   const loadTemplates = useCallback(async () => {
-    const data = await templateClient.getAllProcessTemplates();
+    const res = await fetch("/api/process-templates", {
+      credentials: "include",
+    });
+
+    if (!res.ok) throw new Error(await res.text());
+
+    const data = await res.json();
     setTemplates(data);
   }, []);
 
   const loadProducts = useCallback(async () => {
-    setProducts(await productClient.getAllProducts());
-  }, []);
+    const res = await fetch("/api/products", {
+      credentials: "include",
+    });
 
-  const loadRawMaterials = useCallback(async () => {
-    setRawMaterials(await productClient.getAllRawMaterials());
+    if (!res.ok) throw new Error(await res.text());
+
+    const data = await res.json();
+    setProducts(data);
   }, []);
 
   useEffect(() => {
     void loadTemplates();
     void loadProducts();
-    void loadRawMaterials();
-  }, [loadTemplates, loadProducts, loadRawMaterials]);
+  }, [loadTemplates, loadProducts]);
 
-  const productById = useMemo(() => new Map(products.map((p) => [p.id, p])), [products]);
-  const rawMaterialById = useMemo(() => new Map(rawMaterials.map((m) => [m.id, m])), [rawMaterials]);
-
-  const refresh = async () => {
-    await loadTemplates();
+  const addDraftStep = () => {
+    setDraftSteps((current) => [
+      ...current,
+      {
+        position: current.length + 1,
+        name: "",
+        idealDurationMin: "",
+        instructions: "",
+        materialsText: "",
+      },
+    ]);
   };
 
-  const startEditTemplate = (tpl: ProcessTemplateRead) => {
-    setEditingTemplateId(tpl.id);
-    setEditTplProductId(String(tpl.productId));
-    setEditTplName(tpl.name);
+  const updateDraftStep = (index, field, value) => {
+    setDraftSteps((current) =>
+      current.map((step, i) =>
+        i === index ? { ...step, [field]: value } : step
+      )
+    );
   };
 
-  const saveTemplate = async (tplId: number) => {
-    await templateClient.updateProcessTemplate(tplId, {
-      productId: Number(editTplProductId),
-      name: editTplName.trim(),
-    });
-    setEditingTemplateId(null);
-    await refresh();
+  const removeDraftStep = (index) => {
+    setDraftSteps((current) =>
+      current
+        .filter((_, i) => i !== index)
+        .map((step, i) => ({ ...step, position: i + 1 }))
+    );
   };
 
-  const createTemplate = async () => {
-    await templateClient.createProcessTemplate({
+  const previewTemplate = () => {
+    console.log({
       productId: Number(newTplProductId),
       name: newTplName.trim(),
+      steps: draftSteps,
     });
+
     setShowNewTemplate(false);
     setNewTplProductId("");
     setNewTplName("");
-    await refresh();
+    setDraftSteps([
+      {
+        position: 1,
+        name: "",
+        idealDurationMin: "",
+        instructions: "",
+        materialsText: "",
+      },
+    ]);
   };
-
-  const deleteTemplate = async (tplId: number) => {
-    if (!confirm("¿Eliminar esta plantilla?")) return;
-    await templateClient.deleteProcessTemplate(tplId);
-    await refresh();
-  };
-
-  const startEditStep = (step: ProcessTemplateStepRead) => {
-    setEditingStepId(step.id);
-    setEditStepPosition(String(step.position));
-    setEditStepName(step.name);
-    setEditStepDuration(step.idealDurationMin == null ? "" : String(step.idealDurationMin));
-    setEditStepInstructions(step.instructions ?? "");
-  };
-
-  const createStep = async (templateId: number) => {
-    const nextPosition = Number(newStepPosition);
-    await templateClient.createProcessTemplateStep({
-      processId: templateId,
-      position: nextPosition,
-      name: newStepName.trim(),
-      idealDurationMin: newStepDuration ? Number(newStepDuration) : undefined,
-      instructions: newStepInstructions.trim() || undefined,
-    });
-    setShowNewStepForTemplateId(null);
-    setNewStepPosition("");
-    setNewStepName("");
-    setNewStepDuration("");
-    setNewStepInstructions("");
-    await refresh();
-  };
-
-  const saveStep = async (step: ProcessTemplateStepRead) => {
-    await templateClient.updateProcessTemplateStep(step.id, {
-      processId: step.processId,
-      position: Number(editStepPosition),
-      name: editStepName.trim(),
-      idealDurationMin: editStepDuration ? Number(editStepDuration) : undefined,
-      instructions: editStepInstructions.trim() || undefined,
-    });
-    setEditingStepId(null);
-    await refresh();
-  };
-
-  const deleteStep = async (stepId: number) => {
-    if (!confirm("¿Eliminar este paso?")) return;
-    await templateClient.deleteProcessTemplateStep(stepId);
-    await refresh();
-  };
-
-  const startEditMaterial = (material: ProcessTemplateStepMaterialRead) => {
-    setEditingMaterialId(material.id);
-    setEditMaterialRawMaterialId(String(material.rawMaterialId));
-  };
-
-  const createMaterial = async (stepId: number) => {
-    await templateClient.createProcessTemplateStepMaterial({
-      stepId,
-      rawMaterialId: Number(newMaterialRawMaterialId),
-    });
-    setShowNewMaterialForStepId(null);
-    setNewMaterialRawMaterialId("");
-    await refresh();
-  };
-
-  const saveMaterial = async (material: ProcessTemplateStepMaterialRead) => {
-    await templateClient.updateProcessTemplateStepMaterial(material.id, {
-      stepId: material.stepId,
-      rawMaterialId: Number(editMaterialRawMaterialId),
-    });
-    setEditingMaterialId(null);
-    await refresh();
-  };
-
-  const deleteMaterial = async (materialId: number) => {
-    if (!confirm("¿Eliminar este material?")) return;
-    await templateClient.deleteProcessTemplateStepMaterial(materialId);
-    await refresh();
-  };
-
-  const getProductLabel = (productId: number) => productById.get(productId)?.name ?? `Producto #${productId}`;
 
   return (
     <div className="page">
       <HeaderXuchil />
+
       <div className={styles.container}>
         <div className={styles.headerRow}>
           <h1>Plantillas de proceso</h1>
-          <Button size="small" action="secondary" onClick={() => setShowNewTemplate((v) => !v)}>
+
+          <Button
+            size="small"
+            action="secondary"
+            onClick={() => setShowNewTemplate((current) => !current)}
+          >
             + Nueva plantilla
           </Button>
         </div>
@@ -194,170 +124,219 @@ const TemplatesPage = () => {
         {showNewTemplate && (
           <div className={styles.formCard}>
             <h3>Nueva plantilla</h3>
+
             <label>Producto</label>
-            <select className={styles.select} value={newTplProductId} onChange={(e) => setNewTplProductId(e.target.value)}>
-              <option value="">Seleccionar...</option>
+            <select
+              className={styles.select}
+              value={newTplProductId}
+              onChange={(e) => setNewTplProductId(e.target.value)}
+            >
+              <option value="">Seleccionar producto...</option>
+
               {products.map((product) => (
                 <option key={product.id} value={product.id}>
                   {product.name}
                 </option>
               ))}
             </select>
-            <label>Nombre</label>
-            <input className={styles.input} value={newTplName} onChange={(e) => setNewTplName(e.target.value)} />
+
+            <label>Nombre del proceso</label>
+            <input
+              className={styles.input}
+              value={newTplName}
+              onChange={(e) => setNewTplName(e.target.value)}
+              placeholder="Ej: Basic Bread Process"
+            />
+
+            <h4>Pasos</h4>
+
+            {draftSteps.map((step, index) => (
+              <div key={index} className={styles.formCard}>
+                <h4>Paso {index + 1}</h4>
+
+                <input
+                  className={styles.input}
+                  type="number"
+                  value={step.position}
+                  onChange={(e) =>
+                    updateDraftStep(index, "position", Number(e.target.value))
+                  }
+                  placeholder="Posición"
+                />
+
+                <input
+                  className={styles.input}
+                  value={step.name}
+                  onChange={(e) =>
+                    updateDraftStep(index, "name", e.target.value)
+                  }
+                  placeholder="Nombre del paso"
+                />
+
+                <input
+                  className={styles.input}
+                  type="number"
+                  value={step.idealDurationMin}
+                  onChange={(e) =>
+                    updateDraftStep(
+                      index,
+                      "idealDurationMin",
+                      e.target.value
+                    )
+                  }
+                  placeholder="Duración ideal en minutos"
+                />
+
+                <input
+                  className={styles.input}
+                  value={step.instructions}
+                  onChange={(e) =>
+                    updateDraftStep(index, "instructions", e.target.value)
+                  }
+                  placeholder="Instrucciones"
+                />
+
+                <input
+                  className={styles.input}
+                  value={step.materialsText}
+                  onChange={(e) =>
+                    updateDraftStep(index, "materialsText", e.target.value)
+                  }
+                  placeholder="Materiales separados por coma. Ej: Flour, Water, Yeast"
+                />
+
+                {draftSteps.length > 1 && (
+                  <Button
+                    size="small"
+                    action="secondary"
+                    onClick={() => removeDraftStep(index)}
+                  >
+                    Eliminar paso
+                  </Button>
+                )}
+              </div>
+            ))}
+
             <div className={styles.formActions}>
-              <Button size="small" action="primary" onClick={createTemplate}>Crear</Button>
-              <Button size="small" action="secondary" onClick={() => setShowNewTemplate(false)}>Cancelar</Button>
+              <Button size="small" action="secondary" onClick={addDraftStep}>
+                + Agregar paso
+              </Button>
+
+              <Button size="small" action="primary" onClick={previewTemplate}>
+                Crear preview
+              </Button>
+
+              <Button
+                size="small"
+                action="secondary"
+                onClick={() => setShowNewTemplate(false)}
+              >
+                Cancelar
+              </Button>
             </div>
           </div>
         )}
 
         {templates.map((tpl) => (
           <div key={tpl.id} className={styles.templateCard}>
-            <div className={styles.templateHeader} onClick={() => setExpandedId((current) => (current === tpl.id ? null : tpl.id))}>
+            <div
+              className={styles.templateHeader}
+              onClick={() =>
+                setExpandedId((current) =>
+                  current === tpl.id ? null : tpl.id
+                )
+              }
+            >
               <div className={styles.templateInfo}>
                 <span className={styles.templateName}>{tpl.name}</span>
-                <span className={styles.variantLabel}>{getProductLabel(tpl.productId)}</span>
+
+                <span className={styles.variantLabel}>
+                  {tpl.product?.name ?? "Sin producto"}
+                </span>
               </div>
+
               <div className={styles.templateActions}>
-                <span className={styles.stepCount}>{tpl.processTemplateSteps.length} pasos</span>
-                <span className={styles.chevron}>{expandedId === tpl.id ? "▲" : "▼"}</span>
+                <span className={styles.stepCount}>
+                  {tpl.processTemplateSteps?.length ?? 0} pasos
+                </span>
+
+                <span className={styles.chevron}>
+                  {expandedId === tpl.id ? "▲" : "▼"}
+                </span>
               </div>
             </div>
 
             {expandedId === tpl.id && (
               <div className={styles.templateBody}>
-                <div className={styles.formActions}>
-                  <Button size="small" action="secondary" onClick={() => startEditTemplate(tpl)}>Editar plantilla</Button>
-                  <Button size="small" action="secondary" onClick={() => deleteTemplate(tpl.id)}>Eliminar plantilla</Button>
-                </div>
+                <h4>Pasos</h4>
 
-                {editingTemplateId === tpl.id && (
-                  <div className={styles.formCard}>
-                    <h4>Editar plantilla</h4>
-                    <label>Producto</label>
-                    <select className={styles.select} value={editTplProductId} onChange={(e) => setEditTplProductId(e.target.value)}>
-                      {products.map((product) => (
-                        <option key={product.id} value={product.id}>{product.name}</option>
-                      ))}
-                    </select>
-                    <label>Nombre</label>
-                    <input className={styles.input} value={editTplName} onChange={(e) => setEditTplName(e.target.value)} />
-                    <div className={styles.formActions}>
-                      <Button size="small" action="primary" onClick={() => saveTemplate(tpl.id)}>Guardar</Button>
-                      <Button size="small" action="secondary" onClick={() => setEditingTemplateId(null)}>Cancelar</Button>
-                    </div>
-                  </div>
+                {(tpl.processTemplateSteps?.length ?? 0) === 0 && (
+                  <p className={styles.noSteps}>Sin pasos definidos.</p>
                 )}
 
-                <h4>Pasos</h4>
-                {tpl.processTemplateSteps.length === 0 && <p className={styles.noSteps}>Sin pasos definidos.</p>}
                 <ol className={styles.stepList}>
-                  {tpl.processTemplateSteps
+                  {(tpl.processTemplateSteps ?? [])
                     .slice()
                     .sort((a, b) => a.position - b.position)
                     .map((step) => (
                       <li key={step.id} className={styles.stepItem}>
-                        {editingStepId === step.id ? (
-                          <div className={styles.stepEditForm}>
-                            <input className={styles.input} value={editStepPosition} onChange={(e) => setEditStepPosition(e.target.value)} type="number" placeholder="Posición" />
-                            <input className={styles.input} value={editStepName} onChange={(e) => setEditStepName(e.target.value)} placeholder="Nombre" />
-                            <input className={styles.input} value={editStepDuration} onChange={(e) => setEditStepDuration(e.target.value)} type="number" placeholder="Duración ideal (min)" />
-                            <input className={styles.input} value={editStepInstructions} onChange={(e) => setEditStepInstructions(e.target.value)} placeholder="Instrucciones" />
-                            <div className={styles.formActions}>
-                              <Button size="small" action="primary" onClick={() => saveStep(step)}>Guardar</Button>
-                              <Button size="small" action="secondary" onClick={() => setEditingStepId(null)}>Cancelar</Button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div>
-                            <div className={styles.stepRow}>
-                              <div className={styles.stepInfo}>
-                                <strong>{step.position}. {step.name}</strong>
-                                {step.idealDurationMin != null && <span className={styles.stepDuration}>{step.idealDurationMin} min</span>}
-                                {step.instructions && <span className={styles.stepInstr}>{step.instructions}</span>}
-                              </div>
-                              <div className={styles.stepActions}>
-                                <button className={styles.linkBtn} onClick={() => startEditStep(step)}>Editar</button>
-                                <button className={styles.linkBtn} onClick={() => deleteStep(step.id)}>Eliminar</button>
-                              </div>
-                            </div>
+                        <div>
+                          <div className={styles.stepRow}>
+                            <div className={styles.stepInfo}>
+                              <strong>
+                                {step.position}. {step.name}
+                              </strong>
 
-                            <div className={styles.materialsList}>
-                              <h5>Materiales</h5>
-                              {step.processTemplateStepMaterials.length === 0 && <p className={styles.noSteps}>Sin materiales.</p>}
-                              <ul>
-                                {step.processTemplateStepMaterials.map((material) => (
-                                  <li key={material.id}>
-                                    {editingMaterialId === material.id ? (
-                                      <div className={styles.formCard}>
-                                        <select className={styles.select} value={editMaterialRawMaterialId} onChange={(e) => setEditMaterialRawMaterialId(e.target.value)}>
-                                          {rawMaterials.map((raw) => (
-                                            <option key={raw.id} value={raw.id}>{raw.name}</option>
-                                          ))}
-                                        </select>
-                                        <div className={styles.formActions}>
-                                          <Button size="small" action="primary" onClick={() => saveMaterial(material)}>Guardar</Button>
-                                          <Button size="small" action="secondary" onClick={() => setEditingMaterialId(null)}>Cancelar</Button>
-                                        </div>
-                                      </div>
-                                    ) : (
-                                      <div className={styles.stepRow}>
-                                        <span>{rawMaterialById.get(material.rawMaterialId)?.name}</span>
-                                        <div className={styles.stepActions}>
-                                          <button className={styles.linkBtn} onClick={() => startEditMaterial(material)}>Editar</button>
-                                          <button className={styles.linkBtn} onClick={() => deleteMaterial(material.id)}>Eliminar</button>
-                                        </div>
-                                      </div>
-                                    )}
-                                  </li>
-                                ))}
-                              </ul>
+                              {step.idealDurationMin != null && (
+                                <span className={styles.stepDuration}>
+                                  {step.idealDurationMin} min
+                                </span>
+                              )}
 
-                              {showNewMaterialForStepId === step.id ? (
-                                <div className={styles.formCard}>
-                                  <select className={styles.select} value={newMaterialRawMaterialId} onChange={(e) => setNewMaterialRawMaterialId(e.target.value)}>
-                                    <option value="">Seleccionar material...</option>
-                                    {rawMaterials.map((raw) => (
-                                      <option key={raw.id} value={raw.id}>{raw.name}</option>
-                                    ))}
-                                  </select>
-                                  <div className={styles.formActions}>
-                                    <Button size="small" action="primary" onClick={() => createMaterial(step.id)}>Agregar</Button>
-                                    <Button size="small" action="secondary" onClick={() => setShowNewMaterialForStepId(null)}>Cancelar</Button>
-                                  </div>
-                                </div>
-                              ) : (
-                                <button className={styles.addStepBtn} onClick={() => setShowNewMaterialForStepId(step.id)}>+ Agregar material</button>
+                              {step.instructions && (
+                                <span className={styles.stepInstr}>
+                                  {step.instructions}
+                                </span>
                               )}
                             </div>
                           </div>
-                        )}
+
+                          <div className={styles.materialsList}>
+                            <h5>Materiales</h5>
+
+                            {(step.processTemplateStepMaterials?.length ?? 0) ===
+                              0 && (
+                              <p className={styles.noSteps}>Sin materiales.</p>
+                            )}
+
+                            <ul>
+                              {(step.processTemplateStepMaterials ?? []).map(
+                                (material) => (
+                                  <li key={material.id}>
+                                    <span>
+                                      {material.rawMaterial?.name ??
+                                        `Material #${material.rawMaterialId}`}
+                                    </span>
+                                  </li>
+                                )
+                              )}
+                            </ul>
+                          </div>
+                        </div>
                       </li>
                     ))}
                 </ol>
-
-                {showNewStepForTemplateId === tpl.id ? (
-                  <div className={styles.stepEditForm}>
-                    <h4>Agregar paso</h4>
-                    <input className={styles.input} value={newStepPosition} onChange={(e) => setNewStepPosition(e.target.value)} type="number" placeholder="Posición" />
-                    <input className={styles.input} value={newStepName} onChange={(e) => setNewStepName(e.target.value)} placeholder="Nombre" />
-                    <input className={styles.input} value={newStepDuration} onChange={(e) => setNewStepDuration(e.target.value)} type="number" placeholder="Duración ideal (min)" />
-                    <input className={styles.input} value={newStepInstructions} onChange={(e) => setNewStepInstructions(e.target.value)} placeholder="Instrucciones" />
-                    <div className={styles.formActions}>
-                      <Button size="small" action="primary" onClick={() => createStep(tpl.id)}>Agregar</Button>
-                      <Button size="small" action="secondary" onClick={() => setShowNewStepForTemplateId(null)}>Cancelar</Button>
-                    </div>
-                  </div>
-                ) : (
-                  <button className={styles.addStepBtn} onClick={() => setShowNewStepForTemplateId(tpl.id)}>+ Agregar paso</button>
-                )}
               </div>
             )}
           </div>
         ))}
 
-        <button className={styles.backBtn} onClick={() => router.push("/process-control")}>← Volver</button>
+        <button
+          className={styles.backBtn}
+          onClick={() => router.push("/process-control")}
+        >
+          ← Volver
+        </button>
       </div>
     </div>
   );

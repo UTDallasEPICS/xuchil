@@ -7,12 +7,16 @@ import { withAuthAdmin } from "@/utils/handlers";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+
     const { id } = await params;
     const idParsed = parseInt(id);
+
     if (Number.isNaN(idParsed)) {
       return idError("productCategory");
     }
-    const item = await prisma.productCategory.findUnique({ where: { id: idParsed } });
+    const item = await prisma.productCategory.findUnique({ where: { id: idParsed }, include: {
+      products: true
+    } });
     if (!item) {
       return notFoundError("productCategory");
     }

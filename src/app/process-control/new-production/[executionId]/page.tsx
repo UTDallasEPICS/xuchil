@@ -8,20 +8,22 @@ import { ProductVariant } from "@/types/ProductVariant";
 import styles from "./ProductDetail.module.css";
 
 const ProductDetailPage = () => {
-  const { productId } = useParams();
+  const  {executionId}  = useParams();
+
   const [productVariants, setProductVariants] = useState<ProductVariant[]>([]);
 
   useEffect(() => {
     let mounted = true;
-
     async function load() {
-      const response = await fetch(`/api/product-variants?product_id=${productId}`, { credentials: "include" });
+      const response = await fetch(`/api/product-categories/${executionId}`, { credentials: "include" });
       if (!response.ok) return;
       const data = await response.json();
+
+
       if (!mounted) return;
 
       setProductVariants(
-        data.map((variant: any) => ({
+        data.products.map((variant: any) => ({
           id: String(variant.id),
           name: variant.name,
           imageSrc: variant.imageUrl || "/globe.svg",
@@ -34,7 +36,7 @@ const ProductDetailPage = () => {
     return () => {
       mounted = false;
     };
-  }, [productId]);
+  }, [executionId]);
 
   if (!productVariants || productVariants.length === 0) {
     return (
@@ -56,7 +58,7 @@ const ProductDetailPage = () => {
             imageSrc={variant.imageSrc}
             text={variant.name}
             type="small"
-            route={`/process-control/new-production/${productId}/${variant.id}/1`}
+            route={`/process-control/new-production/${executionId}/${variant.id}`}
           />
         ))}
       </div>

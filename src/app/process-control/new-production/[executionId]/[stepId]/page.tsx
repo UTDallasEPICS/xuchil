@@ -1,5 +1,5 @@
 "use client";
-
+//this page needs surgery
 import { useParams, useRouter } from "next/navigation";
 import React, { useState, useEffect, useCallback } from "react";
 import HeaderXuchil from "@/components/HeaderXuchil";
@@ -11,7 +11,8 @@ import { ProcessStep } from "@/types/ProcessStep";
 import { ProductVariant } from "@/types/ProductVariant";
 
 const ProcessStepPage = () => {
-  const { productId, variantId, stepId } = useParams();
+  const { executionId, variantId, stepId } = useParams();
+  console.log("product",executionId,variantId)
   const router = useRouter();
 
   const [currentVariant, setCurrentVariant] = useState<ProductVariant | null>();
@@ -37,7 +38,7 @@ const ProcessStepPage = () => {
       const stepPosition = parseInt((stepId as string) || "1", 10);
       const positionIndex = stepPosition - 1; // convert to 0-based
 
-      const variantRes = await fetch(`/api/product-variants?product_id=${productId}`, { credentials: "include" });
+      const variantRes = await fetch(`/api/product-variants/${executionId}`, { credentials: "include" });
       if (!variantRes.ok) {
         if (mounted) setLoadError("No se pudieron cargar las variantes del producto.");
         return;
@@ -142,7 +143,7 @@ const ProcessStepPage = () => {
     return () => {
       mounted = false;
     };
-  }, [productId, variantId, stepId]);
+  }, [executionId, variantId, stepId]);
 
   // Use a ref to avoid stale closure issues with stepExecutionId
   const stepExecIdRef = React.useRef<number | null>(null);
@@ -267,11 +268,11 @@ const ProcessStepPage = () => {
     // Navigate forward
     const nextPosition = stepIndex + 2;
     if (stepIndex < steps.length - 1) {
-      router.push(`/process-control/new-production/${productId}/${variantId}/${nextPosition}`);
+      router.push(`/process-control/new-production/${executionId}/${variantId}/${nextPosition}`);
     } else {
       const route = processRunId
-        ? `/process-control/new-production/${productId}/${variantId}/results?runId=${processRunId}`
-        : `/process-control/new-production/${productId}/${variantId}/results`;
+        ? `/process-control/new-production/${executionId}/${variantId}/results?runId=${processRunId}`
+        : `/process-control/new-production/${executionId}/${variantId}/results`;
       router.push(route);
     }
   };

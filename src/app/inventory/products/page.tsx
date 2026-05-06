@@ -6,79 +6,101 @@ import ProductCard from "@/components/ProductCard";
 import styles from "../InventoryPage.module.css";
 import { Search, SlidersHorizontal } from "lucide-react";
 import { useRouter } from "next/navigation";
-import inventoryClient from "@/lib/services/inventoryClient";
 
 type InventoryProductRow = {
-    id: number;
-    name: string;
-    image: string;
-    quantity: number;
-    units: string;
+  id: number;
+  name: string;
+  image: string;
+  quantity: number;
+  units: string;
 };
 
 export default function ProductsInventoryPage() {
-    const [search, setSearch] = useState("");
-    const [products, setProducts] = useState<InventoryProductRow[]>([]);
-    const router = useRouter();
+  const [search, setSearch] = useState("");
+  const [products, setProducts] = useState<InventoryProductRow[]>([]);
+  const router = useRouter();
 
-    useEffect(() => {
-        let mounted = true;
+  useEffect(() => {
+    let mounted = true;
 
-        async function load() {
-            const productItems = await inventoryClient.getAllInventoryItems({ itemType: "PRODUCT" });
-            if (!mounted) return;
+    const loadProducts = async () => {
+      try {
+        const res = await fetch("/api/products", {
+          credentials: "include",
+        });
 
-            const mapped = productItems.map((item) => {
-                const qty = item.inventoryLots.reduce(
-                    (sum: number, lot) => sum + Number(lot.quantity),
-                    0
-                );
-                return {
-                    id: item.id,
-                    name: item.product!.name,
-                    image: item.product!.imgUrl ?? "/globe.svg",
-                    quantity: qty,
-                    units: item.product!.unit.name,
-                };
-            });
+        if (!res.ok) throw new Error(await res.text());
 
-            setProducts(mapped);
-        }
-        load();
-        return () => {
-            mounted = false;
-        };
-    }, []);
+        const data = await res.json();
 
-    const filtered = products.filter((item) =>
-        item.name.toLowerCase().includes(search.toLowerCase())
-    );
+        if (!mounted) return;
 
-    return (
-        <div className={styles.wrapper}>
-            <div className={styles.searchBar}>
-                <div className={styles.searchBarInner}>
-                    <Search size={24} color="#4a6548" />
-                    <input
-                        type="text"
-                        placeholder="Buscar elementos"
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                    />
-                    <SlidersHorizontal size={24} color="#4a6548" />
-                </div>
-            </div>
+        const mapped = data
+          .filter((item: any) => item.inventoryItem?.itemType === "PRODUCT")
+          .map((item: any) => {
+            const quantity =
+              item.inventoryItem?.inventoryLots?.reduce(
+                (sum: number, lot: any) => sum + Number(lot.quantity),
+                0
+              ) ?? 0;
 
+            return {
+              id: item.id,
+              name: item.name,
+              image: item.imgUrl ?? "/globe.svg",
+              quantity,
+              units: item.unit?.name ?? "—",
+            };
+          });
 
-            <div className={styles.cardList}>
-                {filtered.map((item) => (
-                    <ProductCard photo={item.image} key={item.id} {...item} onClick={() => router.push(`/inventory/details/${item.id}`)}/>
-                ))}
-            </div>
+        setProducts(mapped);
+      } catch (err) {
+        console.error("Failed to load products", err);
+      }
+    };
 
-            <BottomButton onClick={() => router.push(`/inventory/new-product`)}>
-                Añadir Registro
-            </BottomButton>
+    loadProducts();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const filtered = products.filter((item) =>
+    item.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div className={styles.wrapper}>
+      <div className={styles.searchBar}>
+        <div className={styles.searchBarInner}>
+          <Search size={24} color="#4a6548" />
+
+          <input
+            type="text"
+            placeholder="Buscar elementos"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+
+          <SlidersHorizontal size={24} color="#4a6548" />
         </div>
-    );
+      </div>
+
+      <div className={styles.cardList}>
+        {filtered.map((item) => (
+          <ProductCard
+            key={item.id}
+            photo={item.image}
+            {...item}
+            onClick={() => router.push(`/inventory/details/${item.id}`)}
+          />
+        ))}
+      </div>
+
+      <BottomButton onClick={() => router.push(`/inventory/new-product`)}>
+        Añadir Registro
+      </BottomButton>
+    </div>
+  );
 }

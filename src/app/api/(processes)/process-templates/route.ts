@@ -6,14 +6,21 @@ import { ProcessTemplateCreateSchema } from "@/lib/schemas";
 
 export async function GET(req: NextRequest) {
   try {
+  
     const items = await prisma.processTemplate.findMany({
       include: {
         processTemplateSteps: {
           orderBy: { position: "asc" },
           include: {
-            processTemplateStepMaterials: true
+            processTemplateStepMaterials: {
+              include: {
+                rawMaterial: true
+              }
+            },
+      
           },
-        }
+        },
+      
       }
     });
     return fetchSuccess(items);
