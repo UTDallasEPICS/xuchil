@@ -63,13 +63,14 @@ export default function ProductivityDashboard(
                     startAngle={180}
                     endAngle={0}
                     shape={MyCustomPie}                 // the colors
-                    label                               // for the number per pie slice                   
+                    label={{fill: '--var(color-text-dark) '}}  // for the number per pie slice
                 >
                     <Label
                         dy={40}
                         fontSize="200%"
                         fontWeight={300}
                         position="center"
+                        fill="var(--color-text-dark)"
                     >
                         100%
                     </Label>
