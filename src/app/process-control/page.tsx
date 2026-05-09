@@ -79,15 +79,7 @@ const ProcessControl = () => {
 
   return (
     <div className={`page ${styles.pageWrapper}`}>
-      <div className={styles.newProcessButtonWrapper}>
-        <Button
-          size="small"
-          action="secondary"
-          onClick={() => router.push("/process-control/new-process")}
-        >
-          + Nuevo Proceso
-        </Button>
-      </div>
+     
 
       <HeaderXuchil />
 
