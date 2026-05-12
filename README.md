@@ -76,6 +76,48 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Production Deployment
+
+Copy [`.env.example`](.env.example) to `.env.local` (local) or configure the same variables in your hosting provider.
+
+Required variables:
+
+- `SESSION_SECRET`: long random secret shared by every running instance.
+- `DATABASE_URL`: defaults to `file:./dev.db` for SQLite. On ephemeral hosts, point this to a persistent path or mounted volume.
+
+Optional variables:
+
+- `CORS_ALLOWED_ORIGINS`: comma-separated allowlist for cross-origin browser clients. Leave unset when the UI and `/api` are served from the same origin.
+
+Recommended startup on a fresh host:
+
+```bash
+pnpm install
+pnpm prisma generate
+pnpm prisma db push
+pnpm prisma:seed:users-clean
+pnpm prisma:seed:minimal
+pnpm prisma:seed:processes
+pnpm build
+pnpm start
+```
+
+Or use `pnpm system:init:prod:start` / `pnpm system:init:prod:offline:start`.
+
+Serve the app over HTTPS in production. Session cookies are marked `Secure` when `NODE_ENV=production`.
+
+### Production troubleshooting
+
+Open `/api/health` on the deployed host. It reports whether `SESSION_SECRET` is configured, whether SQLite is reachable, and whether CORS allowlist is enabled.
+
+| Signal | Likely cause |
+| --- | --- |
+| Browser console shows `blocked by CORS policy` or failed `OPTIONS` | Cross-origin client without `CORS_ALLOWED_ORIGINS` |
+| `401` on `/api/*` after a successful login | Missing or mismatched `SESSION_SECRET`, or session cookie not sent |
+| Redirect loop to `/login` | Invalid session cookie, HTTP instead of HTTPS, or blocked cookie |
+| `502`, timeout, or blank page | Build/start failure, wrong port, or platform health check |
+| `500` on login | SQLite not initialized, missing migrations/seed, or non-persistent database |
+
 ## Learn More
 
 ### Learn Next.js

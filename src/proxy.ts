@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { jwtVerify } from 'jose'
+import { applyCors, handleCorsPreflight } from '@/lib/cors'
 
 const secretKey = process.env.SESSION_SECRET;
 const encodedKey = secretKey ? new TextEncoder().encode(secretKey) : null;
 
 const PUBLIC_PATHS = ['/login'];
+const PUBLIC_API_PREFIXES = ['/api/auth', '/api/health'];
+
+function isPublicApiPath(path: string): boolean {
+  return PUBLIC_API_PREFIXES.some((prefix) => path.startsWith(prefix));
+}
 
 async function isSessionValid(req: NextRequest): Promise<boolean> {
   const sessionCookie = req.cookies.get('session')?.value;
@@ -19,16 +25,20 @@ async function isSessionValid(req: NextRequest): Promise<boolean> {
 
 export default async function proxy(req: NextRequest) {
   const path = req.nextUrl.pathname;
+  const preflightResponse = handleCorsPreflight(req);
+  if (preflightResponse) {
+    return preflightResponse;
+  }
 
   // API routes: return 401 if not authenticated (except auth endpoints)
   if (path.startsWith('/api')) {
-    if (!path.startsWith('/api/auth')) {
+    if (!isPublicApiPath(path)) {
       const valid = await isSessionValid(req);
       if (!valid) {
-        return new NextResponse(null, { status: 401 });
+        return applyCors(req, new NextResponse(null, { status: 401 }));
       }
     }
-    return NextResponse.next();
+    return applyCors(req, NextResponse.next());
   }
 
   // Page routes: check session for login redirect logic

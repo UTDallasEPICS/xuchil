@@ -21,7 +21,7 @@ function mapDeliveryVariant(serverVariant: string) {
 }
 
 export async function fetchOrdersClient() {
-  const res = await fetch("/api/orders");
+  const res = await fetch("/api/orders", { credentials: "include" });
   if (!res.ok) throw new Error("Failed to fetch orders");
   const data = await res.json();
   return data.map((o: any) => ({
@@ -43,7 +43,7 @@ export async function fetchOrdersClient() {
 }
 
 export async function fetchOrderByIdClient(id: number) {
-  const res = await fetch(`/api/orders/${id}`);
+  const res = await fetch(`/api/orders/${id}`, { credentials: "include" });
   if (!res.ok) throw new Error("Failed to fetch order");
   const o = await res.json();
   return {
