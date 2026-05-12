@@ -7,6 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "test:selenium": "mocha",
+    "test:selenium:headless": "set HEADLESS=true && mocha",
+    "test:selenium:watch": "mocha --watch",
     "prisma:seed": "prisma db seed",
     "prisma:seed:users-clean": "tsx prisma/seed.users-clean.ts",
     "prisma:seed:minimal": "tsx prisma/seed.minimal.ts",
@@ -41,16 +44,25 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
+    "@swc/cli": "^0.8.1",
+    "@swc/core": "^1.15.32",
     "@types/bcrypt": "^5.0.2",
+    "@types/mocha": "^10.0.10",
     "@types/node": "^20.19.25",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.1",
+    "@types/selenium-webdriver": "^4.35.5",
+    "chai": "^6.2.2",
     "eslint": "^9.23.0",
     "eslint-config-next": "15.2.1",
+    "mocha": "^11.7.5",
     "prisma": "^6.18.0",
+    "selenium-webdriver": "^4.43.0",
     "ts-node": "^10.9.2",
     "tsx": "^4.20.6",
-    "typescript": "^5.8.2"
+    "typescript": "^5.8.2",
+    "wdio-spec-reporter": "^0.1.5",
+    "webdriverio": "^9.27.0"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
