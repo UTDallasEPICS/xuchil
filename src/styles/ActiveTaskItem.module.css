@@ -1,0 +1,121 @@
+.activeTaskItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 2px solid var(--color-green-dark);
+  border-radius: 14px;
+  background: var(--color-background);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.activeTaskItem.paused {
+  border-color: var(--color-accent);
+  opacity: 0.85;
+}
+
+.taskInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.taskName {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.taskMeta {
+  font-size: 0.75rem;
+  color: var(--color-text-light);
+  margin: 2px 0 0;
+}
+
+.stepBadge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--color-green-dark);
+  color: white;
+  font-weight: 700;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.statusBadge {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.statusBadge.running {
+  background: #d4edda;
+  color: #155724;
+}
+
+.statusBadge.pausedBadge {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.miniTimer {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-green-dark);
+  font-variant-numeric: tabular-nums;
+}
+
+.actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.actionBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.actionBtn:active {
+  transform: scale(0.9);
+}
+
+.pauseBtn {
+  background: var(--color-accent);
+  color: white;
+}
+
+.resumeBtn {
+  background: var(--color-green-dark);
+  color: white;
+}
+
+.nextBtn {
+  background: var(--color-green-light);
+  color: white;
+}
+
+.openBtn {
+  background: transparent;
+  border: 2px solid var(--color-green-dark);
+  color: var(--color-green-dark);
+}

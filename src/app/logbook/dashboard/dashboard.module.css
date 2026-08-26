@@ -1,0 +1,60 @@
+
+.container{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin: 0 auto;
+    max-width: 800px;
+    padding: 10px;
+}
+
+ .dashboardTitle{
+    color: var(--color-text-dark);
+    font-size: var(--font-size-h1);
+    font-weight: 400;
+    margin: 2% 5%;
+}
+
+.dashBackground{
+    background-color: var(--color-text-light);
+    border-radius: 20px;
+    padding: 20px;
+}
+
+/* for headings inside a dashboard box */
+.insideHeader{
+    color: var(--color-text-dark);
+    font-size: 25px;
+    font-weight: 300;
+    margin: 0% 2%;
+}
+
+.legend{
+    display: flex; 
+    min-width: 80%;
+    gap: 14px; 
+    justify-content: center;
+}
+
+.legendItem{
+    display: flex;
+    align-items: center; 
+    gap: 6px;
+}
+
+.legendColor{
+    width: 12px; 
+    height: 12px; 
+    border-radius: 20%;
+}
+
+.legendText{
+    font-size: 100%; 
+    color: var(--color-text-dark);
+}
+
+.summaryText {
+    text-align: center;
+    font-size: 17px;
+    color: var(--color-text-dark);
+}

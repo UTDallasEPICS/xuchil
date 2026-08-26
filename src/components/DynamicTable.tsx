@@ -8,10 +8,11 @@ interface TableColumn {
   key: string;
   label: string;
   isButton?: boolean;
+  onClick?: (row: TableRow) => (void | Promise<void>);
 }
 
 interface TableRow {
-  [key: string]: string | { text: string; idProceso: string };
+  [key: string]: string | { text: string; };
 }
 
 interface DynamicTableProps {
@@ -25,23 +26,21 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
   data,
   isAdminMode = true
 }) => {
-  const router = useRouter();
-
-  const handleVerClick = (
-    idProceso: string,
-    tarea?: string,
-    isAdmin = true
-  ) => {
-    const basePath = `/logbook/detail-process`;
-    if (isAdmin) {
-      router.push(`${basePath}?id=${idProceso}`);
-    } else if (tarea) {
-      router.push(`${basePath}?id=${idProceso}&actividad=${encodeURIComponent(tarea)}`);
-    } else {
-      console.warn("No se proporcionó la tarea para vista de usuario.");
-    }
-  };
-
+  // const handleVerClick = (
+  //   idProceso: string,
+  //   tarea?: string,
+  //   isAdmin = true
+  // ) => {
+  //   const basePath = `/logbook/detail-process`;
+  //   if (isAdmin) {
+  //     router.push(`${basePath}?id=${idProceso}`);
+  //   } else if (tarea) {
+  //     router.push(`${basePath}?id=${idProceso}&actividad=${encodeURIComponent(tarea)}`);
+  //   } else {
+  //     console.warn("No se proporcionó la tarea para vista de usuario.");
+  //   }
+  // };
+  //
   return (
     <div className={styles.tableContainer}>
       {data.length > 0 ? (
@@ -64,12 +63,7 @@ const DynamicTable: React.FC<DynamicTableProps> = ({
                     {col.isButton && typeof row[col.key] === "object" ? (
                       <button
                         className={styles.button}
-                        onClick={() => {
-                          const id = (row[col.key] as { idProceso: string }).idProceso;
-                          const tarea =
-                            typeof row["tarea"] === "string" ? row["tarea"] : undefined;
-                          handleVerClick(id, tarea, isAdminMode);
-                        }}
+                        onClick={() => { if (col.onClick) { col.onClick(row); } }}
                       >
                         {(row[col.key] as { text: string }).text}
                       </button>

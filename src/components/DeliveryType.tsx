@@ -1,5 +1,5 @@
 "use client";
-import { FC, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import Image from "next/image";
 
@@ -14,18 +14,25 @@ interface DeliveryTypeProps {
   size?: Size;
   quantity?: number;
   onClick?: () => void;
+  onVariantChange?: (variant: keyof typeof deliveryVariants) => void;
 }
 
 const iconSizes: Record<Size, number> = { sm: 18, md: 26, lg: 32 };
 
 const DeliveryType: FC<DeliveryTypeProps> = ({
-  variant = "personal",
+  variant = "PERSONAL",
   type = "badge",
   size = "md",
   quantity,
   onClick,
+  onVariantChange,
 }) => {
   const [currentVariant, setCurrentVariant] = useState(variant);
+
+  useEffect(() => {
+    setCurrentVariant(variant);
+  }, [variant]);
+
   const { iconSrc, alt, label, containerClass } =
     deliveryVariants[currentVariant];
 
@@ -33,7 +40,9 @@ const DeliveryType: FC<DeliveryTypeProps> = ({
     if (type !== "picker") return;
     const currentIndex = availableVariants.indexOf(currentVariant);
     const nextIndex = (currentIndex + 1) % availableVariants.length;
-    setCurrentVariant(availableVariants[nextIndex]);
+    const nextVariant = availableVariants[nextIndex];
+    setCurrentVariant(nextVariant);
+    onVariantChange?.(nextVariant);
   };
 
   const TagName = 

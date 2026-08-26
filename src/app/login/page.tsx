@@ -4,60 +4,20 @@ import { useRouter } from "next/navigation";
 import Button from "@/components/Button";
 import HeaderXuchil from "@/components/HeaderXuchil";
 import Modal from "@/components/Modal";
+import * as authService from "@/lib/services/authClient";
 
 const Login = () => {
   const router = useRouter();
 
-  const [user, setUser] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showErrorModal, setShowErrorModal] = useState(false);
   
-  const handleLogin = () => {
-    const registeredUsers = JSON.parse(localStorage.getItem("registeredUsers") || "[]");
-    
-    const baseUsers = [
-      {
-        username: "admin",
-        password: "admin",
-        role: "admin",
-        name: "Administrador Xuchil",
-        email: "admin@xuchilnatural.com",
-        phone: "+52 951 999 88 77",
-        position: "Acceso total al sistema",
-        hours: "Panel de gestión de usuarios",
-        avatar: ""
-      },
-      {
-        username: "prueba",
-        password: "prueba",
-        role: "user",
-        name: "Antonio López",
-        email: "antonio.lopez@xuchilnatural.com",
-        phone: "+52 951 123 56 78",
-        position: "Operador",
-        hours: "15.4hrs trabajadas",
-        avatar: ""
-      }
-    ];
-
-    const allUsers = [...baseUsers, ...registeredUsers];
-    
-    const foundUser = allUsers.find(u => u.username === user && u.password === password);
-
-    if (foundUser) {
-      const userProfileData = JSON.parse(localStorage.getItem(`userProfile_${foundUser.username}`) || "{}");
-      
-      localStorage.setItem("currentUser", foundUser.username);
-      localStorage.setItem("role", foundUser.role);
-      
-      const userData = {
-        ...foundUser,
-        ...userProfileData
-      };
-      
-      localStorage.setItem("userData", JSON.stringify(userData));
+  const handleLogin = async () => {
+    try {
+      await authService.login(email, password);
       router.push("/process-control");
-    } else {
+    } catch {
       setShowErrorModal(true);
     }
   };
@@ -105,8 +65,8 @@ const Login = () => {
           <input
             type="text"
             placeholder="Usuario"
-            value={user}
-            onChange={(e) => setUser(e.target.value)}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             style={{
               width: "70%",
               padding: "10px",

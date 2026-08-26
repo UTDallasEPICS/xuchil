@@ -1,51 +1,48 @@
-// app/api/users/me/route.ts
-import { NextRequest, NextResponse } from "next/server";
+import {verifySession} from "@/lib/session";
+import {NextRequest, NextResponse} from "next/server";
+import {notFoundError, serverError, updateSuccess, validationError} from "@/utils/responses";
 import prisma from "@/lib/db";
-import { verifySession } from "@/lib/session";
-import { workerSchema } from "@/lib/schemas";
-import {notFoundError, serverError, validationError} from "@/utils/responses";
+import {Prisma} from "@prisma/client";
+import bcrypt from "bcrypt";
+import {UserRestrictedUpdateSchema} from "@/lib/schemas";
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const payload = await verifySession();
-    if (!payload) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const authUser = await prisma.authUser.findUnique({
-      where: { id: payload.authUserId },
-      include: { worker: true },
-      omit: { passwordHash: true },
-    });
-
-    if (!authUser) {
-      return notFoundError('user')
-    }
-
-    return NextResponse.json(authUser, { status: 200 });
-  } catch (err) {
-    return serverError('user', 'fetch', null)
+    const payload = (await verifySession())!;
+    const user = await prisma.user.findUnique({
+      where: {
+        id: payload.userId,
+      },
+    })
+    return NextResponse.json(user);
+  } catch (error) {
+    return serverError("current user", "fetch", error);
   }
 }
 
-export async function PUT(request: NextRequest) {
+export const PUT = async (req: NextRequest) => {
   try {
-    const payload = await verifySession();
-    if (!payload) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const payload = (await verifySession())!;
+    const body = await req.json();
+    const res = UserRestrictedUpdateSchema.partial().safeParse(body);
+    if (!res.success) {
+      return validationError("current user", "update", res.error);
     }
-    const body = await request.json();
-    const result = workerSchema.partial().safeParse(body);
-    if (!result.success) {
-      return validationError('user', result.error)
-    }
-    const updatedWorker = await prisma.worker.update({
-      where: { id: payload?.workerId ?? undefined },
-      data: result.data
+    const updatedItem = await prisma.user.update({
+      where: {id: payload.userId},
+      data: {
+        name: res.data.name,
+        email: res.data.email,
+        phone: res.data.phone,
+        imgUrl: res.data.imgUrl,
+        passwordHash: res.data.password && (await bcrypt.hash(res.data.password, 10)),
+      },
     });
-
-    return NextResponse.json(updatedWorker);
-  } catch (error) {
-    return serverError('user', 'update', null)
+    return updateSuccess(updatedItem);
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025") {
+      return notFoundError("user");
+    }
+    return serverError("user", "update", e);
   }
 }

@@ -216,14 +216,14 @@ export function fetchProductVariants(productId: string): ProductVariant[] {
         { 
           id: 16, 
           title: "Rastreo de mercancía", 
-          estimatedTime: 0, 
+          estimatedTime: 1, 
           hasInput: false,
           description: "Realizar el seguimiento del envío." 
         },
         { 
           id: 17, 
           title: "Entrega y envío", 
-          estimatedTime: 0, 
+          estimatedTime: 1, 
           hasInput: false,
           description: "Entregar el producto al cliente o al transportista." 
         },
@@ -326,14 +326,14 @@ export function fetchProductVariants(productId: string): ProductVariant[] {
         { 
           id: 14, 
           title: "Rastreo de mercancía", 
-          estimatedTime: 0, 
+          estimatedTime: 1, 
           hasInput: false,
           description: "Realizar el seguimiento del envío." 
         },
         { 
           id: 15, 
           title: "Entrega y envío", 
-          estimatedTime: 0, 
+          estimatedTime: 1, 
           hasInput: false,
           description: "Entregar el producto al cliente o transportista." 
         },
@@ -354,6 +354,7 @@ export function fetchProductVariants(productId: string): ProductVariant[] {
         currentStep: "Tatemado (Mezquite 5kg)",
         currentStepNumber: 2,
         totalSteps: 7,
+        openRoute: "/process-control/new-production/harina/mezquite/2",
       },
       {
         id: 2,
@@ -365,6 +366,7 @@ export function fetchProductVariants(productId: string): ProductVariant[] {
         currentStep: "Tostado",
         currentStepNumber: 3,
         totalSteps: 15,
+        openRoute: "/process-control/new-production/cafe/sustituto/3",
       },
       {
         id: 3,
@@ -376,6 +378,7 @@ export function fetchProductVariants(productId: string): ProductVariant[] {
         currentStep: "Transporte",
         currentStepNumber: 4,
         totalSteps: 7,
+        openRoute: "/process-control/new-production/harina/mezquite/4",
       },
     ];
   }

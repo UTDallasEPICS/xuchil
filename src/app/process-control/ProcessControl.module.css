@@ -16,11 +16,31 @@
   text-align: center;
 }
 
-.container{
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    max-width: 320px;
-    width: 100%;
-    margin-inline: auto;
-  }
+.activeTasksSection {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto 1.5rem;
+  padding: 0 1rem;
+}
+
+.sectionTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0 0 0.5rem;
+}
+
+.activeTasksList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 320px;
+  width: 100%;
+  margin-inline: auto;
+}

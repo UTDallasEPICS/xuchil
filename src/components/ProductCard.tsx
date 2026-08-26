@@ -2,9 +2,8 @@ import React from 'react';
 import styles from '@/styles/ProductCard.module.css';
 
 export interface ProductCardProps {
-  photo: string;
+  photo: string | null;
   name: string;
-  presentation?: string;
   quantity: number | string;
   units: string;
   onClick?: () => void;
@@ -13,18 +12,14 @@ export interface ProductCardProps {
 const ProductCard: React.FC<ProductCardProps> = ({
   photo,
   name,
-  presentation,
   quantity,
   units,
   onClick,
 }) => (
   <div className={styles.card} onClick={onClick}>
-    <img src={photo} alt={name} className={styles.photo} />
+    <img src={photo ?? undefined} alt={name} className={styles.photo} />
     <div className={styles.info}>
       <h3 className={styles.name}>{name}</h3>
-      {!!presentation && (
-        <p className={styles.presentation}>{presentation}</p>
-      )}
     </div>
     <div className={styles.amount}>
       <h3 className={styles.quantity}>{quantity}</h3>

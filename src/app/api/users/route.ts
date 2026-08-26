@@ -1,58 +1,81 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import {withAuthWorker} from "@/utils/handlers";
+import { UserCreateSchema } from "@/lib/schemas";
+import {createSuccess, serverError, validationError, fetchSuccess, forbiddenError} from "@/utils/responses";
+import bcrypt from "bcrypt";
 import prisma from "@/lib/db";
-import {idError, notFoundError, serverError} from "@/utils/responses";
-import bcrypt from "bcryptjs";
+import { z } from "zod";
 import {verifySession} from "@/lib/session";
+import qs from 'qs';
 
-export async function GET(
-  _req: NextRequest,
-) {
-  const payload = await verifySession();
-  if (!payload?.isAdmin) {
-    return new NextResponse(null, { status: 403 });
-  }
+export const GET = withAuthWorker(async (req: NextRequest) => {
   try {
-    const users = await prisma.authUser.findMany({
-      include: { worker: true },
-      omit: { passwordHash: true }
+    const session = (await verifySession())!;
+    const paginatedFilterSchema = z.strictObject({
+      isGuest: z.coerce.boolean(),
+      offset: z.coerce.number().int(),
+      limit: z.coerce.number().int(),
+      sort: z.strictObject({
+        name: z.enum(["asc", "desc"]).optional(),
+      })
     });
+    const res = paginatedFilterSchema.partial().safeParse(qs.parse(req.nextUrl.search));
+    if (!res.success) {
+      return validationError("user", "fetch", res.error);
+    }
+    const { limit, offset, sort, ...where } = res.data;
 
-    return NextResponse.json(users);
-  } catch (error) {
-    return serverError('user', 'fetch', null)
-  }
-}
-
-export async function POST(
-  req: NextRequest,
-) {
-  const payload = await verifySession();
-  if (!payload?.isAdmin) {
-    return new NextResponse(null, { status: 403 });
-  }
-  try {
-    const body = await req.json();
-    const { fullName, phone, email, profilePhotoUrl, roleId, password } = body;
-
-    const user = await prisma.authUser.create({
-      data: {
-        email,
-        passwordHash: await bcrypt.hash(password, 10),
-        worker: {
-          create: {
-            fullName,
-            roleId,
-            phone,
-            profilePhotoUrl,
-          }
-        }
+    const items = await prisma.user.findMany({
+      where: {
+        ...where,
+        // workers can only see guests, admins can see all users
+        ...(!session.isAdmin && { isGuest: true }),
       },
-      include: { worker: true },
-      omit: { passwordHash: true }
+      skip: offset,
+      take: limit,
+      orderBy: sort ?? { id: "asc" },
     });
-
-    return NextResponse.json(user, {status: 201});
-  } catch (error) {
-    return serverError('user', 'create', null)
+    return fetchSuccess(items);
+  } catch (e) {
+    return serverError("user", "fetch", e);
   }
-}
+});
+
+export const POST = withAuthWorker(
+  async (req: NextRequest) => {
+    try {
+      const session = (await verifySession())!;
+      const body = await req.json();
+      const res = UserCreateSchema.safeParse(body);
+      if (!res.success) {
+        return validationError("user", "create", res.error);
+      }
+
+      if (!session.isAdmin) {
+        if (!res.data.isGuest) {
+          // workers can only create guest users
+          return forbiddenError();
+        }
+        if (res.data.isAdmin) {
+          // workers cannot create admin
+          return forbiddenError();
+        }
+      }
+
+      const newItem = await prisma.user.create({
+        data: {
+          name: res.data.name,
+          email: res.data.email,
+          phone: res.data.phone,
+          imgUrl: res.data.imgUrl,
+          passwordHash: await bcrypt.hash(res.data.password, 10),
+          isAdmin: res.data.isAdmin,
+          isGuest: res.data.isGuest,
+        },
+      });
+      return createSuccess(newItem);
+    } catch (e) {
+      return serverError("user", "create", e);
+    }
+  }
+);

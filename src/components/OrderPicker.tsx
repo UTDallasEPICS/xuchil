@@ -6,27 +6,63 @@ import { Trash } from "lucide-react";
 import ProductPicker from "@/components/ProductPicker";
 import QuantityPicker from "@/components/QuantityPicker";
 import DeleteModal from "@/components/DeleteModal";
-import { Product } from "@/types/Product";
+import { ProductRead } from "@/lib/schemas";
+
+export interface OrderPickerValue {
+  productId: number;
+  quantity: number;
+}
 
 interface OrderPickerProps {
   index: number;
-  products: Product[];
+  products: ProductRead[];
   onDelete: () => void;
+  value?: OrderPickerValue;
+  onChange?: (value: OrderPickerValue) => void;
 }
 
 const OrderPicker: React.FC<OrderPickerProps> = ({
   index,
   products,
   onDelete,
+  value,
+
 }) => {
-  const [units, setUnits] = useState(1);
+  const fallbackProductId = products[0]?.id ?? 0;
+
+  const [selectedProductId, setSelectedProductId] = useState(
+    value?.productId ?? fallbackProductId
+  );
+
+  const [units, setUnits] = useState(value?.quantity ?? 1);
   const [showModal, setShowModal] = useState(false);
+
+  React.useEffect(() => {
+    if (value) {
+      if (selectedProductId !== value.productId) {
+        setSelectedProductId(value.productId);
+      }
+
+      if (units !== value.quantity) {
+        setUnits(value.quantity);
+      }
+
+      return;
+    }
+
+    if (!selectedProductId && fallbackProductId) {
+      setSelectedProductId(fallbackProductId);
+    }
+  }, [value, selectedProductId, units, fallbackProductId]);
+
+  
 
   return (
     <>
       <div className={styles.card}>
         <div className={styles.header}>
           <h2>{`Producto ${index}`}</h2>
+
           <button
             type="button"
             className={styles.removeBtn}
@@ -39,9 +75,12 @@ const OrderPicker: React.FC<OrderPickerProps> = ({
 
         <ProductPicker
           products={products}
+          valueId={selectedProductId}
+          onChange={(product) => setSelectedProductId(product.id)}
         />
 
         <h3 className={styles.unitsLabel}>Unidades:</h3>
+
         <QuantityPicker value={units} onChange={setUnits} min={1} />
       </div>
 

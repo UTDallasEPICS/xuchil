@@ -1,10 +1,12 @@
+import { NextResponse } from "next/server";
 import { deleteSession } from "@/lib/session";
-import {serverError} from "@/utils/responses";
+import { serverError } from "@/utils/responses";
 
 export async function POST() {
   try {
     await deleteSession(); // removes cookie
-  } catch (error) {
+    return NextResponse.json({ ok: true });
+  } catch (e) {
     return serverError('user', 'logout', null)
   }
 }

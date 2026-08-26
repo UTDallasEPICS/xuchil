@@ -7,7 +7,20 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "prisma:seed": "prisma db seed"
+    "prisma:seed": "prisma db seed",
+    "prisma:seed:users-clean": "tsx prisma/seed.users-clean.ts",
+    "prisma:seed:minimal": "tsx prisma/seed.minimal.ts",
+    "prisma:seed:processes": "tsx prisma/seed.processes.ts",
+    "system:init:start": "pnpm install && pnpm prisma generate && pnpm prisma db push && pnpm prisma:seed:users-clean && pnpm prisma:seed:minimal && pnpm prisma:seed:processes && pnpm dev",
+    "system:init:prod:start": "pnpm install && pnpm prisma generate && pnpm prisma db push && pnpm prisma:seed:users-clean && pnpm prisma:seed:minimal && pnpm prisma:seed:processes && pnpm build && pnpm start",
+    "system:init:offline:start": "pnpm prisma generate && pnpm prisma db push && pnpm prisma:seed:users-clean && pnpm prisma:seed:minimal && pnpm prisma:seed:processes && pnpm dev",
+    "system:init:prod:offline:start": "pnpm prisma generate && pnpm prisma db push && pnpm prisma:seed:users-clean && pnpm prisma:seed:minimal && pnpm prisma:seed:processes && pnpm build && pnpm start",
+    "system:reset:full": "pnpm prisma migrate reset --force --skip-seed && pnpm prisma:seed:users-clean && pnpm prisma:seed:minimal && pnpm prisma:seed:processes",
+    "system:reset:full:start": "pnpm system:reset:full && pnpm dev",
+    "user:create": "tsx scripts/create-user.ts",
+    "user:list": "tsx scripts/list-users.ts",
+    "inventory:clear": "tsx scripts/clear-inventory.ts",
+    "inventory:stats": "tsx scripts/inventory-stats.ts"
   },
   "prisma": {
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
@@ -15,29 +28,35 @@
   "dependencies": {
     "@paralleldrive/cuid2": "^3.3.0",
     "@prisma/client": "^6.18.0",
+    "@recharts/devtools": "^0.0.8",
     "bcrypt": "^5.1.1",
     "date-fns": "^4.1.0",
     "jose": "^6.0.10",
     "lucide-react": "^0.476.0",
     "next": "^16.0.5",
+    "qs": "^6.15.1",
     "react": "^19.1.0",
     "react-datepicker": "^8.3.0",
     "react-dom": "^19.1.0",
     "react-icons": "^5.5.0",
+    "recharts": "^3.7.0",
+    "xlsx": "^0.18.5",
     "zod": "^4.1.12"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
     "@types/bcrypt": "^5.0.2",
     "@types/node": "^20.19.25",
+    "@types/qs": "^6.15.0",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.1",
+    "@types/xlsx": "^0.0.35",
     "eslint": "^9.23.0",
     "eslint-config-next": "15.2.1",
     "prisma": "^6.18.0",
     "ts-node": "^10.9.2",
     "tsx": "^4.20.6",
-    "typescript": "^5.8.2"
+    "typescript": "^5.9.3"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

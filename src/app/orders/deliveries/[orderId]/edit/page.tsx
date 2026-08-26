@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 
 import HeaderXuchil from "@/components/HeaderXuchil";
@@ -12,76 +12,193 @@ import DatePicker from "@/components/DatePicker";
 import OrderedProducts from "@/components/OrderedProducts";
 import DeleteModal from "@/components/DeleteModal";
 
-import { fetchProducts } from "@/constants/api";
-import { fetchOrderByIdClient } from "@/lib/ordersClient";
+import ordersService from "@/lib/services/orderClient";
+import productService from "@/lib/services/productClient";
 import { deliveryVariants } from "@/constants/deliveryConfig";
-import { Product } from "@/types/Product";
+import {OrderRead, ProductRead} from "@/lib/schemas";
 
 import styles from "./EditOrder.module.css";
 
-const EditOrderPage = () => {
-  const { orderId } = useParams<{ orderId: string }>();
-  const router = useRouter();
+type OrderItemDraft = {
+  productId: number;
+  quantity: number;
+};
 
-  const [order, setOrder] = useState<any | null>(null);
+function mapDeliveryVariantToApi(variant: keyof typeof deliveryVariants) {
+  return variant;
+}
+
+function mapDeliveryVariantFromApi(serverVariant?: string) {
+  switch ((serverVariant || "").toUpperCase()) {
+    case "PERSONAL":
+      return "PERSONAL" as const;
+    case "CONSIGNMENT":
+      return "CONSIGNMENT" as const;
+    default:
+      return "MAIL" as const;
+  }
+}
+
+function toLocalDate(value?: string | Date | null): Date | null {
+  if (!value) return null;
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function toOrderDateValue(value?: string | Date | null): string {
+  const date = toLocalDate(value);
+  return date ? date.toISOString() : "";
+}
+
+const EditOrderPage = () => {
+  const params = useParams<{ orderId: string }>();
+  const router = useRouter();
+  const orderId = useMemo(() => Number(params.orderId), [params.orderId]);
+
+  const [order, setOrder] = useState<OrderRead | null>(null);
   const [loading, setLoading] = useState(true);
+  const [products, setProducts] = useState<ProductRead[]>([]);
+  const [clientName, setClientName] = useState("");
+  const [deliveryDate, setDeliveryDate] = useState<Date | null>(null);
+  const [address, setAddress] = useState("");
+  const [deliveryVariant, setDeliveryVariant] = useState<keyof typeof deliveryVariants>("MAIL");
+  const [initialOrderItems, setInitialOrderItems] = useState<OrderItemDraft[]>([]);
+  const [orderItems, setOrderItems] = useState<OrderItemDraft[]>([]);
+  const [showDelete, setShowDelete] = useState(false);
 
   useEffect(() => {
     let mounted = true;
-    const idNum = Number(orderId);
-    if (Number.isNaN(idNum)) {
+
+    if (Number.isNaN(orderId)) {
       setOrder(null);
       setLoading(false);
       return;
     }
-    fetchOrderByIdClient(idNum)
-      .then((o) => mounted && setOrder(o))
+
+    ordersService.getOrderById(orderId)
+      .then((o) => {
+        if (mounted) setOrder(o);
+      })
       .catch((err) => {
         console.error("Failed to fetch order", err);
         if (mounted) setOrder(null);
       })
-      .finally(() => mounted && setLoading(false));
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+
     return () => {
       mounted = false;
     };
   }, [orderId]);
 
-  if (loading) return <p>Cargando pedido...</p>;
-  if (!order) return <p>Pedido no encontrado</p>;
+  useEffect(() => {
+    if (!order) return;
 
-  const initialProducts: Product[] = useMemo(fetchProducts, []);
-  const [clientName, setClientName] = useState(order.clientName);
-  const [deliveryDate, setDeliveryDate] = useState<Date | null>(
-    (() => {
-      const [dd, mm, yyyy] = order.deliveryDate.split("/").map(Number);
-      return new Date(yyyy, mm - 1, dd);
-    })()
-  );
-  const [address, setAddress] = useState(order.address);
-  const [deliveryVariant, setDeliveryVariant] =
-    useState<keyof typeof deliveryVariants>(order.deliveryVariant);
+    const currentItems = (order.orderItems ?? []).map((item) => ({
+      productId: item.productId,
+      quantity: item.quantity,
+    }));
 
-  const [showDelete, setShowDelete] = useState(false);
+    setClientName(order.clientName ?? "");
+    setAddress(order.address ?? "");
+    setDeliveryVariant(mapDeliveryVariantFromApi(order.deliveryVariant));
+    setDeliveryDate(toLocalDate(order.deliveryDate));
+    setOrderItems(currentItems);
+    setInitialOrderItems(currentItems);
+  }, [order]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadProducts() {
+      try {
+        const data = await productService.getAllProducts();
+        if (!mounted) return;
+
+        setProducts(data);
+      } catch (error) {
+        console.error("Failed to load products:", error);
+      }
+    }
+
+    loadProducts();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const handleCancel = () => router.back();
 
-  const handleSave = () => {
-    console.table({
-      id: order.id,
-      clientName,
-      deliveryDate,
-      address,
-      deliveryVariant,
-    });
-    router.replace("/orders/deliveries");
+  const handleSave = async () => {
+    if (!order?.id) return;
+
+    if (!clientName.trim()) {
+      alert("El nombre del cliente es obligatorio.");
+      return;
+    }
+
+    if (!deliveryDate) {
+      alert("Selecciona una fecha de entrega.");
+      return;
+    }
+
+    if (!address.trim()) {
+      alert("La dirección de entrega es obligatoria.");
+      return;
+    }
+
+    const validItems = orderItems
+      .map((item) => ({
+        productId: Number(item.productId),
+        quantity: item.quantity,
+      }))
+      .filter((item) => !Number.isNaN(item.productId) && item.quantity > 0);
+
+    if (validItems.length === 0) {
+      alert("Agrega al menos un producto al pedido.");
+      return;
+    }
+
+    const payload = {
+      clientName: clientName.trim(),
+      address: address.trim(),
+      deliveryDate: toOrderDateValue(deliveryDate),
+      deliveryVariant: mapDeliveryVariantToApi(deliveryVariant),
+      status: order.status ?? "SCHEDULED",
+      deliveredAt: order.deliveredAt ?? null,
+      consignmentPartner: order.consignmentPartner ?? null,
+      notes: order.notes ?? null,
+      orderItems: validItems.map((item) => ({
+        productId: item.productId,
+        quantity: item.quantity,
+      })),
+    };
+
+    try {
+      await ordersService.updateOrder(order.id, payload as never);
+      router.replace("/orders/deliveries");
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Error al actualizar el pedido.");
+    }
   };
 
   const handleDelete = () => setShowDelete(true);
 
-  const confirmDelete = () => {
-    console.log("Eliminar pedido", order.id);
-    router.replace("/orders/deliveries");
+  const confirmDelete = async () => {
+    if (!order?.id) return;
+
+    try {
+      await ordersService.deleteOrder(order.id);
+      router.replace("/orders/deliveries");
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Error al eliminar el pedido.");
+    }
   };
+
+  if (loading) return <p>Cargando pedido...</p>;
+  if (!order) return <p>Pedido no encontrado</p>;
 
   return (
     <>
@@ -110,7 +227,12 @@ const EditOrderPage = () => {
         <h1 className={styles.title}>Pedido #{order.id}</h1>
 
         <div className={styles.deliveryType}>
-          <DeliveryType variant={deliveryVariant} type="picker" size="sm" />
+          <DeliveryType
+            variant={deliveryVariant}
+            type="picker"
+            size="sm"
+            onVariantChange={setDeliveryVariant}
+          />
         </div>
 
         <h3>Cliente:</h3>
@@ -137,7 +259,11 @@ const EditOrderPage = () => {
         </div>
 
         <h3>Productos:</h3>
-        <OrderedProducts products={initialProducts} />
+        {products.length > 0 ? (
+          <OrderedProducts products={products} value={initialOrderItems} onChange={setOrderItems} />
+        ) : (
+          <p>Cargando productos...</p>
+        )}
 
         <BottomButton onClick={handleSave}>Finalizar edición</BottomButton>
       </div>

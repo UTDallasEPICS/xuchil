@@ -2,328 +2,858 @@ import {
   PrismaClient,
   ProcessStatus,
   StepStatus,
-  ItemType,
-  MovementDirection,
-  MovementReason,
   DeliveryVariant,
-  OrderStatus
-} from '@prisma/client'
+  OrderStatus,
+  ItemType,
+  MovementReason
+} from "@prisma/client";
 
-const prisma = new PrismaClient()
+const prisma = new PrismaClient();
 
 async function main() {
-  console.log(`Start seeding ...`)
+  await prisma.inventoryMovement.deleteMany();
+  await prisma.inventoryLot.deleteMany();
+  await prisma.processStepWorker.deleteMany();
+  await prisma.processStepMaterialUsage.deleteMany();
+  await prisma.processPause.deleteMany();
+  await prisma.processStepExecution.deleteMany();
+  await prisma.processExecution.deleteMany();
+  await prisma.processTemplateStepMaterial.deleteMany();
+  await prisma.processTemplateStep.deleteMany();
+  await prisma.processTemplate.deleteMany();
+  await prisma.orderItem.deleteMany();
+  await prisma.order.deleteMany();
+  await prisma.inventoryItem.deleteMany();
+  await prisma.user.deleteMany();
+  await prisma.rawMaterial.deleteMany();
+  await prisma.product.deleteMany();
+  await prisma.productCategory.deleteMany();
+  await prisma.unit.deleteMany();
 
-  await prisma.unit.createMany({
-    data: [
-      {id: 1, name: "kg", factorToBase: 1},
-      {id: 2, name: "g", factorToBase: 0.001},
-      {id: 3, name: "L", factorToBase: 1},
-      {id: 4, name: "mL", factorToBase: 0.001},
-      {id: 5, name: "unit", factorToBase: 1},
-    ]
+  const pieceUnit = await prisma.unit.create({
+    data: { name: "piece" },
   });
 
-  const productCategory = await prisma.productCategory.create({
-    data: {id: 1, name: "Baked Goods"},
+  const kgUnit = await prisma.unit.create({
+    data: { name: "kg" },
   });
 
-  await prisma.product.createMany({
-    data: [
-      {id: 1, categoryId: productCategory.id, sku: "CR001", name: "Croissant", defaultUnitId: 5},
-      {id: 2, categoryId: productCategory.id, sku: "BR002", name: "Sourdough Loaf", defaultUnitId: 5},
-    ]
+  const literUnit = await prisma.unit.create({
+    data: { name: "liter" },
   });
 
-  await prisma.productVariant.createMany({
-    data: [
-      {id: 1, productId: 1, name: "Classic Butter", netContent: 1, contentUnitId: 5, defaultUnitId: 5},
-      {id: 2, productId: 2, name: "Standard 500g", netContent: 500, contentUnitId: 2, defaultUnitId: 5},
-    ]
-  });
-
-  await prisma.rawMaterial.createMany({
-    data: [
-      {id: 1, code: "RM001", name: "All-Purpose Flour", defaultUnitId: 1},
-      {id: 2, code: "RM002", name: "Butter (Unsalted)", defaultUnitId: 1},
-    ]
-  });
-
-  const role = await prisma.role.create({data: {id: 1, name: "Baker"}});
-
-  await prisma.worker.createMany({
-    data: [
-      {id: 1, fullName: "Alice (Staff)", roleId: role.id},
-      {id: 2, fullName: "Bob (Admin)", roleId: role.id},
-    ]
-  });
-
-  await prisma.authUser.create({
-    data: {id: 1, workerId: 2, email: "admin@corp.com", passwordHash: "$2b$10$zJR.UT7NtHTssmHL5iRqcuv2ShubMmRNpmQgzEgB6ziY098h6Dwka", isAdmin: true}
-  });
-
-  const guestCharlie = await prisma.guestCollaborator.create({
-    data: {id: 1, displayName: "Charlie (Temp)", contactInfo: "charlie@temp.com"}
-  });
-
-  await prisma.inventoryItem.createMany({
-    data: [
-      // Raw Material Flour
-      {id: 1, itemType: ItemType.RAW, rawMaterialId: 1, productVariantId: null, defaultUnitId: 1},
-      // Product Variant Croissant
-      {id: 2, itemType: ItemType.PRODUCT, rawMaterialId: null, productVariantId: 1, defaultUnitId: 5},
-      // Raw Material Butter (Need to manually create the inventory item for butter)
-      {id: 3, itemType: ItemType.RAW, rawMaterialId: 2, productVariantId: null, defaultUnitId: 1},
-    ]
-  });
-
-  await prisma.inventoryLot.createMany({
-    data: [
-      {
-        id: 1, inventoryItemId: 1, lotCode: "FLOUR-A23", qtyOnHand: 500.00,
-        unitId: 1, receivedAt: new Date('2025-09-01T10:00:00Z')
-      },
-      {
-        id: 2, inventoryItemId: 3, lotCode: "BUTTER-C45", qtyOnHand: 100.00,
-        unitId: 1, receivedAt: new Date('2025-10-10T11:00:00Z'),
-        expiryAt: new Date('2026-04-10T00:00:00Z')
-      },
-      {
-        id: 3, inventoryItemId: 2, lotCode: "PROD-20251001-A", qtyOnHand: 0.00,
-        unitId: 5, receivedAt: new Date('2025-10-01T14:30:00Z'),
-      },
-    ]
-  });
-
-  const processTemplate = await prisma.processTemplate.create({
+  const breadCategory = await prisma.productCategory.create({
     data: {
-      id: 1,
-      productVariantId: 1,
-      version: 1,
-      name: "Standard Croissant Production"
+      name: "Bread",
+      imgUrl: "https://example.com/bread.jpg",
     },
   });
 
-  await prisma.templateStep.createMany({
-    data: [
-      {
-        id: 1,
-        processTemplateId: processTemplate.id,
-        position: 1,
-        name: "Dough Mixing",
-        idealDurationMin: 60,
-        requiresInput: true,
-        instructions: "Mix until dough window is clear."
-      },
-      {id: 2, processTemplateId: processTemplate.id, position: 2, name: "Laminating & Folding", idealDurationMin: 180},
-      {id: 3, processTemplateId: processTemplate.id, position: 3, name: "Baking & Cooling", idealDurationMin: 30},
-    ]
+  const drinkCategory = await prisma.productCategory.create({
+    data: {
+      name: "Drinks",
+      imgUrl: "https://example.com/drinks.jpg",
+    },
   });
 
-  await prisma.stepRequiredMaterial.createMany({
-    data: [
-      {id: 1, templateStepId: 1, rawMaterialId: 1, qtyPerUnitOutput: 0.10, unitId: 1},
-      {id: 2, templateStepId: 2, rawMaterialId: 2, qtyPerUnitOutput: 0.05, unitId: 1},
-    ]
+  const sourdough = await prisma.product.create({
+    data: {
+      name: "Sourdough Loaf",
+      imgUrl: "https://images.unsplash.com/photo-1608198093002-ad4e005484ec",
+      categoryId: breadCategory.id,
+      unitId: pieceUnit.id,
+    },
   });
 
-  await prisma.processRun.createMany({
-    data: [
-      // RUN 1: Completed Run
-      {
-        id: 1, productVariantId: 1, processTemplateId: 1, batchCode: "CRO-20251001-A",
-        createdByWorkerId: 2, plannedQty: 100.00, plannedUnitId: 5,
-        status: ProcessStatus.COMPLETED, startedAt: new Date('2025-10-01T08:00:00Z'),
-        finishedAt: new Date('2025-10-01T14:30:00Z'), goodOutputQty: 98.00,
-        scrapQty: 2.00, outputUnitId: 5,
-      },
-      // RUN 2: Cancelled Run
-      {
-        id: 2, productVariantId: 1, processTemplateId: 1, batchCode: "CRO-20251002-B",
-        createdByWorkerId: 1, plannedQty: 50.00, plannedUnitId: 5,
-        status: ProcessStatus.CANCELLED, startedAt: new Date('2025-10-02T09:00:00Z'),
-        finishedAt: new Date('2025-10-02T10:00:00Z'), notes: "Contamination issue in raw materials, canceled early.",
-      },
-      // RUN 3: In Progress/Paused Run
-      {
-        id: 3, productVariantId: 1, processTemplateId: 1, batchCode: "CRO-20251016-C",
-        createdByWorkerId: 1, plannedQty: 120.00, plannedUnitId: 5,
-        status: ProcessStatus.PAUSED, startedAt: new Date('2025-10-16T10:00:00Z'),
-      },
-    ]
+  const lemonade = await prisma.product.create({
+    data: {
+      name: "Lemonade Bottle",
+      imgUrl: "https://images.unsplash.com/photo-1497534446932-c925b458314e",
+      categoryId: drinkCategory.id,
+      unitId: pieceUnit.id,
+    },
   });
 
-  await prisma.processPause.createMany({
-    data: [
-      {
-        id: 1,
-        processRunId: 3,
-        startedAt: new Date('2025-10-16T10:30:00Z'),
-        endedAt: null,
-        reason: "Equipment calibration check."
-      }
-    ]
+  const baguette = await prisma.product.create({
+    data: {
+      name: "Baguette",
+      imgUrl: "https://images.unsplash.com/photo-1586444248902-2f64eddc13df",
+      categoryId: breadCategory.id,
+      unitId: pieceUnit.id,
+    },
   });
 
-  await prisma.stepExecution.createMany({
-    data: [
-      // RUN 1 Steps
-      {
-        id: 1,
-        processRunId: 1,
-        templateStepId: 1,
-        workerId: 1, // Alice
-        status: StepStatus.DONE,
-        startedAt: new Date('2025-10-01T08:00:00Z'),
-        finishedAt: new Date('2025-10-01T08:55:00Z'),
-        actualDurationMin: 55,
-        inputQty: 10.00,
-        inputUnitId: 1,
-        notes: "A little sticky, adjusted water slightly.",
-      },
-      {
-        id: 2,
-        processRunId: 1,
-        templateStepId: 2,
-        workerId: 1, // Alice
-        status: StepStatus.DONE,
-        startedAt: new Date('2025-10-01T09:00:00Z'),
-        finishedAt: new Date('2025-10-01T12:00:00Z'),
-        actualDurationMin: 180,
-        notes: "Perfect folds, stable temp.",
-      },
-      {
-        id: 3,
-        processRunId: 1,
-        templateStepId: 3,
-        workerId: 2, // Bob
-        status: StepStatus.DONE,
-        startedAt: new Date('2025-10-01T12:00:00Z'),
-        finishedAt: new Date('2025-10-01T12:30:00Z'),
-        actualDurationMin: 30,
-      },
-      // RUN 2 Step
-      {
-        id: 4,
-        processRunId: 2,
-        templateStepId: 1,
-        workerId: 2, // Bob (Responsible)
-        status: StepStatus.BLOCKED,
-        startedAt: new Date('2025-10-02T09:00:00Z'),
-        finishedAt: new Date('2025-10-02T10:00:00Z'),
-        actualDurationMin: 60,
-        notes: "Halted due to batch cancellation.",
-      },
-      // RUN 3 Step
-      {
-        id: 5, processRunId: 3, templateStepId: 1, workerId: 2, // Bob
-        status: StepStatus.IN_PROGRESS, startedAt: new Date('2025-10-16T10:00:00Z'),
-        inputQty: 12.00, inputUnitId: 1,
-        notes: "Started mixing, paused for equipment maintenance."
-      },
-    ]
+  const dinnerRolls = await prisma.product.create({
+    data: {
+      name: "Dinner Rolls",
+      imgUrl: "https://images.unsplash.com/photo-1608198093002-ad4e005484ec",
+      categoryId: breadCategory.id,
+      unitId: pieceUnit.id,
+    },
   });
 
-  await prisma.stepParticipant.createMany({
-    data: [
-      {
-        id: 1,
-        stepExecutionId: 4,
-        workerId: 1,
-        guestId: null,
-        roleInStep: "Helper",
-        startedAt: new Date('2025-10-02T09:15:00Z'),
-        finishedAt: new Date('2025-10-02T10:00:00Z')
-      }, // Alice
-      {
-        id: 2,
-        stepExecutionId: 4,
-        workerId: null,
-        guestId: guestCharlie.id,
-        roleInStep: "Observer",
-        startedAt: new Date('2025-10-02T09:30:00Z'),
-        finishedAt: new Date('2025-10-02T10:00:00Z')
-      }, // Charlie
-    ]
+  const orangeJuice = await prisma.product.create({
+    data: {
+      name: "Orange Juice Bottle",
+      imgUrl: "https://images.unsplash.com/photo-1571687949920-6e7c1a9bce64",
+      categoryId: drinkCategory.id,
+      unitId: pieceUnit.id,
+    },
   });
 
-  await prisma.stepMaterialUsage.createMany({
-    data: [
-      {id: 1, stepExecutionId: 1, rawMaterialId: 1, inventoryLotId: 1, qtyUsed: 10.00, unitId: 1}, // Flour
-      {id: 2, stepExecutionId: 2, rawMaterialId: 2, inventoryLotId: 2, qtyUsed: 5.00, unitId: 1}, // Butter
-    ]
+  const flour = await prisma.rawMaterial.create({
+    data: {
+      name: "Flour",
+      unitId: kgUnit.id,
+      imgUrl: "https://example.com/flour.jpg",
+    },
   });
 
-  await prisma.order.createMany({
-    data: [
-      // Order 1: Scheduled Delivery
-      {
-        id: 1, clientName: "Jane's Cafe", addressText: "123 Main St, Anytown",
-        deliveryDate: new Date('2025-10-17T15:00:00Z'), deliveryVariant: DeliveryVariant.PERSONAL,
-        status: OrderStatus.SCHEDULED, createdByUserId: 1, notes: "Requires morning delivery."
-      },
-      // Order 2: Delivered Consignment
-      {
-        id: 2, clientName: "City Grocer", addressText: "456 Oak Ave, Bigcity",
-        deliveryDate: new Date('2025-09-29T14:00:00Z'), deliveryVariant: DeliveryVariant.CONSIGNMENT,
-        status: OrderStatus.DELIVERED, deliveredAt: new Date('2025-09-29T14:30:00Z'),
-        consignmentPartner: "Fresh Distribution Inc."
-      }
-    ]
+  const water = await prisma.rawMaterial.create({
+    data: {
+      name: "Water",
+      unitId: literUnit.id,
+      imgUrl: "https://example.com/water.jpg",
+    },
   });
 
-  await prisma.orderItem.createMany({
-    data: [
-      {id: 1, orderId: 1, productVariantId: 1, quantity: 20.00, unitId: 5}, // Order 1: Croissant
-      {id: 2, orderId: 2, productVariantId: 1, quantity: 50.00, unitId: 5}, // Order 2: Croissant
-      {id: 3, orderId: 2, productVariantId: 2, quantity: 10.00, unitId: 5} // Order 2: Sourdough Loaf
-    ],
+  const yeast = await prisma.rawMaterial.create({
+    data: {
+      name: "Yeast",
+      unitId: kgUnit.id,
+      imgUrl: "https://example.com/yeast.jpg",
+    },
   });
 
-  await prisma.inventoryMovement.createMany({
-    data: [
-      // Movement 1: Raw Material Consumption (Flour from RUN 1, Step 1)
-      {
-        id: 1, inventoryLotId: 1, direction: MovementDirection.OUT, qty: 10.00, unitId: 1,
-        reason: MovementReason.CONSUMPTION_STEP, relatedStepExecutionId: 1,
-        movedAt: new Date('2025-10-01T08:55:00Z'), note: "Flour usage for Dough Mixing - CRO-20251001-A"
-      },
-      // Movement 2: Raw Material Consumption (Butter from RUN 1, Step 2)
-      {
-        id: 2, inventoryLotId: 2, direction: MovementDirection.OUT, qty: 5.00, unitId: 1,
-        reason: MovementReason.CONSUMPTION_STEP, relatedStepExecutionId: 2,
-        movedAt: new Date('2025-10-01T12:00:00Z'), note: "Butter usage for Laminating - CRO-20251001-A"
-      },
-      // Movement 3: Product Completion (Output from RUN 1)
-      {
-        id: 3, inventoryLotId: 3, direction: MovementDirection.IN, qty: 98.00, unitId: 5,
-        reason: MovementReason.COMPLETION_RUN, relatedProcessRunId: 1,
-        movedAt: new Date('2025-10-01T14:30:00Z'), note: "Good output for CRO-20251001-A"
-      },
-      // Movement 4: Raw Material Purchase (Adjustment)
-      {
-        id: 4, inventoryLotId: 1, direction: MovementDirection.IN, qty: 50.00, unitId: 1,
-        reason: MovementReason.PURCHASE,
-        movedAt: new Date('2025-10-15T10:00:00Z'), note: "Received new bag of Flour-A23."
-      },
-      // Movement 5: Product Outbound (Order 2)
-      {
-        id: 5, inventoryLotId: 3, direction: MovementDirection.OUT, qty: 50.00, unitId: 5,
-        reason: MovementReason.OUTBOUND_ORDER, relatedOrderId: 2,
-        movedAt: new Date('2025-09-29T14:00:00Z'), note: "Outbound for Order #2 (Croissants)"
-      },
-    ]
+  const salt = await prisma.rawMaterial.create({
+    data: {
+      name: "Salt",
+      unitId: kgUnit.id,
+      imgUrl: "https://example.com/salt.jpg",
+    },
   });
 
-  console.log(`Seeding finished.`)
+  const sugar = await prisma.rawMaterial.create({
+    data: {
+      name: "Sugar",
+      unitId: kgUnit.id,
+      imgUrl: "https://example.com/sugar.jpg",
+    },
+  });
+
+  const butter = await prisma.rawMaterial.create({
+    data: {
+      name: "Butter",
+      unitId: kgUnit.id,
+      imgUrl: "https://example.com/butter.jpg",
+    },
+  });
+
+  const milk = await prisma.rawMaterial.create({
+    data: {
+      name: "Milk",
+      unitId: literUnit.id,
+      imgUrl: "https://example.com/milk.jpg",
+    },
+  });
+
+  const eggs = await prisma.rawMaterial.create({
+    data: {
+      name: "Eggs",
+      unitId: pieceUnit.id,
+      imgUrl: "https://example.com/eggs.jpg",
+    },
+  });
+
+  const lemonJuice = await prisma.rawMaterial.create({
+    data: {
+      name: "Lemon Juice",
+      unitId: literUnit.id,
+      imgUrl: "https://example.com/lemon-juice.jpg",
+    },
+  });
+
+  const orangeConcentrate = await prisma.rawMaterial.create({
+    data: {
+      name: "Orange Concentrate",
+      unitId: literUnit.id,
+      imgUrl: "https://example.com/orange-concentrate.jpg",
+    },
+  });
+
+  const passwordHash = "$2b$10$HLfr5vhb.gJMtlGTPKvXjeDiu1tj2e9cx49jdWdDS8AQpHpDFxQPa";
+
+  const admin = await prisma.user.create({
+    data: {
+      name: "Admin User",
+      email: "admin@example.com",
+      phone: "1111111111",
+      imgUrl: "https://example.com/admin.jpg",
+      passwordHash,
+      isAdmin: true,
+      isGuest: false,
+    },
+  });
+
+  const worker = await prisma.user.create({
+    data: {
+      name: "Worker One",
+      email: "worker@example.com",
+      phone: "2222222222",
+      imgUrl: "https://example.com/worker.jpg",
+      passwordHash,
+      isAdmin: false,
+      isGuest: false,
+    },
+  });
+
+  const breadProcess = await prisma.processTemplate.create({
+    data: {
+      name: "Basic Bread Process",
+      productId: sourdough.id,
+    },
+  });
+
+  const step1 = await prisma.processTemplateStep.create({
+    data: {
+      processId: breadProcess.id,
+      position: 1,
+      name: "Mix Ingredients",
+      idealDurationMin: 20,
+      instructions: "Mix flour, water, and yeast.",
+    },
+  });
+
+  const step2 = await prisma.processTemplateStep.create({
+    data: {
+      processId: breadProcess.id,
+      position: 2,
+      name: "Bake",
+      idealDurationMin: 40,
+      instructions: "Bake until golden brown.",
+    },
+  });
+
+  await prisma.processTemplateStepMaterial.create({
+    data: {
+      stepId: step1.id,
+      rawMaterialId: flour.id,
+    },
+  });
+
+  await prisma.processTemplateStepMaterial.create({
+    data: {
+      stepId: step1.id,
+      rawMaterialId: water.id,
+    },
+  });
+
+  await prisma.processTemplateStepMaterial.create({
+    data: {
+      stepId: step1.id,
+      rawMaterialId: yeast.id,
+    },
+  });
+
+  const flourInventory = await prisma.inventoryItem.create({
+    data: {
+      itemType: ItemType.RAW,
+      rawMaterialId: flour.id,
+    },
+  });
+
+  const waterInventory = await prisma.inventoryItem.create({
+    data: {
+      itemType: ItemType.RAW,
+      rawMaterialId: water.id,
+    },
+  });
+
+  const yeastInventory = await prisma.inventoryItem.create({
+    data: {
+      itemType: ItemType.RAW,
+      rawMaterialId: yeast.id,
+    },
+  });
+
+  const saltInventory = await prisma.inventoryItem.create({
+    data: {
+      itemType: ItemType.RAW,
+      rawMaterialId: salt.id,
+    },
+  });
+
+  const sugarInventory = await prisma.inventoryItem.create({
+    data: {
+      itemType: ItemType.RAW,
+      rawMaterialId: sugar.id,
+    },
+  });
+
+  const butterInventory = await prisma.inventoryItem.create({
+    data: {
+      itemType: ItemType.RAW,
+      rawMaterialId: butter.id,
+    },
+  });
+
+  const milkInventory = await prisma.inventoryItem.create({
+    data: {
+      itemType: ItemType.RAW,
+      rawMaterialId: milk.id,
+    },
+  });
+
+  const eggsInventory = await prisma.inventoryItem.create({
+    data: {
+      itemType: ItemType.RAW,
+      rawMaterialId: eggs.id,
+    },
+  });
+
+  const lemonJuiceInventory = await prisma.inventoryItem.create({
+    data: {
+      itemType: ItemType.RAW,
+      rawMaterialId: lemonJuice.id,
+    },
+  });
+
+  const orangeConcentrateInventory = await prisma.inventoryItem.create({
+    data: {
+      itemType: ItemType.RAW,
+      rawMaterialId: orangeConcentrate.id,
+    },
+  });
+
+  const breadInventory = await prisma.inventoryItem.create({
+    data: {
+      itemType: ItemType.PRODUCT,
+      productId: sourdough.id,
+    },
+  });
+
+  const lemonadeInventory = await prisma.inventoryItem.create({
+    data: {
+      itemType: ItemType.PRODUCT,
+      productId: lemonade.id,
+    },
+  });
+
+  const baguetteInventory = await prisma.inventoryItem.create({
+    data: {
+      itemType: ItemType.PRODUCT,
+      productId: baguette.id,
+    },
+  });
+
+  const dinnerRollsInventory = await prisma.inventoryItem.create({
+    data: {
+      itemType: ItemType.PRODUCT,
+      productId: dinnerRolls.id,
+    },
+  });
+
+  const orangeJuiceInventory = await prisma.inventoryItem.create({
+    data: {
+      itemType: ItemType.PRODUCT,
+      productId: orangeJuice.id,
+    },
+  });
+
+  const flourLot = await prisma.inventoryLot.create({
+    data: {
+      inventoryItemId: flourInventory.id,
+      lotCode: "FLOUR-001",
+      quantity: 100,
+      receivedAt: new Date(),
+    },
+  });
+
+  const waterLot = await prisma.inventoryLot.create({
+    data: {
+      inventoryItemId: waterInventory.id,
+      lotCode: "WATER-001",
+      quantity: 200,
+      receivedAt: new Date(),
+    },
+  });
+
+  const yeastLot = await prisma.inventoryLot.create({
+    data: {
+      inventoryItemId: yeastInventory.id,
+      lotCode: "YEAST-001",
+      quantity: 25,
+      receivedAt: new Date(),
+    },
+  });
+
+  const sugarLot = await prisma.inventoryLot.create({
+    data: {
+      inventoryItemId: sugarInventory.id,
+      lotCode: "SUGAR-001",
+      quantity: 45,
+      receivedAt: new Date(),
+    },
+  });
+
+  const butterLot = await prisma.inventoryLot.create({
+    data: {
+      inventoryItemId: butterInventory.id,
+      lotCode: "BUTTER-001",
+      quantity: 30,
+      receivedAt: new Date(),
+    },
+  });
+
+  const breadLot = await prisma.inventoryLot.create({
+    data: {
+      inventoryItemId: breadInventory.id,
+      lotCode: "BREAD-001",
+      quantity: 10,
+      receivedAt: new Date(),
+    },
+  });
+
+  const lemonadeLot = await prisma.inventoryLot.create({
+    data: {
+      inventoryItemId: lemonadeInventory.id,
+      lotCode: "LEMONADE-001",
+      quantity: 15,
+      receivedAt: new Date(),
+    },
+  });
+
+  const baguetteLot = await prisma.inventoryLot.create({
+    data: {
+      inventoryItemId: baguetteInventory.id,
+      lotCode: "BAGUETTE-001",
+      quantity: 20,
+      receivedAt: new Date(),
+    },
+  });
+
+  const dinnerRollsLot = await prisma.inventoryLot.create({
+    data: {
+      inventoryItemId: dinnerRollsInventory.id,
+      lotCode: "ROLLS-001",
+      quantity: 25,
+      receivedAt: new Date(),
+    },
+  });
+
+  const orangeJuiceLot = await prisma.inventoryLot.create({
+    data: {
+      inventoryItemId: orangeJuiceInventory.id,
+      lotCode: "ORANGE-001",
+      quantity: 20,
+      receivedAt: new Date(),
+    },
+  });
+
+  await prisma.inventoryMovement.create({
+    data: {
+      inventoryLotId: flourLot.id,
+      quantityChange: 100,
+      reason: MovementReason.PURCHASE,
+      note: "Initial flour stock",
+      movedAt: new Date(),
+    },
+  });
+
+  await prisma.inventoryMovement.create({
+    data: {
+      inventoryLotId: waterLot.id,
+      quantityChange: 200,
+      reason: MovementReason.PURCHASE,
+      note: "Initial water stock",
+      movedAt: new Date(),
+    },
+  });
+
+  await prisma.inventoryMovement.create({
+    data: {
+      inventoryLotId: yeastLot.id,
+      quantityChange: 25,
+      reason: MovementReason.PURCHASE,
+      note: "Initial yeast stock",
+      movedAt: new Date(),
+    },
+  });
+
+  await prisma.inventoryMovement.create({
+    data: {
+      inventoryLotId: sugarLot.id,
+      quantityChange: 45,
+      reason: MovementReason.PURCHASE,
+      note: "Initial sugar stock",
+      movedAt: new Date(),
+    },
+  });
+
+  await prisma.inventoryMovement.create({
+    data: {
+      inventoryLotId: butterLot.id,
+      quantityChange: 30,
+      reason: MovementReason.PURCHASE,
+      note: "Initial butter stock",
+      movedAt: new Date(),
+    },
+  });
+
+  await prisma.inventoryMovement.create({
+    data: {
+      inventoryLotId: breadLot.id,
+      quantityChange: 10,
+      reason: MovementReason.COMPLETION_RUN,
+      note: "Initial bread stock",
+      movedAt: new Date(),
+    },
+  });
+
+  await prisma.inventoryMovement.create({
+    data: {
+      inventoryLotId: lemonadeLot.id,
+      quantityChange: 15,
+      reason: MovementReason.COMPLETION_RUN,
+      note: "Initial lemonade stock",
+      movedAt: new Date(),
+    },
+  });
+
+  const processExecution = await prisma.processExecution.create({
+    data: {
+      processId: breadProcess.id,
+      batchCode: "BATCH-001",
+      plannedQuantity: 20,
+      status: ProcessStatus.IN_PROGRESS,
+      startedAt: new Date(),
+      notes: "First batch",
+    },
+  });
+
+  const stepExecution1 = await prisma.processStepExecution.create({
+    data: {
+      processExecutionId: processExecution.id,
+      stepId: step1.id,
+      status: StepStatus.DONE,
+      startedAt: new Date(),
+      finishedAt: new Date(),
+      actualDurationMin: 18,
+      inputQty: 20,
+      notes: "Mixing complete",
+    },
+  });
+
+  await prisma.processStepExecution.create({
+    data: {
+      processExecutionId: processExecution.id,
+      stepId: step2.id,
+      status: StepStatus.IN_PROGRESS,
+      startedAt: new Date(),
+      notes: "Currently baking",
+    },
+  });
+
+  await prisma.processStepWorker.create({
+    data: {
+      stepExecutionId: stepExecution1.id,
+      workerId: worker.id,
+    },
+  });
+
+  const flourUsage = await prisma.processStepMaterialUsage.create({
+    data: {
+      stepExecutionId: stepExecution1.id,
+      rawMaterialId: flour.id,
+      qtyUsed: 5,
+      notes: "Used for dough",
+    },
+  });
+
+  await prisma.inventoryMovement.create({
+    data: {
+      inventoryLotId: flourLot.id,
+      quantityChange: -5,
+      reason: MovementReason.CONSUMPTION_STEP,
+      relatedStepMaterialUsageId: flourUsage.id,
+      relatedProcessExecutionId: processExecution.id,
+      note: "Flour used in batch",
+      movedAt: new Date(),
+    },
+  });
+
+  const order1 = await prisma.order.create({
+    data: {
+      clientName: "Sample Customer",
+      address: "123 Main St",
+      deliveryDate: new Date("2026-04-15T10:00:00.000Z"),
+      deliveryVariant: DeliveryVariant.MAIL,
+      status: OrderStatus.SCHEDULED,
+      notes: "Test order",
+    },
+  });
+
+  const order2 = await prisma.order.create({
+    data: {
+      clientName: "North Market",
+      address: "45 Oak Ave",
+      deliveryDate: new Date("2026-04-15T09:00:00.000Z"),
+      deliveryVariant: DeliveryVariant.PERSONAL,
+      status: OrderStatus.DELIVERED,
+      deliveredAt: new Date("2026-04-15T12:30:00.000Z"),
+      notes: "Morning delivery",
+    },
+  });
+
+  const order3 = await prisma.order.create({
+    data: {
+      clientName: "Cafe Luna",
+      address: "88 River Rd",
+      deliveryDate: new Date("2026-04-14T08:00:00.000Z"),
+      deliveryVariant: DeliveryVariant.CONSIGNMENT,
+      consignmentPartner: "FastDrop",
+      status: OrderStatus.DELIVERED,
+      deliveredAt: new Date("2026-04-15T14:15:00.000Z"),
+      notes: "Weekly restock",
+    },
+  });
+
+  const order4 = await prisma.order.create({
+    data: {
+      clientName: "City Deli",
+      address: "200 Pine St",
+      deliveryDate: new Date("2026-04-14T11:00:00.000Z"),
+      deliveryVariant: DeliveryVariant.MAIL,
+      status: OrderStatus.DELIVERED,
+      deliveredAt: new Date("2026-04-13T16:45:00.000Z"),
+      notes: "Large bread order",
+    },
+  });
+
+  const order5 = await prisma.order.create({
+    data: {
+      clientName: "Fresh Table",
+      address: "17 Maple Dr",
+      deliveryDate: new Date("2026-04-12T10:30:00.000Z"),
+      deliveryVariant: DeliveryVariant.PERSONAL,
+      status: OrderStatus.CANCELLED,
+      notes: "Customer cancelled",
+    },
+  });
+
+  const order6 = await prisma.order.create({
+    data: {
+      clientName: "Bistro Seven",
+      address: "901 Elm St",
+      deliveryDate: new Date("2026-04-11T09:45:00.000Z"),
+      deliveryVariant: DeliveryVariant.MAIL,
+      status: OrderStatus.DELIVERED,
+      deliveredAt: new Date("2026-04-13T13:20:00.000Z"),
+      notes: "Weekend order",
+    },
+  });
+
+  const order7 = await prisma.order.create({
+    data: {
+      clientName: "Corner Shop",
+      address: "320 Cedar Ln",
+      deliveryDate: new Date("2026-04-10T08:20:00.000Z"),
+      deliveryVariant: DeliveryVariant.MAIL,
+      status: OrderStatus.DELIVERED,
+      deliveredAt: new Date("2026-04-11T15:00:00.000Z"),
+      notes: "Bread and drinks",
+    },
+  });
+
+  const order8 = await prisma.order.create({
+    data: {
+      clientName: "Harbor Cafe",
+      address: "12 Coast Blvd",
+      deliveryDate: new Date("2026-04-09T07:50:00.000Z"),
+      deliveryVariant: DeliveryVariant.CONSIGNMENT,
+      consignmentPartner: "QuickRoute",
+      status: OrderStatus.DELIVERED,
+      deliveredAt: new Date("2026-04-09T11:40:00.000Z"),
+      notes: "Cafe supply order",
+    },
+  });
+
+  await prisma.orderItem.create({
+    data: {
+      orderId: order1.id,
+      productId: sourdough.id,
+      quantity: 2,
+    },
+  });
+
+  await prisma.orderItem.create({
+    data: {
+      orderId: order2.id,
+      productId: sourdough.id,
+      quantity: 4,
+    },
+  });
+
+  await prisma.orderItem.create({
+    data: {
+      orderId: order2.id,
+      productId: lemonade.id,
+      quantity: 3,
+    },
+  });
+
+  await prisma.orderItem.create({
+    data: {
+      orderId: order3.id,
+      productId: baguette.id,
+      quantity: 6,
+    },
+  });
+
+  await prisma.orderItem.create({
+    data: {
+      orderId: order3.id,
+      productId: dinnerRolls.id,
+      quantity: 5,
+    },
+  });
+
+  await prisma.orderItem.create({
+    data: {
+      orderId: order4.id,
+      productId: sourdough.id,
+      quantity: 8,
+    },
+  });
+
+  await prisma.orderItem.create({
+    data: {
+      orderId: order4.id,
+      productId: orangeJuice.id,
+      quantity: 4,
+    },
+  });
+
+  await prisma.orderItem.create({
+    data: {
+      orderId: order5.id,
+      productId: lemonade.id,
+      quantity: 2,
+    },
+  });
+
+  await prisma.orderItem.create({
+    data: {
+      orderId: order6.id,
+      productId: dinnerRolls.id,
+      quantity: 7,
+    },
+  });
+
+  await prisma.orderItem.create({
+    data: {
+      orderId: order6.id,
+      productId: sourdough.id,
+      quantity: 3,
+    },
+  });
+
+  await prisma.orderItem.create({
+    data: {
+      orderId: order7.id,
+      productId: baguette.id,
+      quantity: 5,
+    },
+  });
+
+  await prisma.orderItem.create({
+    data: {
+      orderId: order7.id,
+      productId: lemonade.id,
+      quantity: 6,
+    },
+  });
+
+  await prisma.orderItem.create({
+    data: {
+      orderId: order8.id,
+      productId: orangeJuice.id,
+      quantity: 5,
+    },
+  });
+
+  await prisma.orderItem.create({
+    data: {
+      orderId: order8.id,
+      productId: dinnerRolls.id,
+      quantity: 4,
+    },
+  });
+
+  await prisma.inventoryMovement.create({
+    data: {
+      inventoryLotId: breadLot.id,
+      quantityChange: -2,
+      reason: MovementReason.OUTBOUND_ORDER,
+      relatedOrderId: order1.id,
+      note: "Bread sent for order",
+      movedAt: new Date(),
+    },
+  });
+
+  await prisma.inventoryMovement.create({
+    data: {
+      inventoryLotId: breadLot.id,
+      quantityChange: -4,
+      reason: MovementReason.OUTBOUND_ORDER,
+      relatedOrderId: order2.id,
+      note: "Bread sent for delivered order",
+      movedAt: new Date("2026-04-15T12:30:00.000Z"),
+    },
+  });
+
+  await prisma.inventoryMovement.create({
+    data: {
+      inventoryLotId: lemonadeLot.id,
+      quantityChange: -3,
+      reason: MovementReason.OUTBOUND_ORDER,
+      relatedOrderId: order2.id,
+      note: "Lemonade sent for delivered order",
+      movedAt: new Date("2026-04-15T12:30:00.000Z"),
+    },
+  });
+
+  await prisma.inventoryMovement.create({
+    data: {
+      inventoryLotId: baguetteLot.id,
+      quantityChange: -6,
+      reason: MovementReason.OUTBOUND_ORDER,
+      relatedOrderId: order3.id,
+      note: "Baguette sent for delivered order",
+      movedAt: new Date("2026-04-14T14:15:00.000Z"),
+    },
+  });
+
+  await prisma.inventoryMovement.create({
+    data: {
+      inventoryLotId: dinnerRollsLot.id,
+      quantityChange: -5,
+      reason: MovementReason.OUTBOUND_ORDER,
+      relatedOrderId: order3.id,
+      note: "Dinner rolls sent for delivered order",
+      movedAt: new Date("2026-04-14T14:15:00.000Z"),
+    },
+  });
+
+  console.log("Seed complete");
 }
 
 main()
   .then(async () => {
-    await prisma.$disconnect()
+    await prisma.$disconnect();
   })
   .catch(async (e) => {
-    console.error(e)
-    await prisma.$disconnect()
-    process.exit(1)
-  })
+    console.error(e);
+    await prisma.$disconnect();
+    process.exit(1);
+  });

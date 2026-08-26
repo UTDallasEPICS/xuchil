@@ -5,15 +5,17 @@ import { useState, useEffect } from "react";
 import HeaderXuchil from "@/components/HeaderXuchil";
 import Button from "@/components/Button";
 import BottomButton from "@/components/BottomButton";
-import ProductCard from "@/components/ProductCard";
+import ProductCard, {ProductCardProps} from "@/components/ProductCard";
 import DeliveryType from "@/components/DeliveryType";
-import { fetchOrderByIdClient, putOrderStatusClient } from "@/lib/ordersClient";
 import {
   CircleUserRound as UserIcon,
   Calendar as CalendarIcon,
 } from "lucide-react";
 
 import styles from "./OrderDetails.module.css";
+import {OrderRead} from "@/lib/schemas";
+import orderClient from "@/lib/services/orderClient";
+import productClient from "@/lib/services/productClient";
 
 const formatMXDateLong = (raw: string) => {
   const [dd, mm, yyyy] = raw.split("/").map(Number);
@@ -28,9 +30,9 @@ const OrderDetailsPage = () => {
   const { orderId } = useParams<{ orderId: string }>();
   const router = useRouter();
 
-  const [order, setOrder] = useState<any | null>(null);
+  const [order, setOrder] = useState<OrderRead | null>(null);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
+  const [products, setProducts] = useState<(ProductCardProps & {id: number})[] | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -40,13 +42,35 @@ const OrderDetailsPage = () => {
       setLoading(false);
       return;
     }
-    fetchOrderByIdClient(idNum)
-      .then((o) => mounted && setOrder(o))
-      .catch((err) => {
-        console.error("Failed to fetch order", err);
-        if (mounted) setOrder(null);
-      })
-      .finally(() => mounted && setLoading(false));
+    const runEffect = async () => {
+      try {
+        const order = await orderClient.getOrderById(idNum);
+        if (mounted) {
+          setOrder(order);
+        }
+        const products = await Promise.all(order.orderItems.map(async (it) => {
+          const product = await productClient.getProductById(it.productId);
+          return {
+            id: it.id,
+            photo: product.imgUrl ?? null,
+            name: product.name,
+            quantity: it.quantity,
+            units: product.unit.name,
+          }
+        }));
+        setProducts(products);
+      } catch (e) {
+        console.error("Failed to fetch order", e);
+        if (mounted) {
+          setOrder(null);
+          setProducts(null);
+        }
+      } finally {
+        if (mounted) setLoading(false);
+      }
+
+    }
+    runEffect();
     return () => {
       mounted = false;
     };
@@ -54,8 +78,10 @@ const OrderDetailsPage = () => {
 
   if (loading) return <p>Cargando pedido...</p>;
   if (!order) return <p>Pedido no encontrado</p>;
+  if (products === null) return <p>Cargando productos...</p>;
 
-  const { id, clientName, address, deliveryDate, deliveryVariant, products, delivered } = order;
+  const { id, clientName, address, deliveryDate, deliveryVariant, status } = order;
+  const delivered = status == "DELIVERED";
 
   const handleEdit = () => {
     router.push(`/orders/deliveries/${id}/edit`);
@@ -64,8 +90,15 @@ const OrderDetailsPage = () => {
   const handleDelivered = async () => {
     try {
       const newStatus = delivered ? "SCHEDULED" : "DELIVERED";
-      await putOrderStatusClient(id, newStatus as any);
-      router.replace(`/orders/deliveries/${id}`);
+      const updated = await orderClient.updateOrder(id, { status: newStatus });
+      setOrder((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          delivered: updated.status === "DELIVERED" || Boolean(updated.deliveredAt),
+        };
+      });
+      router.refresh();
     } catch (err) {
       console.error("Failed to update order status", err);
       alert("No se pudo cambiar el estado del pedido");
@@ -110,8 +143,8 @@ const OrderDetailsPage = () => {
 
       <h3>Productos:</h3>
       <div className={styles.productContainer}>
-        {products.map(({ id: pid, ...p }) => (
-          <ProductCard key={pid} {...p} />
+        {products.map((product) => (
+          <ProductCard key={product.id} {...product} />
         ))}
       </div>
 

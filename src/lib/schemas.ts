@@ -1,232 +1,361 @@
-import * as z from "zod";
+import { z } from "zod";
+import {
+  ProcessStatus,
+  StepStatus,
+  DeliveryVariant,
+  OrderStatus,
+  ItemType,
+  MovementReason,
+} from "@prisma/client";
 
-const requiredError = (label: string)=> ({
-    error: (iss: {input: unknown}) => iss.input === undefined
-    ? `${label} is required.`: `${label} is invalid.`
+const InputDateTimeString = z.iso.datetime({offset:true}).transform((val) => new Date(val));
+const OutputDateTimeString = z.iso.datetime();
+const LocalDateString = z.iso.datetime().transform((val) => {
+  const d = new Date(val);
+  if (Number.isNaN(d.getTime())) return "";
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const yyyy = d.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
 })
 
-const typeError = (label: string, type:string)=> ({
-    error: `${label} must be ${type}.`
-})
-
-export const ProcessStatusEnum = z.enum([
-    'PLANNED',
-    'IN_PROGRESS',
-    'PAUSED',
-    'COMPLETED',
-    'CANCELLED'
-    ], {
-    error: (iss): string => `Expected ${Object.values(ProcessStatusEnum.def.entries)}, received ${iss.input}`,
+// Unit
+export const UnitCreateSchema = z.strictObject({
+  name: z.string(),
 });
-
-export const StepStatusEnum = z.enum([
-    'PENDING',
-    'IN_PROGRESS',
-    'DONE',
-    'BLOCKED',
-    'SKIPPED'
-    ], {
-    error: (iss): string => `Expected ${Object.values(StepStatusEnum.def.entries)}, received ${iss.input}`,
+export const UnitReadSchema = z.object({
+  id: z.number().int(),
+  name: z.string(),
 });
+export type UnitCreate = z.infer<typeof UnitCreateSchema>;
+export type UnitRead = z.infer<typeof UnitReadSchema>;
 
-export const DeliveryVariantEnum = z.enum([
-    'MAIL',
-    'PERSONAL',
-    'CONSIGNMENT'
-    ], {
-    error: (iss): string => `Expected ${Object.values(DeliveryVariantEnum.def.entries)}, received ${iss.input}`,
+// ProductCategory
+export const ProductCategoryCreateSchema = z.strictObject({
+  name: z.string(),
+  imgUrl: z.url().optional(),
 });
-
-export const OrderStatusEnum = z.enum([
-    'SCHEDULED',
-    'DELIVERED',
-    'CANCELLED'
-    ], {
-    error: (iss): string => `Expected ${Object.values(OrderStatusEnum.def.entries)}, received ${iss.input}`,
+export const ProductCategoryReadSchema = z.object({
+  id: z.number().int(),
+  name: z.string(),
+  imgUrl: z.url().nullable().optional(),
 });
+export type ProductCategoryCreate = z.infer<typeof ProductCategoryCreateSchema>;
+export type ProductCategoryRead = z.infer<typeof ProductCategoryReadSchema>;
 
-export const ItemTypeEnum = z.enum([
-    'RAW',
-    'PRODUCT'
-    ], {
-    error: (iss): string => `Expected ${Object.values(ItemTypeEnum.def.entries)}, received ${iss.input}`,
+// Product
+export const ProductCreateSchema = z.strictObject({
+  categoryId: z.number().int(),
+  name: z.string(),
+  imgUrl: z.url().optional(),
+  unitId: z.number().int(),
 });
-
-export const MovementDirectionEnum = z.enum([
-    'IN',
-    'OUT'
-], requiredError("movementDirection"));
-
-export const MovmementReasonEnum = z.enum([
-    'PURCHASE',
-    'CONSUMPTION_STEP',
-    'ADJUSTMENT',
-    'COMPLETION_RUN',
-    'OUTBOUND_ORDER'
-], requiredError("movementReason"));
-
-export const processTemplateSchema = z.strictObject({
-    productVariantId: z.number(requiredError("productVariantId")).int(typeError("productVariantId", "int")),
-    name: z.string(requiredError("name")).min(1, "name cannot be empty."),
-    version: z.number(typeError("version", "number")).int(typeError("version", "int")).optional(),
-    isActive: z.boolean(typeError("isActive", "boolean")).optional(),
-    notes: z.string(typeError("notes", "string")).optional().nullable()
-})
-
-export const templateStepSchema = z.strictObject({
-    processTemplateId: z.number(requiredError("processTemplateId")).int(typeError("processTemplate", "int")),
-    name: z.string(requiredError("name")).min(1, "name cannot be empty."),
-    position: z.number(typeError("position", "number")).int(typeError("position", "int")).optional(),
-    idealDurationMin: z.number().int(typeError("idealDurationMin", "int")).optional().nullable(),
-    requiresInput: z.boolean(typeError("requiresInput", "boolean")).optional(),
-    instructions: z.string(typeError("instructions", "string")).optional().nullable()
-})
-
-export const stepExecutionSchema = z.strictObject({
-    processRunId: z.number(requiredError("processRunId")).int(typeError("processRunId", "int")),
-    templateStepId: z.number(requiredError("templateStepId")).int(typeError("templateStepId", "int")),
-    workerId: z.number(typeError("workerId", "int")).int(typeError("workerId", "int")).optional().nullable(),
-    status: StepStatusEnum.optional(),
-    startedAt: z.iso.datetime(typeError("startedAt", "date")).optional().nullable(),
-    finishedAt: z.iso.datetime(typeError("finishedAt", "date")).optional().nullable(),
-    actualDurationMin: z.number(typeError("actualDurationMin", "int")).int(typeError("actualDurationMin", "int")).optional().nullable(),
-    inputQty: z.number(typeError("inputQty", "number")).optional().nullable(),
-    inputUnitId: z.number(typeError("inputUnitId", "int")).int(typeError("inputUnitId", "int")).optional().nullable(),
-    notes: z.string(typeError("notes", "string")).optional().nullable()
-})
-
-export const processRunSchema = z.strictObject({
-    productVariantId: z.number(requiredError("productVariantId")).int(typeError("productVariantId", "int")),
-    processTemplateId: z.number(requiredError("processTemplateId")).int(typeError("processTemplateId", "int")),
-    // auto gen batchCode
-    // batchCode: z.string(requiredError("batchCode")).min(1, "batchCode cannot be empty."),
-    createdByWorkerId: z.number(typeError("createdByWorkerId", "int")).int(typeError("createdByWorkerId", "int")).optional().nullable(),
-    plannedQty: z.number(typeError("plannedQty", "number")).optional().nullable(),
-    plannedUnitId : z.number(typeError("plannedUnitId", "int")).int(typeError("plannedUnitId", "int")).optional().nullable(),
-    status: ProcessStatusEnum.optional(),
-    startedAt: z.iso.datetime(typeError("startedAt", "date")).optional().nullable(),
-    finishedAt: z.iso.datetime(typeError("finishedAt", "date")).optional().nullable(),
-    goodOutputQty: z.number(typeError("goodOutputQty", "number")).optional().nullable(),
-    scrapQty: z.number(typeError("scrapQty", "number")).optional().nullable(),
-    outputUnitId: z.number(typeError("outputUnitId", "int")).int(typeError("outputUnitId", "int")).optional().nullable(),
-    notes: z.string(typeError("notes", "string")).optional().nullable()
-})
-
-export const inventoryMovementSchema = z.strictObject({
-    inventoryLotId: z.number(requiredError("inventoryLotId")).int(typeError("inventoryLotId", "int")),
-    direction: MovementDirectionEnum,
-    qty: z.number(requiredError("qty")),
-    unitId: z.number(requiredError("unitId")).int(typeError("unitId", "int")),
-    reason: MovmementReasonEnum,
-    relatedStepExecutionId: z.number().int(typeError("relatedStepExecutionId", "int")).optional(),
-    relatedProcessRunId: z.number().int(typeError("relatedProcessRunId", "int")).optional(),
-    relatedOrderId: z.number().int(typeError("requiredOrderId", "int")).optional(),
-    note: z.string(typeError("note", "string")).optional().nullable(),
-    movedAt: z.iso.datetime(typeError("movedAt", "date"))
-})
-
-export const rawMaterialSchema = z.strictObject({
-    code: z.string(requiredError("code")).min(1, "code cannot be empty."),
-    name: z.string(requiredError("name")).min(1, "name cannot be empty."),
-    defaultUnitId: z.number().int(typeError("defaultUnitId", "int")).optional().nullable(),
-    imageUrl: z.string(typeError("imageUrl", "string")).optional().nullable(),
-    isActive: z.boolean(typeError("isActive", "boolean")).optional()
-})
-
-export const productVariantSchema = z.strictObject({
-    productId: z.number(requiredError("productId")).int(typeError("productId", "int")),
-    name: z.string(requiredError("name")).min(1, "name cannot be empty."),
-    presentation: z.string(typeError("presentation", "string")).optional().nullable(),
-    netContent: z.number("netContent must be a number").optional().nullable(),
-    contentUnitId: z.number(typeError("contentUnitId", "int")).int(typeError("contentUnitId", "int")).optional().nullable(),
-    defaultUnitId: z.number(typeError("defaultUnitId", "int")).int(typeError("defaultUnitId", "int")).optional().nullable(),
-    imageUrl: z.string(typeError("imageUrl", "string")).optional().nullable(),
-    isActive: z.boolean(typeError("isActive", "boolean")).optional()
-})
-
-export const orderItemSchema = z.strictObject({
-    // orderId: z.number().int(),
-    productVariantId: z.number(requiredError("productVariantId")).int(typeError("productVariantId", "int")),
-    quantity: z.number(requiredError("quantity")),
-    unitId: z.number(typeError("unitId", "int")).int(typeError("unitId", "int")).optional().nullable(),
-    notes: z.string(typeError("notes", "string")).optional().nullable()
-})
-
-export const orderSchema = z.strictObject({
-    clientName: z.string(requiredError("clientName")).min(1, "clientName cannot be empty."),
-    addressText: z.string(requiredError("addressText")).min(1, "addressText cannot be empty."),
-    deliveryDate: z.iso.datetime(requiredError("date")),
-    deliveryVariant: DeliveryVariantEnum.optional(),
-    orderItems: z.array(orderItemSchema).min(1, "order must contain at least one item."), // must contain at least 1 item
-    status: OrderStatusEnum.optional(),
-    deliveredAt: z.iso.datetime(typeError("deliveredAt", "date")).optional().nullable(),
-    consignmentPartner: z.string(typeError("consignmentPartner", "string")).optional().nullable(),
-    notes: z.string(typeError("notes", "string")).optional().nullable(),
-})
-
-export const authUserSchema = z.strictObject({
-    workerId: z.number(typeError("workerId", "int")).int(typeError("workerId", "int")).optional().nullable(),
-    email: z.string(requiredError("email")).min(1, "email cannot be empty."),
-    passwordHash: z.string(requiredError("passwordHash")).min(1, "passwordHash cannot be empty."),
-    isAdmin: z.boolean(typeError("isAdmin", "boolean")).optional(),
-    isActive: z.boolean(typeError("isActive", "boolean")).optional(),
-    lastLoginAt: z.iso.datetime(typeError("lastLoginAt", "boolean")).optional().nullable()
-})
-
-export const workerSchema = z.strictObject({
-    fullName: z.string(requiredError("fullName")).min(1, "fullName cannot be empty."),
-    roleId: z.int(typeError("roleId", "int")).optional().nullable(),
-    phone: z.string(typeError("phone", "string")).optional().nullable(),
-    profilePhotoUrl: z.string(typeError("profilePhotoUrl", "string")).optional().nullable(),
-    isActive: z.boolean(typeError("isActive", "boolean")).optional()
-})
-
-export const processPauseSchema = z.strictObject({
-    // processRunId: z.number(requiredError("processRunId")).int(typeError("processRunId", "int")),
-    reason: z.string(typeError("reason", "string")).optional().nullable(),
-})
-
-export const adminCreateSchema = z.strictObject({
-  email: z.string(requiredError("email")).email(typeError("email", "email")),
-  password: z.string(requiredError("password")).min(8, "password must be at least 8 characters")
+export const ProductReadSchema = z.object({
+  id: z.number().int(),
+  categoryId: z.number().int(),
+  name: z.string(),
+  imgUrl: z.url().nullable().optional(),
+  unitId: z.number().int(),
+  unit: UnitReadSchema,
 });
+export type ProductCreate = z.infer<typeof ProductCreateSchema>;
+export type ProductRead = z.infer<typeof ProductReadSchema>;
 
-export const workerCreateSchema = z.strictObject({
-  fullName: z.string(requiredError("fullName")).min(1, "fullName cannot be empty."),
-  roleId: z.int(typeError("roleId", "int")).optional().nullable(),
-  phone: z.string(typeError("phone", "string")).optional().nullable(),
-  profilePhotoUrl: z.string(typeError("profilePhotoUrl", "string")).optional().nullable(),
-  isActive: z.boolean(typeError("isActive", "boolean")).optional(),
-
-  // new fields
-  isAdmin: z.boolean(typeError("isAdmin", "boolean")).optional().default(false),
-  adminCreate: z.union([adminCreateSchema, z.undefined()]).optional()
-})
-.superRefine((data, ctx) => {
-
-  // require adminCreate if isAdmin = true
-  if (data.isAdmin && !data.adminCreate) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["adminCreate"],
-      message: "adminCreate is required when isAdmin is true."
-    });
-  }
-
-  // forbid adminCreate if isAdmin = false
-  if (!data.isAdmin && data.adminCreate) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["adminCreate"],
-      message: "adminCreate must not be provided unless isAdmin is true."
-    });
-  }
+// RawMaterial
+export const RawMaterialCreateSchema = z.strictObject({
+  name: z.string(),
+  unitId: z.number().int(),
+  imgUrl: z.url().optional(),
 });
+export const RawMaterialReadSchema = z.object({
+  id: z.number().int(),
+  name: z.string(),
+  imgUrl: z.url().nullable().optional(),
+  unitId: z.number().int(),
+  unit: UnitReadSchema,
+});
+export type RawMaterialCreate = z.infer<typeof RawMaterialCreateSchema>;
+export type RawMaterialRead = z.infer<typeof RawMaterialReadSchema>;
 
-export const loginSchema = z.strictObject({
+// User
+export const UserCreateSchema = z.strictObject({
+  name: z.string(),
+  email: z.email().optional(),
+  phone: z.string().optional(),
+  imgUrl: z.url().optional(),
+  password: z.string(),
+  isAdmin: z.boolean().optional(),
+  isGuest: z.boolean().optional(),
+});
+export const UserRestrictedUpdateSchema = z.strictObject({
+  name: z.string(),
+  email: z.email().optional(),
+  phone: z.string().optional(),
+  imgUrl: z.url().optional(),
+  password: z.string(),
+});
+export const UserReadSchema = z.object({
+  id: z.number().int(),
+  name: z.string(),
+  email: z.email().nullable().optional(),
+  phone: z.string().nullable().optional(),
+  imgUrl: z.url().nullable().optional(),
+  isAdmin: z.boolean(),
+  isGuest: z.boolean()
+});
+export type UserCreate = z.infer<typeof UserCreateSchema>;
+export type UserRestrictedUpdate = z.infer<typeof UserRestrictedUpdateSchema>;
+export type UserRead = z.infer<typeof UserReadSchema>;
 
-})
+// ProcessTemplateStepMaterial
+export const ProcessTemplateStepMaterialCreateSchema = z.strictObject({
+  stepId: z.number().int(),
+  rawMaterialId: z.number().int(),
+});
+export const ProcessTemplateStepMaterialReadSchema = z.object({
+  id: z.number().int(),
+  stepId: z.number().int(),
+  rawMaterialId: z.number().int(),
+});
+export type ProcessTemplateStepMaterialCreate = z.infer<typeof ProcessTemplateStepMaterialCreateSchema>;
+export type ProcessTemplateStepMaterialRead = z.infer<typeof ProcessTemplateStepMaterialReadSchema>;
 
-export const logoutSchema = z.strictObject({
+// ProcessTemplateStep
+export const ProcessTemplateStepCreateSchema = z.strictObject({
+  processId: z.number().int(),
+  position: z.number().int(),
+  name: z.string(),
+  idealDurationMin: z.number().int().optional(),
+  instructions: z.string().optional(),
+});
+export const ProcessTemplateStepReadSchema = z.object({
+  id: z.number().int(),
+  processId: z.number().int(),
+  position: z.number().int(),
+  name: z.string(),
+  idealDurationMin: z.number().int().nullable().optional(),
+  instructions: z.string().nullable().optional(),
+  processTemplateStepMaterials: ProcessTemplateStepMaterialReadSchema.array(),
+});
+export type ProcessTemplateStepCreate = z.infer<typeof ProcessTemplateStepCreateSchema>;
+export type ProcessTemplateStepRead = z.infer<typeof ProcessTemplateStepReadSchema>;
 
-})
+// ProcessTemplate
+export const ProcessTemplateCreateSchema = z.strictObject({
+  productId: z.number().int(),
+  name: z.string(),
+});
+export const ProcessTemplateReadSchema = z.object({
+  id: z.number().int(),
+  productId: z.number().int(),
+  name: z.string(),
+  processTemplateSteps: ProcessTemplateStepReadSchema.array(),
+});
+export type ProcessTemplateCreate = z.infer<typeof ProcessTemplateCreateSchema>;
+export type ProcessTemplateRead = z.infer<typeof ProcessTemplateReadSchema>;
+
+// ProcessPause
+export const ProcessPauseCreateSchema = z.strictObject({
+  processStepExecutionId: z.number().int(),
+  startedAt: InputDateTimeString,
+  endedAt: InputDateTimeString.optional(),
+});
+export const ProcessPauseReadSchema = z.object({
+  id: z.number().int(),
+  processStepExecutionId: z.number().int(),
+  startedAt: OutputDateTimeString,
+  endedAt: OutputDateTimeString.nullable().optional(),
+});
+export type ProcessPauseCreate = z.input<typeof ProcessPauseCreateSchema>;
+export type ProcessPauseRead = z.output<typeof ProcessPauseReadSchema>;
+
+// ProcessStepExecution
+export const ProcessStepExecutionCreateSchema = z.strictObject({
+  processExecutionId: z.number().int(),
+  stepId: z.number().int(),
+  status: z.enum(StepStatus).optional(),
+  startedAt: InputDateTimeString.optional(),
+  finishedAt: InputDateTimeString.optional(),
+  actualDurationMin: z.number().int().optional(),
+  inputQty: z.number().optional(),
+  notes: z.string().optional(),
+});
+export const ProcessStepExecutionReadSchema = z.object({
+  id: z.number().int(),
+  processExecutionId: z.number().int(),
+  stepId: z.number().int(),
+  status: z.enum(StepStatus),
+  startedAt: OutputDateTimeString.nullable().optional(),
+  finishedAt: OutputDateTimeString.nullable().optional(),
+  actualDurationMin: z.number().int().nullable().optional(),
+  inputQty: z.number().nullable().optional(),
+  notes: z.string().nullable().optional(),
+});
+export type ProcessStepExecutionCreate = z.input<typeof ProcessStepExecutionCreateSchema>;
+export type ProcessStepExecutionRead = z.output<typeof ProcessStepExecutionReadSchema>;
+
+// ProcessExecution
+export const ProcessExecutionCreateSchema = z.strictObject({
+  processId: z.number().int(),
+  batchCode: z.string(),
+  plannedQuantity: z.number().optional(),
+  status: z.enum(ProcessStatus).optional(),
+  startedAt: InputDateTimeString,
+  finishedAt: InputDateTimeString.optional(),
+  outputQuantity: z.number().optional(),
+  scrapQuantity: z.number().optional(),
+  notes: z.string().optional(),
+});
+export const ProcessExecutionReadSchema = z.object({
+  id: z.number().int(),
+  processId: z.number().int(),
+  batchCode: z.string(),
+  plannedQuantity: z.number().nullable().optional(),
+  status: z.enum(ProcessStatus),
+  startedAt: OutputDateTimeString,
+  finishedAt: OutputDateTimeString.nullable().optional(),
+  outputQuantity: z.number().nullable().optional(),
+  scrapQuantity: z.number().nullable().optional(),
+  notes: z.string().nullable().optional(),
+  processStepExecutions: ProcessStepExecutionReadSchema.array(),
+});
+export type ProcessExecutionCreate = z.input<typeof ProcessExecutionCreateSchema>;
+export type ProcessExecutionRead = z.output<typeof ProcessExecutionReadSchema>;
+
+// ProcessStepMaterialUsage
+export const ProcessStepMaterialUsageCreateSchema = z.strictObject({
+  stepExecutionId: z.number().int(),
+  rawMaterialId: z.number().int(),
+  qtyUsed: z.number(),
+  unitId: z.number().int(),
+  notes: z.string().optional(),
+});
+export const ProcessStepMaterialUsageReadSchema = z.object({
+  id: z.number().int(),
+  stepExecutionId: z.number().int(),
+  rawMaterialId: z.number().int(),
+  qtyUsed: z.number(),
+  unitId: z.number().int(),
+  notes: z.string().nullable().optional(),
+});
+export type ProcessStepMaterialUsageCreate = z.infer< typeof ProcessStepMaterialUsageCreateSchema >;
+export type ProcessStepMaterialUsageRead = z.infer< typeof ProcessStepMaterialUsageReadSchema >;
+
+// ProcessStepWorker
+export const ProcessStepWorkerCreateSchema = z.strictObject({
+  stepExecutionId: z.number().int(),
+  workerId: z.number().int(),
+});
+export const ProcessStepWorkerReadSchema = z.object({
+  id: z.number().int(),
+  stepExecutionId: z.number().int(),
+  workerId: z.number().int(),
+});
+export type ProcessStepWorkerCreate = z.infer<typeof ProcessStepWorkerCreateSchema>;
+export type ProcessStepWorkerRead = z.infer<typeof ProcessStepWorkerReadSchema>;
+
+// InventoryLot
+export const InventoryLotCreateSchema = z.strictObject({
+  inventoryItemId: z.number().int(),
+  lotCode: z.string().optional(),
+  quantity: z.number(),
+  receivedAt: InputDateTimeString,
+  expiryAt: InputDateTimeString.optional(),
+});
+export const InventoryLotReadSchema = z.object({
+  id: z.number().int(),
+  inventoryItemId: z.number().int(),
+  lotCode: z.string().nullable().optional(),
+  quantity: z.number(),
+  receivedAt: OutputDateTimeString,
+  expiryAt: OutputDateTimeString.nullable().optional(),
+});
+export type InventoryLotCreate = z.input<typeof InventoryLotCreateSchema>;
+export type InventoryLotRead = z.output<typeof InventoryLotReadSchema>;
+
+// InventoryItem
+export const InventoryItemCreateSchema = z.strictObject({
+  itemType: z.enum(ItemType),
+  rawMaterialId: z.number().int().optional(),
+  productId: z.number().int().optional(),
+});
+export const InventoryItemReadSchema = z.object({
+  id: z.number().int(),
+  itemType: z.enum(ItemType),
+  rawMaterialId: z.number().int().nullable().optional(),
+  productId: z.number().int().nullable().optional(),
+  rawMaterial: RawMaterialReadSchema.nullish(),
+  product: ProductReadSchema.nullish(),
+  inventoryLots: z.array(InventoryLotReadSchema)
+});
+export type InventoryItemCreate = z.infer<typeof InventoryItemCreateSchema>;
+export type InventoryItemRead = z.infer<typeof InventoryItemReadSchema>;
+
+
+
+
+// InventoryMovement
+export const InventoryMovementCreateSchema = z.strictObject({
+  inventoryLotId: z.number().int(),
+  quantityChange: z.number(),
+  reason: z.enum(MovementReason),
+  relatedStepMaterialUsageId: z.number().int().optional(),
+  relatedProcessExecutionId: z.number().int().optional(),
+  relatedOrderId: z.number().int().optional(),
+  note: z.string().optional(),
+  movedAt: InputDateTimeString,
+});
+export const InventoryMovementReadSchema = z.object({
+  id: z.number().int(),
+  inventoryLotId: z.number().int(),
+  quantityChange: z.number(),
+  reason: z.enum(MovementReason),
+  relatedStepMaterialUsageId: z.number().int().nullable().optional(),
+  relatedProcessExecutionId: z.number().int().nullable().optional(),
+  relatedOrderId: z.number().int().nullable().optional(),
+  note: z.string().nullable().optional(),
+  movedAt: OutputDateTimeString,
+});
+export type InventoryMovementCreate = z.input< typeof InventoryMovementCreateSchema >;
+export type InventoryMovementRead = z.output< typeof InventoryMovementReadSchema >;
+
+// OrderItem
+export const OrderItemCreateSchema = z.strictObject({
+  orderId: z.number().int(),
+  productId: z.number().int(),
+  quantity: z.number(),
+});
+export const OrderItemReadSchema = z.object({
+  id: z.number().int(),
+  orderId: z.number().int(),
+  productId: z.number().int(),
+  quantity: z.number(),
+});
+export type OrderItemCreate = z.infer<typeof OrderItemCreateSchema>;
+export type OrderItemRead = z.infer<typeof OrderItemReadSchema>;
+
+// Order
+export const OrderCreateSchema = z.strictObject({
+  clientName: z.string(),
+  address: z.string().optional(),
+  deliveryDate: InputDateTimeString,
+  deliveryVariant: z.enum(DeliveryVariant).optional(),
+  status: z.enum(OrderStatus).optional(),
+  deliveredAt: InputDateTimeString.optional(),
+  consignmentPartner: z.string().optional(),
+  notes: z.string().optional(),
+});
+export const OrderReadSchema = z.object({
+  id: z.number().int(),
+  clientName: z.string(),
+  address: z.string().nullable().optional(),
+  deliveryDate: LocalDateString,
+  deliveryVariant: z.enum(DeliveryVariant),
+  status: z.enum(OrderStatus),
+  deliveredAt: z.nullish(LocalDateString),
+  consignmentPartner: z.string().nullable().optional(),
+  notes: z.string().nullable().optional(),
+  orderItems: OrderItemReadSchema.array(),
+});
+export type OrderCreate = z.input<typeof OrderCreateSchema>;
+export type OrderRead = z.output<typeof OrderReadSchema>;
