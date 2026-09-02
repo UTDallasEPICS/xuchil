@@ -9,7 +9,7 @@ import qs from "qs";
 export async function GET(req: NextRequest) {
   try {
     const paginatedFilterSchema = z.strictObject({
-      inventoryLotId: z.coerce.number().int(),
+      inventoryItemId: z.coerce.number().int(),
       offset: z.coerce.number().int(),
       limit: z.coerce.number().int(),
     });

@@ -13,7 +13,9 @@ export async function GET(req: NextRequest) {
       offset: z.coerce.number().int(),
       limit: z.coerce.number().int(),
     });
-    const res = paginatedFilterSchema.partial().safeParse(qs.parse(req.nextUrl.search));
+    const res = paginatedFilterSchema.partial().safeParse(
+      qs.parse(req.nextUrl.search, { ignoreQueryPrefix: true })
+    );
     if (!res.success) {
       return validationError("processExecution", "fetch", res.error);
     }

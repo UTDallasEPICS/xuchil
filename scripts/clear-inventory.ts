@@ -38,7 +38,6 @@ async function clearInventory() {
   if (!forceFlag) {
     console.log('ADVERTENCIA: Esta accion eliminara:');
     console.log('   - Todos los movimientos de inventario');
-    console.log('   - Todos los lotes de inventario');
     console.log('   - Todos los items de inventario');
     console.log('\n   Esta accion NO es reversible.\n');
 
@@ -62,11 +61,7 @@ async function clearInventory() {
     const deletedMaterialUsages = await prisma.stepMaterialUsage.deleteMany({});
     console.log(`Eliminados ${deletedMaterialUsages.count} usos de materiales`);
 
-    // 3. Eliminar lotes de inventario
-    const deletedLots = await prisma.inventoryLot.deleteMany({});
-    console.log(`Eliminados ${deletedLots.count} lotes de inventario`);
-
-    // 4. Eliminar items de inventario
+    // 3. Eliminar items de inventario
     const deletedItems = await prisma.inventoryItem.deleteMany({});
     console.log(`Eliminados ${deletedItems.count} items de inventario`);
 

@@ -8,7 +8,7 @@
  *   pnpm tsx scripts/cleanup-runs.ts --reset   # Resetea todos los runs a estado limpio (PLANNED + steps PENDING)
  */
 
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, ProcessStatus, StepStatus } from '@prisma/client';
 import readline from 'readline';
 
 const prisma = new PrismaClient();
@@ -25,17 +25,23 @@ async function main() {
     const autoDelete = args.includes('--delete');
     const autoReset = args.includes('--reset');
 
-    const runs = await prisma.processRun.findMany({
+    const runs = await prisma.processExecution.findMany({
         where: {
-            status: { not: 'COMPLETED' },
+            status: { not: ProcessStatus.COMPLETED },
         },
         include: {
-            productVariant: { select: { name: true } },
-            stepExecutions: {
-                select: { id: true, status: true, templateStep: { select: { name: true } } },
+            process: {
+                include: {
+                    product: { select: { name: true } },
+                },
+            },
+            processStepExecutions: {
+                include: {
+                    processStep: { select: { name: true } },
+                },
                 orderBy: { id: 'asc' },
             },
-            processPauses: { select: { id: true } },
+            processPauses: { select: { id: true, processStepExecutionId: true } },
         },
         orderBy: { id: 'asc' },
     });
@@ -49,16 +55,15 @@ async function main() {
     console.log(`\nSe encontraron ${runs.length} ProcessRun(s) no completados:\n`);
 
     for (const run of runs) {
-        const stepSummary = run.stepExecutions.map(
-            (se, i) => `    ${i + 1}. ${se.templateStep?.name || 'Sin nombre'} → ${se.status}`
+        const stepSummary = run.processStepExecutions.map(
+            (se, i) => `    ${i + 1}. ${se.processStep?.name || 'Sin nombre'} → ${se.status}`
         ).join('\n');
 
         console.log(`  ID: ${run.id}`);
-        console.log(`  Producto: ${run.productVariant?.name || 'Desconocido'}`);
+        console.log(`  Producto: ${run.process?.product?.name || 'Desconocido'}`);
         console.log(`  Estado: ${run.status}`);
-        console.log(`  Batch: ${run.batchCode}`);
-        console.log(`  Creado: ${run.startedAt || 'Sin iniciar'}`);
-        console.log(`  Pasos (${run.stepExecutions.length}):`);
+        console.log(`  Iniciado: ${run.startedAt ? run.startedAt.toISOString() : 'Sin iniciar'}`);
+        console.log(`  Pasos (${run.processStepExecutions.length}):`);
         console.log(stepSummary);
         console.log(`  Pausas registradas: ${run.processPauses.length}`);
         console.log('');
@@ -83,18 +88,18 @@ async function main() {
     }
 
     const runIds = runs.map(r => r.id);
-    const stepIds = runs.flatMap(r => r.stepExecutions.map(se => se.id));
+    const stepIds = runs.flatMap(r => r.processStepExecutions.map(se => se.id));
     const pauseIds = runs.flatMap(r => r.processPauses.map(p => p.id));
 
     if (action === 'delete') {
         console.log(`\nEliminando ${runs.length} run(s), ${stepIds.length} step(s), ${pauseIds.length} pausa(s)...`);
 
         await prisma.$transaction([
-            // Delete step participants first (foreign key)
-            prisma.stepParticipant.deleteMany({ where: { stepExecutionId: { in: stepIds } } }),
-            prisma.processPause.deleteMany({ where: { processRunId: { in: runIds } } }),
-            prisma.stepExecution.deleteMany({ where: { processRunId: { in: runIds } } }),
-            prisma.processRun.deleteMany({ where: { id: { in: runIds } } }),
+            prisma.processPause.deleteMany({ where: { processStepExecutionId: { in: stepIds } } }),
+            prisma.processStepWorker.deleteMany({ where: { stepExecutionId: { in: stepIds } } }),
+            prisma.processStepMaterialUsage.deleteMany({ where: { stepExecutionId: { in: stepIds } } }),
+            prisma.processStepExecution.deleteMany({ where: { processExecutionId: { in: runIds } } }),
+            prisma.processExecution.deleteMany({ where: { id: { in: runIds } } }),
         ]);
 
         console.log('Eliminados exitosamente.');
@@ -102,21 +107,18 @@ async function main() {
         console.log('\nReseteando ' + runs.length + ' run(s) a estado limpio...');
 
         await prisma.$transaction([
-            // Reset run status
-            prisma.processRun.updateMany({
+            prisma.processExecution.updateMany({
                 where: { id: { in: runIds } },
-                data: { status: 'PLANNED', startedAt: null, finishedAt: null },
+                data: { status: ProcessStatus.PLANNED, finishedAt: null },
             }),
-            // Reset all steps to PENDING
-            prisma.stepExecution.updateMany({
-                where: { processRunId: { in: runIds } },
-                data: { status: 'PENDING', startedAt: null, finishedAt: null, actualDurationMin: null },
+            prisma.processStepExecution.updateMany({
+                where: { processExecutionId: { in: runIds } },
+                data: { status: StepStatus.PENDING, startedAt: null, finishedAt: null, actualDurationMin: null },
             }),
-            // Delete pause records
-            prisma.processPause.deleteMany({ where: { processRunId: { in: runIds } } }),
+            prisma.processPause.deleteMany({ where: { processStepExecutionId: { in: stepIds } } }),
         ]);
 
-        console.log('Reseteados exitosamente. Todos los runs están en PLANNED con pasos en PENDING.');
+        console.log('Reseteados exitosamente. Todos los procesos están en PLANNED con pasos en PENDING.');
     }
 
     await prisma.$disconnect();

@@ -75,7 +75,6 @@ CREATE TABLE "ProcessTemplateStepMaterial" (
 CREATE TABLE "ProcessExecution" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "processId" INTEGER NOT NULL,
-    "batchCode" TEXT NOT NULL,
     "plannedQuantity" DECIMAL,
     "status" TEXT NOT NULL DEFAULT 'PLANNED',
     "startedAt" DATETIME NOT NULL,
@@ -83,16 +82,18 @@ CREATE TABLE "ProcessExecution" (
     "outputQuantity" DECIMAL,
     "scrapQuantity" DECIMAL,
     "notes" TEXT,
+    "packageType" TEXT,
+    "contentPerPackage" DECIMAL,
     CONSTRAINT "ProcessExecution_processId_fkey" FOREIGN KEY ("processId") REFERENCES "ProcessTemplate" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
 -- CreateTable
 CREATE TABLE "ProcessPause" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "processExecutionId" INTEGER NOT NULL,
+    "processStepExecutionId" INTEGER NOT NULL,
     "startedAt" DATETIME NOT NULL,
     "endedAt" DATETIME,
-    CONSTRAINT "ProcessPause_processExecutionId_fkey" FOREIGN KEY ("processExecutionId") REFERENCES "ProcessExecution" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+    CONSTRAINT "ProcessPause_processStepExecutionId_fkey" FOREIGN KEY ("processStepExecutionId") REFERENCES "ProcessStepExecution" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -136,25 +137,15 @@ CREATE TABLE "InventoryItem" (
     "itemType" TEXT NOT NULL,
     "rawMaterialId" INTEGER,
     "productId" INTEGER,
+    "quantity" DECIMAL NOT NULL DEFAULT 0,
     CONSTRAINT "InventoryItem_rawMaterialId_fkey" FOREIGN KEY ("rawMaterialId") REFERENCES "RawMaterial" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
     CONSTRAINT "InventoryItem_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product" ("id") ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 -- CreateTable
-CREATE TABLE "InventoryLot" (
-    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "inventoryItemId" INTEGER NOT NULL,
-    "lotCode" TEXT,
-    "quantity" DECIMAL NOT NULL,
-    "receivedAt" DATETIME NOT NULL,
-    "expiryAt" DATETIME,
-    CONSTRAINT "InventoryLot_inventoryItemId_fkey" FOREIGN KEY ("inventoryItemId") REFERENCES "InventoryItem" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
-);
-
--- CreateTable
 CREATE TABLE "InventoryMovement" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "inventoryLotId" INTEGER NOT NULL,
+    "inventoryItemId" INTEGER NOT NULL,
     "quantityChange" DECIMAL NOT NULL,
     "reason" TEXT NOT NULL,
     "relatedStepMaterialUsageId" INTEGER,
@@ -162,7 +153,7 @@ CREATE TABLE "InventoryMovement" (
     "relatedOrderId" INTEGER,
     "note" TEXT,
     "movedAt" DATETIME NOT NULL,
-    CONSTRAINT "InventoryMovement_inventoryLotId_fkey" FOREIGN KEY ("inventoryLotId") REFERENCES "InventoryLot" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "InventoryMovement_inventoryItemId_fkey" FOREIGN KEY ("inventoryItemId") REFERENCES "InventoryItem" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "InventoryMovement_relatedStepMaterialUsageId_fkey" FOREIGN KEY ("relatedStepMaterialUsageId") REFERENCES "ProcessStepMaterialUsage" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
     CONSTRAINT "InventoryMovement_relatedProcessExecutionId_fkey" FOREIGN KEY ("relatedProcessExecutionId") REFERENCES "ProcessExecution" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
     CONSTRAINT "InventoryMovement_relatedOrderId_fkey" FOREIGN KEY ("relatedOrderId") REFERENCES "Order" ("id") ON DELETE SET NULL ON UPDATE CASCADE
@@ -213,16 +204,7 @@ CREATE UNIQUE INDEX "User_phone_key" ON "User"("phone");
 CREATE UNIQUE INDEX "ProcessTemplateStep_processId_position_key" ON "ProcessTemplateStep"("processId", "position");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "ProcessExecution_batchCode_key" ON "ProcessExecution"("batchCode");
-
--- CreateIndex
-CREATE INDEX "ProcessExecution_processId_idx" ON "ProcessExecution"("processId");
-
--- CreateIndex
-CREATE INDEX "ProcessPause_processExecutionId_idx" ON "ProcessPause"("processExecutionId");
-
--- CreateIndex
-CREATE INDEX "ProcessStepMaterialUsage_stepExecutionId_idx" ON "ProcessStepMaterialUsage"("stepExecutionId");
+CREATE INDEX "ProcessExecution_status_idx" ON "ProcessExecution"("status");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "InventoryItem_rawMaterialId_key" ON "InventoryItem"("rawMaterialId");
@@ -231,10 +213,4 @@ CREATE UNIQUE INDEX "InventoryItem_rawMaterialId_key" ON "InventoryItem"("rawMat
 CREATE UNIQUE INDEX "InventoryItem_productId_key" ON "InventoryItem"("productId");
 
 -- CreateIndex
-CREATE INDEX "Order_deliveryDate_idx" ON "Order"("deliveryDate");
-
--- CreateIndex
-CREATE INDEX "Order_status_idx" ON "Order"("status");
-
--- CreateIndex
-CREATE INDEX "Order_deliveryVariant_idx" ON "Order"("deliveryVariant");
+CREATE INDEX "InventoryMovement_inventoryItemId_idx" ON "InventoryMovement"("inventoryItemId");

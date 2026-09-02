@@ -11,22 +11,22 @@ import {
 
 async function getAllProcessTemplates(): Promise<ProcessTemplateRead[]> {
   const res = await sendRequest({ method: 'GET', url: '/api/process-templates' });
-  return (await res.json()).map((item: unknown) => ProcessTemplateReadSchema.parse(item));
+  return (res).map((item: unknown) => ProcessTemplateReadSchema.parse(item));
 }
 
 async function getProcessTemplateById(id: number): Promise<ProcessTemplateRead> {
   const res = await sendRequest({ method: 'GET', url: `/api/process-templates/${id}` });
-  return ProcessTemplateReadSchema.parse(await res.json());
+  return ProcessTemplateReadSchema.parse(res);
 }
 
 async function createProcessTemplate(payload: ProcessTemplateCreate): Promise<ProcessTemplateRead> {
   const res = await sendRequest({ method: 'POST', url: '/api/process-templates', body: payload });
-  return ProcessTemplateReadSchema.parse(await res.json());
+  return ProcessTemplateReadSchema.parse(res);
 }
 
 async function updateProcessTemplate(id: number, payload: Partial<ProcessTemplateCreate>): Promise<ProcessTemplateRead> {
   const res = await sendRequest({ method: 'PUT', url: `/api/process-templates/${id}`, body: payload });
-  return ProcessTemplateReadSchema.parse(await res.json());
+  return ProcessTemplateReadSchema.parse(res);
 }
 
 async function deleteProcessTemplate(id: number): Promise<void> {
@@ -35,14 +35,14 @@ async function deleteProcessTemplate(id: number): Promise<void> {
 
 async function getProcessTemplateStepById(id: number): Promise<ProcessTemplateStepRead> {
   const res = await sendRequest({ method: 'GET', url: `/api/process-template-steps/${id}` });
-  return ProcessTemplateStepReadSchema.parse(await res.json());
+  return ProcessTemplateStepReadSchema.parse(res);
 }
 
 async function createProcessTemplateStep(
   payload: ProcessTemplateStepCreate,
 ): Promise<ProcessTemplateStepRead> {
   const res = await sendRequest({ method: 'POST', url: '/api/process-template-steps', body: payload });
-  return ProcessTemplateStepReadSchema.parse(await res.json());
+  return ProcessTemplateStepReadSchema.parse(res);
 }
 
 async function updateProcessTemplateStep(
@@ -50,7 +50,7 @@ async function updateProcessTemplateStep(
   payload: Partial<ProcessTemplateStepCreate>,
 ): Promise<ProcessTemplateStepRead> {
   const res = await sendRequest({ method: 'PUT', url: `/api/process-template-steps/${id}`, body: payload });
-  return ProcessTemplateStepReadSchema.parse(await res.json());
+  return ProcessTemplateStepReadSchema.parse(res);
 }
 
 async function deleteProcessTemplateStep(id: number): Promise<void> {

@@ -45,13 +45,20 @@ const ProcessControl = () => {
           const status = step.status;
           return (status === "IN_PROGRESS" || status === "PENDING");
         });
-        const stepExecution = r.processStepExecutions[currentStepIndex];
+        const stepExecution =
+          currentStepIndex >= 0 ? r.processStepExecutions[currentStepIndex] : null;
         const openRoute = allStepsDone
-          ? `/process-control/new-production/${product.id}/results?runId=${r.id}`
-          : `/process-control/new-production/${product.id}/${currentStepIndex + 1}`;
+          ? `/process-control/${r.id}/results`
+          : stepExecution
+            ? `/process-control/${r.id}/${stepExecution.id}`
+            : `/process-control/${r.id}/results`;
 
-        const templateStep = await templateClient.getProcessTemplateStepById(stepExecution.stepId);
-        const currentStepName = allStepsDone ? "Captura de resultados" : templateStep.name;
+        const templateStep = stepExecution
+          ? await templateClient.getProcessTemplateStepById(stepExecution.stepId)
+          : null;
+        const currentStepName = allStepsDone
+          ? "Captura de resultados"
+          : templateStep?.name ?? "Paso pendiente";
 
         return {
           processRunId: r.id,
@@ -60,8 +67,8 @@ const ProcessControl = () => {
           currentStepNumber: allStepsDone ? r.processStepExecutions.length : currentStepIndex + 1,
           totalSteps: r.processStepExecutions.length || 0,
           status: r.status as "IN_PROGRESS" | "PAUSED" | "PLANNED",
-          stepExecutionId: stepExecution.id,
-          startedAt: stepExecution.startedAt ?? null,
+          stepExecutionId: stepExecution?.id ?? null,
+          startedAt: stepExecution?.startedAt ?? null,
           openRoute,
           isResultsStage: allStepsDone,
         };
@@ -87,7 +94,6 @@ const ProcessControl = () => {
         <h1>Control de procesos</h1>
       </div>
 
-      {/* Active Tasks Panel */}
       {activeTasks.length > 0 && (
         <div className={styles.activeTasksSection}>
           <h2 className={styles.sectionTitle}>Tareas en proceso</h2>
@@ -105,7 +111,7 @@ const ProcessControl = () => {
 
       <div className={styles.container}>
         <ImageCard imageSrc="/new-process.svg" text="Nueva producción" type="large" route="/process-control/new-production" />
-        <ImageCard imageSrc="/pending-task.svg" text="Tareas pendientes" type="large" route="/process-control/pending-tasks" />
+        <ImageCard imageSrc="/pending-task.svg" text="Estadísticas de tareas pendientes" type="large" route="/process-control/pending-tasks" />
         <ImageCard imageSrc="/file.svg" text="Plantillas de proceso" type="large" route="/process-control/templates" />
       </div>
     </div>

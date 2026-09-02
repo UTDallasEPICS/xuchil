@@ -187,8 +187,8 @@ export const ProcessStepExecutionReadSchema = z.object({
   status: z.enum(StepStatus),
   startedAt: OutputDateTimeString.nullable().optional(),
   finishedAt: OutputDateTimeString.nullable().optional(),
-  actualDurationMin: z.number().int().nullable().optional(),
-  inputQty: z.number().nullable().optional(),
+  actualDurationMin: z.coerce.number().int().nullable().optional(),
+  inputQty: z.coerce.number().nullable().optional(),
   notes: z.string().nullable().optional(),
 });
 export type ProcessStepExecutionCreate = z.input<typeof ProcessStepExecutionCreateSchema>;
@@ -197,7 +197,6 @@ export type ProcessStepExecutionRead = z.output<typeof ProcessStepExecutionReadS
 // ProcessExecution
 export const ProcessExecutionCreateSchema = z.strictObject({
   processId: z.number().int(),
-  batchCode: z.string(),
   plannedQuantity: z.number().optional(),
   status: z.enum(ProcessStatus).optional(),
   startedAt: InputDateTimeString,
@@ -205,18 +204,21 @@ export const ProcessExecutionCreateSchema = z.strictObject({
   outputQuantity: z.number().optional(),
   scrapQuantity: z.number().optional(),
   notes: z.string().optional(),
+  packageType: z.string().optional(),
+  contentPerPackage: z.number().optional(),
 });
 export const ProcessExecutionReadSchema = z.object({
   id: z.number().int(),
   processId: z.number().int(),
-  batchCode: z.string(),
-  plannedQuantity: z.number().nullable().optional(),
+  plannedQuantity: z.coerce.number().nullable().optional(),
   status: z.enum(ProcessStatus),
   startedAt: OutputDateTimeString,
   finishedAt: OutputDateTimeString.nullable().optional(),
-  outputQuantity: z.number().nullable().optional(),
-  scrapQuantity: z.number().nullable().optional(),
+  outputQuantity: z.coerce.number().nullable().optional(),
+  scrapQuantity: z.coerce.number().nullable().optional(),
   notes: z.string().nullable().optional(),
+  packageType: z.string().nullish(),
+  contentPerPackage: z.coerce.number().nullish(),
   processStepExecutions: ProcessStepExecutionReadSchema.array(),
 });
 export type ProcessExecutionCreate = z.input<typeof ProcessExecutionCreateSchema>;
@@ -227,7 +229,6 @@ export const ProcessStepMaterialUsageCreateSchema = z.strictObject({
   stepExecutionId: z.number().int(),
   rawMaterialId: z.number().int(),
   qtyUsed: z.number(),
-  unitId: z.number().int(),
   notes: z.string().optional(),
 });
 export const ProcessStepMaterialUsageReadSchema = z.object({
@@ -235,7 +236,6 @@ export const ProcessStepMaterialUsageReadSchema = z.object({
   stepExecutionId: z.number().int(),
   rawMaterialId: z.number().int(),
   qtyUsed: z.number(),
-  unitId: z.number().int(),
   notes: z.string().nullable().optional(),
 });
 export type ProcessStepMaterialUsageCreate = z.infer< typeof ProcessStepMaterialUsageCreateSchema >;
@@ -254,49 +254,9 @@ export const ProcessStepWorkerReadSchema = z.object({
 export type ProcessStepWorkerCreate = z.infer<typeof ProcessStepWorkerCreateSchema>;
 export type ProcessStepWorkerRead = z.infer<typeof ProcessStepWorkerReadSchema>;
 
-// InventoryLot
-export const InventoryLotCreateSchema = z.strictObject({
-  inventoryItemId: z.number().int(),
-  lotCode: z.string().optional(),
-  quantity: z.number(),
-  receivedAt: InputDateTimeString,
-  expiryAt: InputDateTimeString.optional(),
-});
-export const InventoryLotReadSchema = z.object({
-  id: z.number().int(),
-  inventoryItemId: z.number().int(),
-  lotCode: z.string().nullable().optional(),
-  quantity: z.number(),
-  receivedAt: OutputDateTimeString,
-  expiryAt: OutputDateTimeString.nullable().optional(),
-});
-export type InventoryLotCreate = z.input<typeof InventoryLotCreateSchema>;
-export type InventoryLotRead = z.output<typeof InventoryLotReadSchema>;
-
-// InventoryItem
-export const InventoryItemCreateSchema = z.strictObject({
-  itemType: z.enum(ItemType),
-  rawMaterialId: z.number().int().optional(),
-  productId: z.number().int().optional(),
-});
-export const InventoryItemReadSchema = z.object({
-  id: z.number().int(),
-  itemType: z.enum(ItemType),
-  rawMaterialId: z.number().int().nullable().optional(),
-  productId: z.number().int().nullable().optional(),
-  rawMaterial: RawMaterialReadSchema.nullish(),
-  product: ProductReadSchema.nullish(),
-  inventoryLots: z.array(InventoryLotReadSchema)
-});
-export type InventoryItemCreate = z.infer<typeof InventoryItemCreateSchema>;
-export type InventoryItemRead = z.infer<typeof InventoryItemReadSchema>;
-
-
-
-
 // InventoryMovement
 export const InventoryMovementCreateSchema = z.strictObject({
-  inventoryLotId: z.number().int(),
+  inventoryItemId: z.number().int(),
   quantityChange: z.number(),
   reason: z.enum(MovementReason),
   relatedStepMaterialUsageId: z.number().int().optional(),
@@ -307,7 +267,7 @@ export const InventoryMovementCreateSchema = z.strictObject({
 });
 export const InventoryMovementReadSchema = z.object({
   id: z.number().int(),
-  inventoryLotId: z.number().int(),
+  inventoryItemId: z.number().int(),
   quantityChange: z.number(),
   reason: z.enum(MovementReason),
   relatedStepMaterialUsageId: z.number().int().nullable().optional(),
@@ -319,6 +279,26 @@ export const InventoryMovementReadSchema = z.object({
 export type InventoryMovementCreate = z.input< typeof InventoryMovementCreateSchema >;
 export type InventoryMovementRead = z.output< typeof InventoryMovementReadSchema >;
 
+// InventoryItem
+export const InventoryItemCreateSchema = z.strictObject({
+  itemType: z.enum(ItemType),
+  rawMaterialId: z.number().int().optional(),
+  productId: z.number().int().optional(),
+  quantity: z.number().optional(),
+});
+export const InventoryItemReadSchema = z.object({
+  id: z.number().int(),
+  itemType: z.enum(ItemType),
+  rawMaterialId: z.number().int().nullable().optional(),
+  productId: z.number().int().nullable().optional(),
+  rawMaterial: RawMaterialReadSchema.nullish(),
+  product: ProductReadSchema.nullish(),
+  quantity: z.number(),
+  inventoryMovements: z.array(InventoryMovementReadSchema)
+});
+export type InventoryItemCreate = z.infer<typeof InventoryItemCreateSchema>;
+export type InventoryItemRead = z.infer<typeof InventoryItemReadSchema>;
+
 // OrderItem
 export const OrderItemCreateSchema = z.strictObject({
   orderId: z.number().int(),
@@ -329,7 +309,7 @@ export const OrderItemReadSchema = z.object({
   id: z.number().int(),
   orderId: z.number().int(),
   productId: z.number().int(),
-  quantity: z.number(),
+  quantity: z.coerce.number(),
 });
 export type OrderItemCreate = z.infer<typeof OrderItemCreateSchema>;
 export type OrderItemRead = z.infer<typeof OrderItemReadSchema>;

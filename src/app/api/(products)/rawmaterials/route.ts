@@ -10,9 +10,11 @@ export async function GET(req: NextRequest) {
       include: {
         unit: true,
         inventoryItem: {
-          include: {
-            inventoryLots: true
-          }
+          select: {
+            id: true,
+            quantity: true,
+            itemType: true,
+          },
         }
       }
     });
