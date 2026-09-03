@@ -4,34 +4,21 @@ import React, { useEffect, useState } from "react";
 import ImageCard from "@/components/ImageCard";
 import HeaderXuchil from "@/components/HeaderXuchil";
 import styles from "./NewProduction.module.css";
+import productClient from "@/lib/services/productClient";
+import {ProductCategoryRead} from "@/lib/schemas";
 
 const NewProductionPage = () => {
-  const [products, setProducts] = useState<{ id: string; name: string; imageSrc: string }[]>([]);
+  const [productCategories, setProductCategories] = useState<ProductCategoryRead[] | null>(null);
 
   useEffect(() => {
-    let mounted = true;
-
     async function load() {
-      const response = await fetch("/api/product-categories", { credentials: "include" });
-      if (!response.ok) return;
-      const data = await response.json();
-      if (!mounted) return;
-
-      setProducts(
-        data.map((category: any) => ({
-          id: String(category.id),
-          name: category.name,
-          imageSrc: category.imageUrl || "/globe.svg",
-        }))
-      );
+      const categories = await productClient.getAllProductCategories();
+      setProductCategories(categories);
     }
-
     load();
-
-    return () => {
-      mounted = false;
-    };
   }, []);
+
+  if (productCategories === null) return null;
 
   return (
     <div className="page">
@@ -39,13 +26,13 @@ const NewProductionPage = () => {
       <h1>¿Qué producto haremos hoy?</h1>
       
       <div className={styles.container}>
-        {products.map((product) => (
+        {productCategories.map((category) => (
           <ImageCard
-            key={product.id}
-            imageSrc={product.imageSrc}
-            text={product.name}
+            key={category.id}
+            imageSrc={category.imgUrl ?? '/globe.svg'}
+            text={category.name}
             type="square"
-            route={`/process-control/new-production/${product.id}`}
+            route={`/process-control/new-production/categories/${category.id}`}
           />
         ))}
       </div>

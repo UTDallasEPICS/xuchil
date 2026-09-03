@@ -8,7 +8,8 @@ interface ImageCardProps {
   imageSrc: string;
   text: string;
   type?: "small" | "square" | "large";
-  route: string;
+  route?: string;
+  onClick?: () => (void | Promise<void>);
 }
 
 const ImageCard: React.FC<ImageCardProps> = ({
@@ -16,11 +17,17 @@ const ImageCard: React.FC<ImageCardProps> = ({
   text,
   type = "small",
   route,
+  onClick,
 }) => {
   const router = useRouter();
 
   const handleClick = () => {
-    router.push(route);
+    if (onClick) {
+      onClick();
+    }
+    if (route) {
+      router.push(route);
+    }
   };
 
   return (

@@ -3,7 +3,7 @@ import qs from 'qs';
 export interface RequestOptions {
   method: 'GET' | 'POST' | 'PUT' | 'DELETE';
   url: string;
-  query?: Record<string, string | number | boolean | undefined>;
+  query?: unknown;
   body?: unknown;
 }
 
@@ -23,7 +23,12 @@ export async function sendRequest({method, url, query, body}: RequestOptions) {
   });
 
   if (!res.ok) {
-    throw new Error(await res.json());
+    const errorPayload = await res.json();
+    const message =
+      typeof errorPayload === 'string'
+        ? errorPayload
+        : errorPayload?.message ?? JSON.stringify(errorPayload);
+    throw new Error(message);
   }
 
   if (res.status != 204) {

@@ -7,7 +7,6 @@ import qs from "qs";
 import {ItemType} from "@prisma/client";
 
 export async function GET(req: NextRequest) {
-  console.log("route reached")
   const paginatedFilterSchema = z.strictObject({
     itemType: z.enum(ItemType),
     offset: z.coerce.number().int(),
@@ -26,7 +25,7 @@ export async function GET(req: NextRequest) {
       take: limit,
       orderBy: { id: "asc" },
       include: {
-        
+        inventoryMovements: true,
         product: {
           include: {
             unit: true
@@ -55,7 +54,7 @@ export const POST = async (req: NextRequest) => {
     const newItem = await prisma.inventoryItem.create({
       data: res.data,
       include: {
-        inventoryLots: true,
+        inventoryMovements: true,
         product: {
           include: {
             unit: true

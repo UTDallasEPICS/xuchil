@@ -4,31 +4,23 @@ import bcrypt from "bcrypt";
 const prisma = new PrismaClient();
 
 async function clearDatabase() {
-  // Delete from dependents to parents to satisfy foreign keys.
-  await prisma.$transaction([
-    prisma.stepParticipant.deleteMany(),
-    prisma.stepMaterialUsage.deleteMany(),
-    prisma.processPause.deleteMany(),
-    prisma.stepExecution.deleteMany(),
-    prisma.inventoryMovement.deleteMany(),
-    prisma.inventoryLot.deleteMany(),
-    prisma.inventoryItem.deleteMany(),
-    prisma.stepRequiredMaterial.deleteMany(),
-    prisma.templateStep.deleteMany(),
-    prisma.processRun.deleteMany(),
-    prisma.processTemplate.deleteMany(),
-    prisma.orderItem.deleteMany(),
-    prisma.order.deleteMany(),
-    prisma.guestCollaborator.deleteMany(),
-    prisma.authUser.deleteMany(),
-    prisma.worker.deleteMany(),
-    prisma.role.deleteMany(),
-    prisma.productVariant.deleteMany(),
-    prisma.product.deleteMany(),
-    prisma.productCategory.deleteMany(),
-    prisma.rawMaterial.deleteMany(),
-    prisma.unit.deleteMany(),
-  ]);
+  await prisma.inventoryMovement.deleteMany();
+  await prisma.processStepWorker.deleteMany();
+  await prisma.processStepMaterialUsage.deleteMany();
+  await prisma.processPause.deleteMany();
+  await prisma.processStepExecution.deleteMany();
+  await prisma.processExecution.deleteMany();
+  await prisma.processTemplateStepMaterial.deleteMany();
+  await prisma.processTemplateStep.deleteMany();
+  await prisma.processTemplate.deleteMany();
+  await prisma.orderItem.deleteMany();
+  await prisma.order.deleteMany();
+  await prisma.inventoryItem.deleteMany();
+  await prisma.user.deleteMany();
+  await prisma.rawMaterial.deleteMany();
+  await prisma.product.deleteMany();
+  await prisma.productCategory.deleteMany();
+  await prisma.unit.deleteMany();
 }
 
 async function seedUsersOnly() {
@@ -36,49 +28,31 @@ async function seedUsersOnly() {
 
   await clearDatabase();
 
-  await prisma.role.createMany({
-    data: [
-      { id: 1, name: "Produccion" },
-      { id: 2, name: "Administracion" },
-    ],
-  });
-
-  await prisma.worker.createMany({
-    data: [
-      { id: 1, fullName: "Administrador Xuchil", roleId: 2, isActive: true },
-      { id: 2, fullName: "Operador 1", roleId: 1, isActive: true },
-      { id: 3, fullName: "Operador 2", roleId: 1, isActive: true },
-    ],
-  });
-
   const adminHash = await bcrypt.hash("Admin123", 10);
   const userHash = await bcrypt.hash("User1234", 10);
 
-  await prisma.authUser.createMany({
+  await prisma.user.createMany({
     data: [
       {
-        id: 1,
-        workerId: 1,
+        name: "Administrador Xuchil",
         email: "admin@xuchil.com",
         passwordHash: adminHash,
         isAdmin: true,
-        isActive: true,
+        isGuest: false,
       },
       {
-        id: 2,
-        workerId: 2,
+        name: "Operador 1",
         email: "operador1@xuchil.com",
         passwordHash: userHash,
         isAdmin: false,
-        isActive: true,
+        isGuest: false,
       },
       {
-        id: 3,
-        workerId: 3,
+        name: "Operador 2",
         email: "operador2@xuchil.com",
         passwordHash: userHash,
         isAdmin: false,
-        isActive: true,
+        isGuest: false,
       },
     ],
   });

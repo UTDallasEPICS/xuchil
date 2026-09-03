@@ -11,27 +11,27 @@ import {
 
 async function getAllOrders(): Promise<OrderRead[]> {
   const res = await sendRequest({ method: 'GET', url: '/api/orders' });
-  return (await res.json()).map((item: unknown) => OrderReadSchema.parse(item));
+  return (res).map((item: unknown) => OrderReadSchema.parse(item));
 }
 
 async function getOrderById(id: number): Promise<OrderRead> {
   const res = await sendRequest({ method: 'GET', url: `/api/orders/${id}` });
-  return OrderReadSchema.parse(await res.json());
+  return OrderReadSchema.parse(res);
 }
 
 async function updateOrder(id: number, payload: Partial<OrderCreate>): Promise<OrderRead> {
   const res = await sendRequest({ method: 'PUT', url: `/api/orders/${id}`, body: payload });
-  return OrderReadSchema.parse(await res.json());
+  return OrderReadSchema.parse(res);
 }
 
 async function createOrder(payload: OrderCreate): Promise<OrderRead> {
   const res = await sendRequest({ method: 'POST', url: '/api/orders', body: payload });
-  return OrderReadSchema.parse(await res.json());
+  return OrderReadSchema.parse(res);
 }
 
 async function createOrderItem(payload: OrderItemCreate): Promise<OrderItemRead> {
   const res = await sendRequest({ method: 'POST', url: '/api/order-items', body: payload });
-  return OrderItemReadSchema.parse(await res.json());
+  return OrderItemReadSchema.parse(res);
 }
 
 async function deleteOrder(id: number) {

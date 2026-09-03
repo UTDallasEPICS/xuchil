@@ -138,16 +138,17 @@ model ProcessTemplateStepMaterial {
 }
 
 model ProcessExecution {
-  id              Int           @id @default(autoincrement())
-  processId       Int
-  batchCode       String        @unique
-  plannedQuantity Decimal?
-  status          ProcessStatus @default(PLANNED)
-  startedAt       DateTime
-  finishedAt      DateTime?
-  outputQuantity  Decimal?
-  scrapQuantity   Decimal?
-  notes           String?
+  id                Int           @id @default(autoincrement())
+  processId         Int
+  plannedQuantity   Decimal?
+  status            ProcessStatus @default(PLANNED)
+  startedAt         DateTime
+  finishedAt        DateTime?
+  outputQuantity    Decimal?
+  scrapQuantity     Decimal?
+  notes             String?
+  packageType       String?
+  contentPerPackage Decimal?
 
   process               ProcessTemplate        @relation(fields: [processId], references: [id])
   processStepExecutions ProcessStepExecution[]
@@ -205,30 +206,19 @@ model ProcessStepWorker {
 }
 
 model InventoryItem {
-  id            Int            @id @default(autoincrement())
-  itemType      ItemType
-  rawMaterialId Int?           @unique
-  productId     Int?           @unique
-  rawMaterial   RawMaterial?   @relation(fields: [rawMaterialId], references: [id])
-  product       Product?       @relation(fields: [productId], references: [id])
-  inventoryLots InventoryLot[]
-}
-
-model InventoryLot {
-  id              Int       @id @default(autoincrement())
-  inventoryItemId Int
-  lotCode         String?
-  quantity        Decimal
-  receivedAt      DateTime
-  expiryAt        DateTime?
-
-  inventoryItem      InventoryItem       @relation(fields: [inventoryItemId], references: [id])
+  id                 Int                 @id @default(autoincrement())
+  itemType           ItemType
+  rawMaterialId      Int?                @unique
+  productId          Int?                @unique
+  quantity           Decimal             @default(0)
+  rawMaterial        RawMaterial?        @relation(fields: [rawMaterialId], references: [id])
+  product            Product?            @relation(fields: [productId], references: [id])
   inventoryMovements InventoryMovement[]
 }
 
 model InventoryMovement {
   id                         Int            @id @default(autoincrement())
-  inventoryLotId             Int
+  inventoryItemId            Int
   quantityChange             Decimal
   reason                     MovementReason
   relatedStepMaterialUsageId Int?
@@ -237,12 +227,12 @@ model InventoryMovement {
   note                       String?
   movedAt                    DateTime
 
-  inventoryLot             InventoryLot              @relation(fields: [inventoryLotId], references: [id])
+  inventoryItem            InventoryItem             @relation(fields: [inventoryItemId], references: [id])
   relatedStepMaterialUsage ProcessStepMaterialUsage? @relation(fields: [relatedStepMaterialUsageId], references: [id])
   relatedProcessExecution  ProcessExecution?         @relation(fields: [relatedProcessExecutionId], references: [id])
   relatedOrder             Order?                    @relation(fields: [relatedOrderId], references: [id])
 
-  @@index([inventoryLotId])
+  @@index([inventoryItemId])
 }
 
 model Order {

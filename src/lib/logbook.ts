@@ -2,7 +2,7 @@
 // Lightweight client for Logbook endpoints
 // - GET /api/logbook/my-tasks (filters: dateFrom, dateTo, productVariantId)
 // - GET /api/logbook/tasks/{id}
-// - GET /api/logbook/process-runs (filters: batchCode, workerId, dateFrom, dateTo, productVariantId)
+// - GET /api/logbook/process-runs (filters: workerId, dateFrom, dateTo, productVariantId)
 // - GET /api/logbook/process-runs/{id}
 
 type Query = Record<string, string | number | undefined>;
@@ -44,7 +44,6 @@ export async function fetchStepExecutionDetail(stepExecutionId: number) {
 
 // ADMIN: process runs history (completed/cancelled)
 export async function fetchProcessRuns(params?: {
-  batchCode?: string;
   workerId?: number | string;
   dateFrom?: string;
   dateTo?: string;

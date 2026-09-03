@@ -64,7 +64,7 @@ const Logbook = () => {
 
         const adminRows: TableRow[] = doneItems.map((item) => ({
           producto: item.processExecution?.product?.name ?? "—",
-          lote: item.processExecution?.batchCode ?? "—",
+          lote: item.processExecution?.id ? `#${item.processExecution.id}` : "—",
           fechas: [
             item.startedAt
               ? new Date(item.startedAt).toLocaleDateString("es-MX")

@@ -14,63 +14,25 @@ async function inventoryStats() {
   console.log('Estadisticas de Inventario\n');
 
   try {
-    // Contar items por tipo
-    const rawItems = await prisma.inventoryItem.count({
-      where: { itemType: 'RAW' },
-    });
-
-    const productItems = await prisma.inventoryItem.count({
-      where: { itemType: 'PRODUCT' },
-    });
-
-    const totalLots = await prisma.inventoryLot.count();
+    const rawItems = await prisma.inventoryItem.count({ where: { itemType: 'RAW' } });
+    const productItems = await prisma.inventoryItem.count({ where: { itemType: 'PRODUCT' } });
     const totalMovements = await prisma.inventoryMovement.count();
-
-    // Movimientos por tipo
-    const inMovements = await prisma.inventoryMovement.count({
-      where: { direction: 'IN' },
-    });
-
-    const outMovements = await prisma.inventoryMovement.count({
-      where: { direction: 'OUT' },
-    });
 
     console.log('Items de Inventario:');
     console.log(`   Materias primas: ${rawItems}`);
     console.log(`   Productos: ${productItems}`);
     console.log(`   Total: ${rawItems + productItems}\n`);
 
-    console.log('Lotes de Inventario:');
-    console.log(`   Total de lotes: ${totalLots}\n`);
-
     console.log('Movimientos de Inventario:');
-    console.log(`   Entradas (IN): ${inMovements}`);
-    console.log(`   Salidas (OUT): ${outMovements}`);
     console.log(`   Total: ${totalMovements}\n`);
 
-    // Detalles de items con stock
-    const itemsWithLots = await prisma.inventoryItem.findMany({
+    const itemsWithStock = await prisma.inventoryItem.findMany({
+      where: { quantity: { gt: 0 } },
       include: {
         rawMaterial: true,
-        productVariant: {
-          include: {
-            product: true,
-          },
-        },
-        inventoryLots: {
-          where: {
-            qtyOnHand: {
-              gt: 0,
-            },
-          },
-          include: {
-            unit: true,
-          },
-        },
+        product: true,
       },
     });
-
-    const itemsWithStock = itemsWithLots.filter((item) => item.inventoryLots.length > 0);
 
     if (itemsWithStock.length > 0) {
       console.log('-'.repeat(80));
@@ -80,19 +42,10 @@ async function inventoryStats() {
         const name =
           item.itemType === 'RAW'
             ? item.rawMaterial?.name
-            : `${item.productVariant?.product?.name} - ${item.productVariant?.name}`;
+            : item.product?.name;
 
         console.log(`\n* ${name} (${item.itemType === 'RAW' ? 'Materia Prima' : 'Producto'})`);
-
-        item.inventoryLots.forEach((lot) => {
-          console.log(`   Lote: ${lot.lotCode || 'Sin codigo'}`);
-          console.log(`   Cantidad: ${lot.qtyOnHand} ${lot.unit?.name || ''}`);
-          console.log(`   Recibido: ${new Date(lot.receivedAt).toLocaleDateString('es-MX')}`);
-          if (lot.expiryAt) {
-            console.log(`   Vence: ${new Date(lot.expiryAt).toLocaleDateString('es-MX')}`);
-          }
-          console.log('');
-        });
+        console.log(`   Cantidad: ${item.quantity.toString()}`);
       });
 
       console.log('-'.repeat(80) + '\n');

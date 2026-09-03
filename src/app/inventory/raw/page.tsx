@@ -38,14 +38,10 @@ export default function RawInventoryPage() {
         const mapped = data
           .filter((item: any) => item.inventoryItem?.itemType === "RAW")
           .map((item: any) => {
-            const quantity =
-              item.inventoryItem?.inventoryLots?.reduce(
-                (sum: number, lot: any) => sum + Number(lot.quantity),
-                0
-              ) ?? 0;
+            const quantity = Number(item.inventoryItem?.quantity ?? 0);
 
             return {
-              id: item.id,
+              id: item.inventoryItem.id,
               name: item.name,
               image: item.imgUrl ?? "/globe.svg",
               quantity,

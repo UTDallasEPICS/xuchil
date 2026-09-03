@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FaPlay, FaPause, FaExternalLinkAlt } from "react-icons/fa";
 import styles from "../styles/ActiveTaskItem.module.css";
-import * as stepExecutionService from "@/lib/services/executionClient";
+import executionClient from "@/lib/services/executionClient";
 
 interface ActiveTaskItemProps {
     productName: string;
@@ -55,11 +55,15 @@ const ActiveTaskItem: React.FC<ActiveTaskItemProps> = ({
         return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
     };
 
-    const callAction = async (action: string, body?: object) => {
+    const callAction = async (action: string) => {
         if (!stepExecutionId || isLoading) return;
         setIsLoading(true);
         try {
-            await stepExecutionService.postAction(stepExecutionId, action, body);
+            if (action == "pause") {
+                await executionClient.pauseStepExecution(await executionClient.getProcessStepExecutionById(stepExecutionId));
+            } else if (action == "resume") {
+                await executionClient.resumeStepExecution(await executionClient.getProcessStepExecutionById(stepExecutionId));
+            }
             onActionComplete?.();
         } catch (e) {
             console.error(`Action ${action} error:`, e);
@@ -70,7 +74,7 @@ const ActiveTaskItem: React.FC<ActiveTaskItemProps> = ({
 
     const handlePause = (e: React.MouseEvent) => {
         e.stopPropagation();
-        callAction("pause", { reason: null });
+        callAction("pause");
     };
 
     const handleResume = (e: React.MouseEvent) => {
