@@ -41,7 +41,7 @@ export default function ProductsInventoryPage() {
             const quantity = Number(item.inventoryItem?.quantity ?? 0);
 
             return {
-              id: item.id,
+              id: item.inventoryItem.id,
               name: item.name,
               image: item.imgUrl ?? "/globe.svg",
               quantity,

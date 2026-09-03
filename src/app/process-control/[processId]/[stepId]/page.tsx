@@ -145,7 +145,7 @@ const ProcessStepPage = () => {
 
     try {
       await Promise.all(Object.entries(quantity).map(async ([mId, q]) => {
-        const material = template.processTemplateSteps[stepIndex].processTemplateStepMaterials.find(m => m.rawMaterialId === Number(mId))!;
+        const material = template.processTemplateSteps[stepIndex].processTemplateStepMaterials.find(m => m.id === Number(mId))!;
         await executionClient.createMaterialUsage({
           stepExecutionId: currentStepExecution.id,
           rawMaterialId: material.rawMaterialId,

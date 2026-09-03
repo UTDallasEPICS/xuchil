@@ -32,7 +32,7 @@ const NewProductionPage = () => {
             imageSrc={category.imgUrl ?? '/globe.svg'}
             text={category.name}
             type="square"
-            route={`/process-control/new-production/${category.id}`}
+            route={`/process-control/new-production/categories/${category.id}`}
           />
         ))}
       </div>

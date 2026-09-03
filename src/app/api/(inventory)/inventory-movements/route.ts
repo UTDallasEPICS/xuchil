@@ -38,7 +38,18 @@ export const POST = withAuthWorker(async (req: NextRequest) => {
     if (!res.success) {
       return validationError("inventoryMovement", "create", res.error);
     }
-    const newItem = await prisma.inventoryMovement.create({ data: res.data });
+    const newItem = await prisma.$transaction(async (tx) => {
+      const movement = await tx.inventoryMovement.create({ data: res.data });
+      await tx.inventoryItem.update({
+        where: { id: res.data.inventoryItemId },
+        data: {
+          quantity: {
+            increment: res.data.quantityChange,
+          },
+        },
+      });
+      return movement;
+    });
     return createSuccess(newItem);
   } catch (e) {
     return serverError("inventoryMovement", "create", e);

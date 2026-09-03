@@ -235,7 +235,7 @@ export const ProcessStepMaterialUsageReadSchema = z.object({
   id: z.number().int(),
   stepExecutionId: z.number().int(),
   rawMaterialId: z.number().int(),
-  qtyUsed: z.number(),
+  qtyUsed: z.coerce.number(),
   notes: z.string().nullable().optional(),
 });
 export type ProcessStepMaterialUsageCreate = z.infer< typeof ProcessStepMaterialUsageCreateSchema >;
@@ -268,7 +268,7 @@ export const InventoryMovementCreateSchema = z.strictObject({
 export const InventoryMovementReadSchema = z.object({
   id: z.number().int(),
   inventoryItemId: z.number().int(),
-  quantityChange: z.number(),
+  quantityChange: z.coerce.number(),
   reason: z.enum(MovementReason),
   relatedStepMaterialUsageId: z.number().int().nullable().optional(),
   relatedProcessExecutionId: z.number().int().nullable().optional(),
@@ -293,7 +293,7 @@ export const InventoryItemReadSchema = z.object({
   productId: z.number().int().nullable().optional(),
   rawMaterial: RawMaterialReadSchema.nullish(),
   product: ProductReadSchema.nullish(),
-  quantity: z.number(),
+  quantity: z.coerce.number(),
   inventoryMovements: z.array(InventoryMovementReadSchema)
 });
 export type InventoryItemCreate = z.infer<typeof InventoryItemCreateSchema>;

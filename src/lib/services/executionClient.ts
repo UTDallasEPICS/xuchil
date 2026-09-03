@@ -155,7 +155,7 @@ async function updateProcessPause(id: number, payload: Partial<ProcessPauseCreat
 async function createMaterialUsage(payload: ProcessStepMaterialUsageCreate): Promise<ProcessStepMaterialUsageRead> {
   const res = await sendRequest({
     method: "POST",
-    url: "/api/process-step-material-usages",
+    url: "/api/material-usages",
     body: payload,
   });
 
