@@ -22,7 +22,7 @@ enum StepStatus {
   PENDING
   IN_PROGRESS
   DONE
-  BLOCKED    //diferente
+  BLOCKED //diferente
   SKIPPED
 }
 
@@ -43,7 +43,7 @@ enum ItemType {
   PRODUCT
 }
 
-enum MovementDirection { //no existe
+enum MovementDirection {
   IN
   OUT
 }
@@ -63,10 +63,10 @@ enum ReservationStatus {
 }
 
 model Unit {
-  id           Int     @id @default(autoincrement())
-  name         String  @unique
-  products              Product[]
-  rawMaterials          RawMaterial[]
+  id           Int           @id @default(autoincrement())
+  name         String        @unique
+  products     Product[]
+  rawMaterials RawMaterial[]
 
   factorToBase Decimal @default("1")
 
@@ -77,7 +77,7 @@ model Unit {
   outputUnitRuns        ProcessRun[]           @relation("OutputUnitRun")
   stepExecutions        StepExecution[]
   stepMaterialUsages    StepMaterialUsage[]
-  materialReservations   MaterialReservation[]
+  materialReservations  MaterialReservation[]
   inventoryItems        InventoryItem[]
   inventoryLots         InventoryLot[]
   inventoryMovements    InventoryMovement[]
@@ -142,7 +142,7 @@ model RawMaterial {
   defaultUnit           Unit?                  @relation(fields: [defaultUnitId], references: [id])
   stepRequiredMaterials StepRequiredMaterial[]
   stepMaterialUsages    StepMaterialUsage[]
-  materialReservations   MaterialReservation[]
+  materialReservations  MaterialReservation[]
   inventoryItems        InventoryItem[]
 }
 
@@ -154,12 +154,12 @@ model Role {
 }
 
 model Worker {
-  id              Int     @id @default(autoincrement())
+  id              Int       @id @default(autoincrement())
   fullName        String
   roleId          Int?
   phone           String?
   profilePhotoUrl String?
-  isActive        Boolean @default(true)
+  isActive        Boolean   @default(true)
   expiresAt       DateTime?
 
   role             Role?             @relation(fields: [roleId], references: [id])
@@ -167,6 +167,7 @@ model Worker {
   processRuns      ProcessRun[]
   stepExecutions   StepExecution[]
   stepParticipants StepParticipant[]
+  shifts           WorkerShift[]
 }
 
 model AuthUser {
@@ -178,9 +179,41 @@ model AuthUser {
   isActive     Boolean   @default(true)
   lastLoginAt  DateTime?
 
-  worker Worker? @relation(fields: [workerId], references: [id])
+  worker           Worker?           @relation(fields: [workerId], references: [id])
+  shiftCorrections ShiftCorrection[]
 
   @@index([workerId])
+}
+
+model WorkerShift {
+  id        Int       @id @default(autoincrement())
+  workerId  Int
+  startedAt DateTime
+  endedAt   DateTime?
+
+  worker      Worker            @relation(fields: [workerId], references: [id])
+  corrections ShiftCorrection[]
+
+  @@index([workerId, startedAt])
+  @@index([workerId, endedAt])
+}
+
+model ShiftCorrection {
+  id                Int       @id @default(autoincrement())
+  workerShiftId     Int
+  editorAuthUserId  Int
+  reason            String
+  originalStartedAt DateTime
+  originalEndedAt   DateTime?
+  updatedStartedAt  DateTime
+  updatedEndedAt    DateTime?
+  correctedAt       DateTime  @default(now())
+
+  workerShift WorkerShift @relation(fields: [workerShiftId], references: [id])
+  editor      AuthUser    @relation(fields: [editorAuthUserId], references: [id])
+
+  @@index([workerShiftId, correctedAt])
+  @@index([editorAuthUserId, correctedAt])
 }
 
 model ProcessTemplate {
@@ -243,15 +276,15 @@ model ProcessRun {
   outputUnitId      Int?
   notes             String?
 
-  productVariant     ProductVariant      @relation(fields: [productVariantId], references: [id])
-  processTemplate    ProcessTemplate     @relation(fields: [processTemplateId], references: [id])
-  creator            Worker?             @relation(fields: [createdByWorkerId], references: [id])
-  plannedUnit        Unit?               @relation("PlannedUnitRun", fields: [plannedUnitId], references: [id])
-  outputUnit         Unit?               @relation("OutputUnitRun", fields: [outputUnitId], references: [id])
-  processPauses      ProcessPause[]
-  stepExecutions     StepExecution[]
+  productVariant       ProductVariant        @relation(fields: [productVariantId], references: [id])
+  processTemplate      ProcessTemplate       @relation(fields: [processTemplateId], references: [id])
+  creator              Worker?               @relation(fields: [createdByWorkerId], references: [id])
+  plannedUnit          Unit?                 @relation("PlannedUnitRun", fields: [plannedUnitId], references: [id])
+  outputUnit           Unit?                 @relation("OutputUnitRun", fields: [outputUnitId], references: [id])
+  processPauses        ProcessPause[]
+  stepExecutions       StepExecution[]
   materialReservations MaterialReservation[]
-  inventoryMovements InventoryMovement[]
+  inventoryMovements   InventoryMovement[]
 
   @@index([productVariantId])
   @@index([processTemplateId])
@@ -310,18 +343,18 @@ model StepMaterialUsage {
 }
 
 model MaterialReservation {
-  id              Int              @id @default(autoincrement())
-  processRunId    Int
-  templateStepId  Int
-  rawMaterialId   Int
-  qty             Decimal
-  unitId          Int
-  status          ReservationStatus @default(RESERVED)
-  consumedAt      DateTime?
-  releasedAt      DateTime?
+  id             Int               @id @default(autoincrement())
+  processRunId   Int
+  templateStepId Int
+  rawMaterialId  Int
+  qty            Decimal
+  unitId         Int
+  status         ReservationStatus @default(RESERVED)
+  consumedAt     DateTime?
+  releasedAt     DateTime?
 
   processRun   ProcessRun   @relation(fields: [processRunId], references: [id])
-  templateStep TemplateStep  @relation(fields: [templateStepId], references: [id])
+  templateStep TemplateStep @relation(fields: [templateStepId], references: [id])
   rawMaterial  RawMaterial  @relation(fields: [rawMaterialId], references: [id])
   unit         Unit         @relation(fields: [unitId], references: [id])
 
@@ -331,7 +364,6 @@ model MaterialReservation {
   @@index([status])
 }
 
-
 model StepParticipant {
   id              Int       @id @default(autoincrement())
   stepExecutionId Int
@@ -340,8 +372,8 @@ model StepParticipant {
   startedAt       DateTime?
   finishedAt      DateTime?
 
-  stepExecution StepExecution      @relation(fields: [stepExecutionId], references: [id])
-  worker        Worker?            @relation(fields: [workerId], references: [id])
+  stepExecution StepExecution @relation(fields: [stepExecutionId], references: [id])
+  worker        Worker?       @relation(fields: [workerId], references: [id])
 
   @@index([stepExecutionId, workerId])
 }
