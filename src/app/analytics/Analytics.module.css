@@ -1,0 +1,207 @@
+/* CSS Module: every class here is scoped to analytics/page.tsx only. */
+.pageWrapper {
+  padding: 0 1rem 3rem;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.title {
+  text-align: center;
+  margin: 1.5rem 0 1rem;
+}
+
+.sectionTitle {
+  font-size: var(--font-size-h3);
+  margin: 1.75rem 0 0.75rem;
+}
+
+.error {
+  color: var(--color-negative);
+  text-align: center;
+}
+
+.empty {
+  color: var(--color-gray-dark);
+  font-size: 0.9rem;
+}
+
+/* --- filter pills --- */
+.filterRow {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.pill {
+  border: none;
+  border-radius: 999px;
+  padding: 0.4rem 1rem;
+  cursor: pointer;
+  background: var(--color-secondary);
+  color: var(--color-text-dark);
+}
+
+.pillActive {
+  background: var(--color-green-dark);
+  color: var(--color-text-light);
+}
+
+/* --- summary cards --- */
+.cardRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+  padding: 1rem;
+  border: 1px solid var(--color-gray-light);
+  border-radius: 16px;
+  background: #fff;
+  color: var(--color-green-dark);
+  font: inherit;
+  text-align: left;
+}
+
+button.card {
+  cursor: pointer;
+}
+
+.cardValue {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--color-text-dark);
+}
+
+.cardLabel {
+  font-size: 0.85rem;
+  color: var(--color-gray-dark);
+}
+
+/* --- bar chart (flexbox columns, bar height set inline as a %) --- */
+.chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 180px;
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--color-gray-light);
+  overflow-x: auto;
+}
+
+.barColumn {
+  flex: 1;
+  min-width: 28px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.bar {
+  width: 100%;
+  min-height: 2px;
+  background: var(--color-green-light);
+  border-radius: 4px 4px 0 0;
+}
+
+.barValue {
+  font-size: 0.75rem;
+}
+
+.barLabel {
+  font-size: 0.7rem;
+  color: var(--color-gray-dark);
+  margin-top: 4px;
+  white-space: nowrap;
+}
+
+/* --- trending list --- */
+.trendingList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.trendingItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--color-gray-light);
+}
+
+.trendingImage {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.trendingName {
+  flex: 1;
+}
+
+/* --- modal --- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  z-index: 100;
+}
+
+.modal {
+  background: #fff;
+  padding: 1.25rem;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.closeBtn {
+  border: none;
+  background: var(--color-secondary);
+  border-radius: 8px;
+  padding: 0.4rem;
+  cursor: pointer;
+  display: flex;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.5rem;
+}
+
+.table th,
+.table td {
+  padding: 0.6rem 0.4rem;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.table th:last-child,
+.table td:last-child {
+  text-align: right;
+}
