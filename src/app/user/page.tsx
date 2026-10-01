@@ -109,9 +109,9 @@ const UserProfile = () => {
           </div>
         </div>
 
-        {/* Panel de administración simplificado (Solo Admin) */}
+        {/* Panel de administración (Solo Admin) */}
         {role === "admin" && (
-          <div style={{ marginTop: "20px", width: "100%", maxWidth: "420px" }}>
+          <div className={styles.adminActions}>
             <Button
               size="regular"
               action="primary"
@@ -119,6 +119,15 @@ const UserProfile = () => {
               style={{ width: "100%" }}
             >
               Administrar y Crear Usuarios
+            </Button>
+
+            <Button
+              size="regular"
+              action="primary"
+              onClick={() => router.push("/reports")}
+              style={{ width: "100%" }}
+            >
+              Reportes
             </Button>
           </div>
         )}
