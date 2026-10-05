@@ -23,7 +23,6 @@ export async function GET() {
             stepParticipants: {
               include: {
                 worker: true,
-                guest: true,
               },
             },
           },
