@@ -68,6 +68,10 @@
   text-align: left;
 }
 
+.cardRowThree {
+  grid-template-columns: repeat(3, 1fr);
+}
+
 button.card {
   cursor: pointer;
 }

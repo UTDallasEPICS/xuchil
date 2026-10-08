@@ -1,11 +1,12 @@
 "use client";
 // Analytics page, ported from the old `dev` schema to the uao schema.
-// Reads two existing endpoints (no new API needed):
-//   GET /api/orders            -> orders + orderItems + productVariant
-//   GET /api/inventory/summary -> inventoryItems + inventoryLots
+// Reads three endpoints:
+//   GET /api/orders                          -> orders + orderItems + productVariant
+//   GET /api/inventory/summary               -> inventoryItems + inventoryLots
+//   GET /api/step-executions/status-counts   -> task counts by status
 // All math happens here in the browser.
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, BarChart3, Package, TrendingUp, X } from "lucide-react";
+import { AlertTriangle, BarChart3, CheckCircle2, Circle, Loader, Package, TrendingUp, X } from "lucide-react";
 import HeaderXuchil from "@/components/HeaderXuchil";
 import styles from "./Analytics.module.css";
 
@@ -31,6 +32,9 @@ interface RawInventoryItem {
   productVariant: { name: string; defaultUnit: { name: string } | null } | null;
   inventoryLots: { id: number; qtyOnHand: string | null; expiryAt: string | null }[];
 }
+
+// Shape of GET /api/step-executions/status-counts.
+interface TaskCounts { notStarted: number; inProgress: number; done: number }
 
 interface OrderPoint { date: string; orderCount: number }
 interface TrendingItem { id: number; name: string; image: string; units: number }
@@ -133,6 +137,7 @@ export default function Analytics() {
   const [orders, setOrders] = useState<RawOrder[]>([]);
   const [inventory, setInventory] = useState<RawInventoryItem[]>([]);
   const [openModal, setOpenModal] = useState<"expiry" | "stock" | null>(null);
+  const [tasks, setTasks] = useState<TaskCounts | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Fetch once on page load. The old page re-fetched /api/orders on every
@@ -140,13 +145,15 @@ export default function Analytics() {
   useEffect(() => {
     async function load() {
       try {
-        const [ordersRes, inventoryRes] = await Promise.all([
+        const [ordersRes, inventoryRes, tasksRes] = await Promise.all([
           fetch("/api/orders"),
           fetch("/api/inventory/summary"),
+          fetch("/api/step-executions/status-counts"),
         ]);
-        if (!ordersRes.ok || !inventoryRes.ok) throw new Error("respuesta no OK");
+        if (!ordersRes.ok || !inventoryRes.ok || !tasksRes.ok) throw new Error("respuesta no OK");
         setOrders(await ordersRes.json());
         setInventory(await inventoryRes.json());
+        setTasks(await tasksRes.json());
       } catch (err) {
         console.error("analytics load error", err);
         setError("No se pudieron cargar los datos.");
@@ -239,6 +246,26 @@ export default function Analytics() {
           ))}
         </ul>
       )}
+
+      {/* Current state of all tasks; not affected by the hoy/semana/mes filter. */}
+      <h2 className={styles.sectionTitle}>Tareas (estado actual)</h2>
+      <div className={`${styles.cardRow} ${styles.cardRowThree}`}>
+        <div className={styles.card}>
+          <Circle size={28} />
+          <div className={styles.cardValue}>{tasks?.notStarted ?? "—"}</div>
+          <div className={styles.cardLabel}>sin iniciar</div>
+        </div>
+        <div className={styles.card}>
+          <Loader size={28} />
+          <div className={styles.cardValue}>{tasks?.inProgress ?? "—"}</div>
+          <div className={styles.cardLabel}>en progreso</div>
+        </div>
+        <div className={styles.card}>
+          <CheckCircle2 size={28} />
+          <div className={styles.cardValue}>{tasks?.done ?? "—"}</div>
+          <div className={styles.cardLabel}>completadas</div>
+        </div>
+      </div>
 
       <h2 className={styles.sectionTitle}>Inventario</h2>
       <div className={styles.cardRow}>
