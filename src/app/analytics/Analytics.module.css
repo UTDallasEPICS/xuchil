@@ -68,6 +68,23 @@
   text-align: left;
 }
 
+.slicer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  color: var(--color-gray-dark);
+}
+
+.slicer select {
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--color-gray-light);
+  border-radius: 999px;
+  background: #fff;
+  font: inherit;
+  color: var(--color-text-dark);
+}
+
 .cardRowThree {
   grid-template-columns: repeat(3, 1fr);
 }
