@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json();
   } catch (parseError: unknown) {
-    return validationError(RESOURCE_NAME, new Error('Invalid JSON in request body'));
+    return NextResponse.json({ error: 'Invalid JSON in request body' }, { status: 400 });
   }
 
   // Dependencia: La validación del esquema debe tener éxito antes de intentar la creación en la base de datos
