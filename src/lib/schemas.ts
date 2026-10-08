@@ -247,6 +247,15 @@ export const processPauseSchema = z.strictObject({
     reason: z.string(typeError("reason", "string")).optional().nullable(),
 })
 
+export const shiftCorrectionSchema = z.strictObject({
+    startedAt: z.iso.datetime().optional(),
+    endedAt: z.union([z.iso.datetime(), z.null()]).optional(),
+    reason: z.string().trim().min(1, "reason cannot be empty."),
+}).refine(
+    (data) => data.startedAt !== undefined || data.endedAt !== undefined,
+    {message: "startedAt or endedAt is required."}
+);
+
 export const adminCreateSchema = z.strictObject({
   email: z.string(requiredError("email")).email(typeError("email", "email")),
   password: z.string(requiredError("password")).min(8, "password must be at least 8 characters")
