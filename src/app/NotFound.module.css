@@ -1,0 +1,39 @@
+.wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  text-align: center;
+  background: var(--color-background);
+}
+
+.code {
+  font-size: 5rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--color-consignment);
+  margin: 0;
+}
+
+.title {
+  font-size: var(--font-size-h2);
+  margin: 0;
+}
+
+.text {
+  color: var(--color-gray-dark);
+  max-width: 360px;
+  margin: 0;
+}
+
+.button {
+  margin-top: 1rem;
+  padding: 0.6rem 1.5rem;
+  border-radius: 999px;
+  background: var(--color-green-dark);
+  color: var(--color-text-light);
+  text-decoration: none;
+}
