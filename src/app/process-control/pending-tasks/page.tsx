@@ -184,7 +184,7 @@ const PendingTasksPage = () => {
                   fontWeight: "600"
                 }}
               >
-                {mode === "net" ? "⏱️ Neto (sin pausas)" : "⏳ Bruto (con pausas)"}
+                {mode === "net" ? "Sin Pausas" : "Con Pausas"}
               </button>
 
               {(["7d", "30d", "90d", "all"] as const).map((p) => {

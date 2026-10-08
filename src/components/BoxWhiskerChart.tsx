@@ -32,10 +32,10 @@ const BoxWhiskerChart: React.FC<BoxWhiskerChartProps> = ({
   unit = 'min',
   maxWidth = '100%'
 }) => {
-  if (!data || data.length === 0) {
+  if (!data || data.length === 0 || (data.length === 1 && data[0].max === 0 && data[0].min === 0)) {
     return (
       <div style={{ textAlign: 'center', padding: '20px', color: '#999' }}>
-        No hay datos para {title}
+        <strong style={{ color: "#374151" }}>{title}:</strong> Sin corridas completadas en este período (N = 0)
       </div>
     );
   }
@@ -93,7 +93,7 @@ const BoxWhiskerChart: React.FC<BoxWhiskerChartProps> = ({
         <ComposedChart
           data={chartData}
           layout="vertical"
-          margin={{ top: 2, right: 10, left: 0, bottom: 5 }}
+          margin={{ top: 4, right: 25, left: 25, bottom: 12 }}
           barCategoryGap={2}
           barGap={1}
         >
