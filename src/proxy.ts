@@ -1,26 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { jwtVerify } from 'jose'
 import { applyCors, handleCorsPreflight } from '@/lib/cors'
-
-const secretKey = process.env.SESSION_SECRET;
-const encodedKey = secretKey ? new TextEncoder().encode(secretKey) : null;
+import { SESSION_COOKIE, decrypt, checkSessionAgainstDb } from '@/lib/session'
 
 const PUBLIC_PATHS = ['/login'];
+// Pages only admins may open. Anyone else gets the 404 page (src/app/not-found.tsx),
+// so the page's existence isn't revealed. Matches the path and everything under it.
+const ADMIN_PATHS = ['/analytics'];
 const PUBLIC_API_PREFIXES = ['/api/auth', '/api/health'];
 
 function isPublicApiPath(path: string): boolean {
   return PUBLIC_API_PREFIXES.some((prefix) => path.startsWith(prefix));
 }
 
-async function isSessionValid(req: NextRequest): Promise<boolean> {
-  const sessionCookie = req.cookies.get('session')?.value;
-  if (!sessionCookie || !encodedKey) return false;
-  try {
-    await jwtVerify(sessionCookie, encodedKey, { algorithms: ['HS256'] });
-    return true;
-  } catch {
-    return false;
-  }
+function isAdminPath(path: string): boolean {
+  return ADMIN_PATHS.some((p) => path === p || path.startsWith(p + '/'));
+}
+
+// Valid cookie AND user still active in the database, with the live isAdmin value.
+// Checked on every request so a deactivated user is locked out immediately, even from
+// API routes that don't call verifySession() themselves.
+// (Next.js 16 runs proxy.ts on Node.js, so Prisma works here.)
+async function getLiveSession(req: NextRequest) {
+  const payload = await decrypt(req.cookies.get(SESSION_COOKIE)?.value);
+  return payload ? checkSessionAgainstDb(payload) : null;
 }
 
 export default async function proxy(req: NextRequest) {
@@ -33,8 +35,7 @@ export default async function proxy(req: NextRequest) {
   // API routes: return 401 if not authenticated (except auth endpoints)
   if (path.startsWith('/api')) {
     if (!isPublicApiPath(path)) {
-      const valid = await isSessionValid(req);
-      if (!valid) {
+      if (!(await getLiveSession(req))) {
         return applyCors(req, new NextResponse(null, { status: 401 }));
       }
     }
@@ -42,12 +43,19 @@ export default async function proxy(req: NextRequest) {
   }
 
   // Page routes: check session for login redirect logic
-  const valid = await isSessionValid(req);
+  const session = await getLiveSession(req);
 
   // Not authenticated and not on a public page → redirect to login
-  if (!valid && !PUBLIC_PATHS.includes(path)) {
+  if (!session && !PUBLIC_PATHS.includes(path)) {
     const loginUrl = new URL('/login', req.url);
     return NextResponse.redirect(loginUrl);
+  }
+
+  // Logged in but not admin on an admin-only page → show the 404 page instead.
+  // Rewriting to a path with no page makes Next.js render not-found.tsx with a 404 status,
+  // while the browser's URL bar keeps showing what the user typed.
+  if (session && !session.isAdmin && isAdminPath(path)) {
+    return NextResponse.rewrite(new URL('/404', req.url));
   }
 
   return NextResponse.next();
