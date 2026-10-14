@@ -85,6 +85,11 @@ export function parseDateOnly(value: string | null): Date | null {
     : null;
 }
 
+export function currentAttendanceDate(now = new Date()): Date {
+  const parts = localDateParts(now);
+  return new Date(Date.UTC(parts.year, parts.month - 1, parts.day));
+}
+
 function localDateParts(date: Date): {year: number; month: number; day: number} {
   const parts = new Intl.DateTimeFormat('en-US', {
     timeZone: ATTENDANCE_TIME_ZONE,

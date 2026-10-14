@@ -4,9 +4,16 @@
 }
 
 .content {
-  width: min(100% - 2rem, 1100px);
+  width: min(100% - 3rem, 1280px);
   margin: 0 auto;
   padding: 0 0 3rem;
+}
+
+.attendanceCard {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  box-sizing: border-box;
 }
 
 .heading,
@@ -32,6 +39,12 @@
   font-size: 0.85rem;
   font-weight: 700;
   text-transform: uppercase;
+}
+
+.workerName {
+  margin: 0.35rem 0 0;
+  color: var(--color-green-light);
+  font-weight: 700;
 }
 
 .refreshButton {
@@ -114,6 +127,13 @@
 .statusDetail {
   margin: 0.25rem 0 0;
   color: var(--color-gray-dark);
+}
+
+.attentionMessage {
+  margin: 0.5rem 0 0;
+  color: var(--color-negative);
+  font-size: 0.9rem;
+  font-weight: 700;
 }
 
 .actionButton {

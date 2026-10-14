@@ -88,6 +88,7 @@ const messageForError = (status: number, fallback: string) => {
 const AttendancePage = () => {
   const router = useRouter();
   const [currentShift, setCurrentShift] = useState<WorkerShift | null>(null);
+  const [workerName, setWorkerName] = useState("");
   const [history, setHistory] = useState<WorkerShift[]>([]);
   const [totals, setTotals] = useState<AttendanceTotals | null>(null);
   const [nextPage, setNextPage] = useState(1);
@@ -114,11 +115,13 @@ const AttendancePage = () => {
     setError(null);
     try {
       const date = formatDateInput(new Date());
-      const [current, historyResponse, totalsResponse] = await Promise.all([
+      const [profile, current, historyResponse, totalsResponse] = await Promise.all([
+        requestJson("/api/users/me"),
         requestJson("/api/attendance/current"),
         requestJson("/api/attendance/history?page=1&pageSize=20"),
         requestJson(`/api/attendance/totals?date=${date}`),
       ]);
+      setWorkerName(profile.worker?.fullName ?? "");
       setCurrentShift(current);
       setHistory((historyResponse as HistoryResponse).data);
       setNextPage(2);
@@ -167,6 +170,11 @@ const AttendancePage = () => {
     }
   };
 
+  const openShiftNeedsAttention = currentShift
+    ? Date.now() - new Date(currentShift.startedAt).getTime() >= 24 * 60 * 60 * 1000 ||
+      formatDate(currentShift.startedAt) !== formatDate(new Date().toISOString())
+    : false;
+
   const loadMoreHistory = async () => {
     setLoadingMore(true);
     setError(null);
@@ -190,6 +198,7 @@ const AttendancePage = () => {
           <div>
             <p className={styles.eyebrow}>Control personal</p>
             <h1>Asistencia</h1>
+            {workerName && <p className={styles.workerName}>Trabajador: {workerName}</p>}
           </div>
           <button
             type="button"
@@ -206,7 +215,7 @@ const AttendancePage = () => {
         {error && <div className={styles.alertError} role="alert">{error}</div>}
         {message && <div className={styles.alertSuccess} role="status"><CheckCircle2 size={18} />{message}</div>}
 
-        <Card>
+        <Card className={styles.attendanceCard}>
           <section className={styles.statusCard} aria-live="polite">
             <div className={`${styles.statusIcon} ${currentShift ? styles.statusActive : styles.statusInactive}`}>
               {currentShift ? <Clock3 size={28} /> : <CalendarClock size={28} />}
@@ -218,6 +227,11 @@ const AttendancePage = () => {
                   ? `Entrada: ${formatDate(currentShift.startedAt)} a las ${formatTime(currentShift.startedAt)}`
                   : "Registra tu entrada para comenzar tu turno."}
               </p>
+              {openShiftNeedsAttention && (
+                <p className={styles.attentionMessage}>
+                  Este turno comenzó anteriormente y puede requerir una corrección administrativa.
+                </p>
+              )}
             </div>
             <Button
               size="regular"
@@ -239,14 +253,14 @@ const AttendancePage = () => {
         <section className={styles.summarySection}>
           <h2>Resumen</h2>
           <div className={styles.summaryGrid}>
-            <Card>
+            <Card className={styles.attendanceCard}>
               <div className={styles.summaryCard}>
                 <span className={styles.summaryLabel}>Resumen de hoy</span>
                 <strong>{totals ? formatMinutes(totals.daily.completedMinutes) : "—"}</strong>
                 <span className={styles.summaryMeta}>{totals?.daily.openShiftCount ? "Hay un turno en curso" : "Tiempo completado"}</span>
               </div>
             </Card>
-            <Card>
+            <Card className={styles.attendanceCard}>
               <div className={styles.summaryCard}>
                 <span className={styles.summaryLabel}>Resumen semanal</span>
                 <strong>{totals ? formatMinutes(totals.weekly.completedMinutes) : "—"}</strong>

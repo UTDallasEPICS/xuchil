@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
 
   if (dateFrom || dateTo) {
     const rangeStart = dateFrom ? dateOnlyToUtc(dateFrom) : undefined;
-    const rangeEnd = dateTo ? dateOnlyToUtc(addLocalDays(dateTo, 1)) : undefined;
+    const rangeEnd = dateTo ? addLocalDays(dateOnlyToUtc(dateTo), 1) : undefined;
     where.startedAt = {};
     if (rangeEnd) {
       where.startedAt.lt = rangeEnd;

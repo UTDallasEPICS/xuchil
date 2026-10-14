@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {
   addLocalDays,
+  currentAttendanceDate,
   dateOnlyToUtc,
   parseDateOnly,
   resolveAttendanceWorkerId,
@@ -90,6 +91,18 @@ describe('attendance calculations and authorization', () => {
     assert.ok(parseDateOnly('2026-09-25'));
     assert.equal(parseDateOnly('2026-02-30'), null);
     assert.equal(parseDateOnly('09/25/2026'), null);
+  });
+
+  it('uses the Mexico City calendar date when UTC is already on the next day', () => {
+    const utcAfterMexicoMidnight = new Date('2026-09-25T04:30:00.000Z');
+    assert.equal(currentAttendanceDate(utcAfterMexicoMidnight).toISOString(), '2026-09-24T00:00:00.000Z');
+  });
+
+  it('keeps the final history date through the next Mexico City midnight', () => {
+    const finalDate = dateOnlyToUtc(parseDateOnly('2026-09-25')!);
+    const exclusiveEnd = addLocalDays(finalDate, 1);
+    assert.equal(exclusiveEnd.toISOString(), '2026-09-26T06:00:00.000Z');
+    assert.ok(new Date('2026-09-26T05:59:59.999Z') < exclusiveEnd);
   });
 
   it('splits a shift crossing midnight into daily totals', () => {

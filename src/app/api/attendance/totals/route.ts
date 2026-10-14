@@ -1,5 +1,5 @@
 import {NextRequest, NextResponse} from 'next/server';
-import {getAuthenticatedAttendanceContext, parseDateOnly, dateOnlyToUtc, addLocalDays, weekStartUtc, ATTENDANCE_TIME_ZONE, ATTENDANCE_WEEK_START, resolveAttendanceWorkerId} from '@/lib/attendance';
+import {getAuthenticatedAttendanceContext, parseDateOnly, currentAttendanceDate, dateOnlyToUtc, addLocalDays, weekStartUtc, ATTENDANCE_TIME_ZONE, ATTENDANCE_WEEK_START, resolveAttendanceWorkerId} from '@/lib/attendance';
 import {calculateDailyTotals, calculateWeeklyTotals} from '@/lib/attendance-calculations';
 import prisma from '@/lib/db';
 import {serverError} from '@/utils/responses';
@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
   }
   const params = request.nextUrl.searchParams;
   const requestedDateValue = params.get('date');
-  const requestedDate = parseDateOnly(requestedDateValue) ?? new Date();
+  const requestedDate = parseDateOnly(requestedDateValue) ?? currentAttendanceDate();
   if (requestedDateValue && !parseDateOnly(requestedDateValue)) {
     return NextResponse.json({error: 'date must use YYYY-MM-DD'}, {status: 400});
   }
