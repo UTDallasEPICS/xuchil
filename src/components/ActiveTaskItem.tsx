@@ -125,7 +125,7 @@ const ActiveTaskItem: React.FC<ActiveTaskItemProps> = ({
                         disabled={isLoading}
                         title="Pausar"
                     >
-                        <FaPause size={12} />
+                        <FaPause size={12} color="#ffffff" /><span>Pausar</span>
                     </button>
                 ) : (
                     <button
@@ -134,7 +134,7 @@ const ActiveTaskItem: React.FC<ActiveTaskItemProps> = ({
                         disabled={isLoading}
                         title="Reanudar"
                     >
-                        <FaPlay size={12} />
+                        <FaPlay size={12} color="#ffffff" /><span>Reanudar</span>
                     </button>
                 )}
                 <button
@@ -145,7 +145,7 @@ const ActiveTaskItem: React.FC<ActiveTaskItemProps> = ({
                     }}
                     title="Abrir"
                 >
-                    <FaExternalLinkAlt size={12} />
+                    <FaExternalLinkAlt size={11} color="var(--color-green-dark)" /><span>Abrir</span>
                 </button>
             </div>
         </div>
