@@ -14,7 +14,11 @@ export interface TaskTimeData {
   taskName: string;
   min: number;
   median: number;
+  average?: number;
   max: number;
+  count?: number;
+  hasSufficientData?: boolean;
+  statusMessage?: string;
 }
 
 interface BoxWhiskerChartProps {
@@ -22,140 +26,143 @@ interface BoxWhiskerChartProps {
   title?: string;
   height?: number;
   unit?: string;
-  maxWidth?: string | number; 
+  maxWidth?: string | number;
 }
 
-const BoxWhiskerChart: React.FC<BoxWhiskerChartProps> = ({ 
-  data, 
-  title, 
-  height = 180,
-  unit = 'min',
-  maxWidth = '100%'
+const BoxWhiskerChart: React.FC<BoxWhiskerChartProps> = ({
+  data,
+  title,
+  height = 70,
+  unit = 'minutos',
+  maxWidth = '100%',
 }) => {
-  if (!data || data.length === 0 || (data.length === 1 && data[0].max === 0 && data[0].min === 0)) {
-    return (
-      <div style={{ textAlign: 'center', padding: '20px', color: '#999' }}>
-        <strong style={{ color: "#374151" }}>{title}:</strong> Sin corridas completadas en este período (N = 0)
-      </div>
-    );
+  const item = data && data.length > 0 ? data[0] : null;
+
+  // Empty state handling for products with 0 completed runs
+  // If a product has 0 runs, do not render it at all
+  const isZeroData = !item || item.count === 0 || (item.min === 0 && item.max === 0);
+  if (isZeroData) {
+    return null;
   }
 
-  const sortedData = [...data].sort((a, b) => a.median - b.median);
-  const maxValue = Math.max(...sortedData.map(d => d.max));
-  const minValue = Math.min(...sortedData.map(d => d.min));
-  
-  // Set domain with padding on both sides
-  const xAxisMin = Math.max(0, Math.floor(minValue - 2)); // Start just below min value
-  const xAxisMax = Math.ceil(maxValue + 2); // End just above max value
-  
-  // Calculate min, max, and median across all tasks
-  const globalMin = Math.min(...sortedData.map(d =>d.min));
-  const globalMax = Math.max(...sortedData.map(d =>d.max));
-  const globalMedian = sortedData[Math.floor(sortedData.length / 2)]?.median || 0;
+  const { min, median, max } = item;
+  const average = typeof item.average === 'number' ? item.average : median;
+  const count = item.count ?? 1;
 
-  // Create custom ticks with min, median, and max (NO 0)
-  const customTicks = [globalMin, globalMedian, globalMax]
-    .filter((value, index, self) => self.indexOf(value) === index)
+  // Domain with safe padding to prevent tick labels from clipping
+  const xAxisMin = Math.max(0, Math.floor(min - 2));
+  const xAxisMax = Math.ceil(max + 2);
+
+  // Custom ticks for Min, Median, Average, and Max
+  const customTicks = [min, median, average, max]
+    .filter((v, i, self) => self.indexOf(v) === i)
     .sort((a, b) => a - b);
 
-  console.log('Custom ticks:', customTicks); // Debug
-
-  const chartData = sortedData.map((item, index) =>({
-    taskName: item.taskName,
-    median: item.median,
-    min: item.min,
-    max: item.max,
-    index: index,
-  }));
+  const chartData = [
+    {
+      taskName: item.taskName,
+      median,
+      average,
+      min,
+      max,
+      index: 0,
+    },
+  ];
 
   return (
-    <div style={{ 
+    <div style={{
       width: '100%',
-      maxWidth: maxWidth, 
-      height: height,
-      backgroundColor: 'white',
+      maxWidth,
+      height,
+      backgroundColor: '#ffffff',
       borderRadius: '6px',
-      padding: '8px'
+      padding: '8px 12px',
+      border: '1px solid #eee',
+      marginBottom: '8px',
     }}>
-      {title && (
-        <h3 style={{ 
-          marginBottom: '6px', 
+      {/* Title & Simple Summary Header */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '2px',
+      }}>
+        <h3 style={{
+          margin: 0,
           color: '#333',
           fontSize: '12px',
           fontWeight: '600',
-          textAlign: 'left'
         }}>
-          {title}
+          {title} <span style={{ color: '#777', fontWeight: '400' }}>(N = {count})</span>
         </h3>
-      )}
-      
-      <ResponsiveContainer width="100%" height="100%">
+
+        <div style={{ fontSize: '10px', color: '#555' }}>
+          <span>Mín: {min}</span> |{' '}
+          <span style={{ color: '#214e34', fontWeight: '600' }}>Mediana: {median}</span> |{' '}
+          <span style={{ color: '#d97706', fontWeight: '600' }}>Promedio: {average}</span> |{' '}
+          <span>Máx: {max} {unit}</span>
+        </div>
+      </div>
+
+      <ResponsiveContainer width="100%" height="80%">
         <ComposedChart
           data={chartData}
           layout="vertical"
-          margin={{ top: 4, right: 25, left: 25, bottom: 12 }}
-          barCategoryGap={2}
-          barGap={1}
+          margin={{ top: 2, right: 25, left: 25, bottom: 4 }}
         >
-          <XAxis 
+          <XAxis
             type="number"
             domain={[xAxisMin, xAxisMax]}
             ticks={customTicks}
             tickCount={customTicks.length}
-           padding={{ left: 0, right: 0 }}
-          label={{ 
-            value: `Tiempo (${unit})`, 
-            position: 'bottom',
-            offset: 5,
-            style: { fontSize: '9px', fill: '#666' }
-          }}
-          tick={{ fontSize: 8 }}
-          axisLine={{ stroke: '#ccc', strokeWidth: 1 }}
-          tickLine={true}
-          allowDecimals={true}
-          interval={0}
-          // Add this to prevent extra ticks
-          allowDataOverflow={true}
-          scale="linear"
-          tickMargin={5}
-          tickFormatter={(value) => {
-          // Only show values that are in your customTicks array
-          if (customTicks.includes(value)) {
-            return value % 1 === 0 ? `${value}` : `${value.toFixed(1)}`;
-           }
-          return '';
-         }}
-/>
-          <YAxis 
-            type="category" 
+            tick={{ fontSize: 9 }}
+            axisLine={{ stroke: '#ccc', strokeWidth: 1 }}
+            tickLine={true}
+            allowDecimals={true}
+            interval={0}
+            scale="linear"
+            tickFormatter={(val) => `${val}`}
+          />
+          <YAxis
+            type="category"
             dataKey="index"
             hide={true}
-            scale="point"
-            padding={{ top: 0, bottom: 0 }}
           />
-          
-          <Scatter 
-            dataKey="median" 
+
+          {/* Median: reen Square (#214e34) with Min/Max ErrorBar */}
+          <Scatter
+            dataKey="median"
             fill="#214e34"
             shape="square"
             name="Mediana"
             size={28}
+            isAnimationActive={false}
           >
-            <ErrorBar 
-              dataKey="min" 
-              direction="x" 
-              stroke="#666" 
+            <ErrorBar
+              dataKey="min"
+              direction="x"
+              stroke="#666"
               strokeWidth={1}
               width={6}
             />
-            <ErrorBar 
-              dataKey="max" 
-              direction="x" 
-              stroke="#666" 
+            <ErrorBar
+              dataKey="max"
+              direction="x"
+              stroke="#666"
               strokeWidth={1}
               width={6}
             />
           </Scatter>
+
+          {/* Average: Orange Circle (#d97706) */}
+          <Scatter
+            dataKey="average"
+            fill="#d97706"
+            shape="circle"
+            name="Promedio"
+            size={20}
+            isAnimationActive={false}
+          />
         </ComposedChart>
       </ResponsiveContainer>
     </div>
