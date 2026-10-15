@@ -89,6 +89,7 @@ const AttendancePage = () => {
   const router = useRouter();
   const [currentShift, setCurrentShift] = useState<WorkerShift | null>(null);
   const [workerName, setWorkerName] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
   const [history, setHistory] = useState<WorkerShift[]>([]);
   const [totals, setTotals] = useState<AttendanceTotals | null>(null);
   const [nextPage, setNextPage] = useState(1);
@@ -110,9 +111,9 @@ const AttendancePage = () => {
     return response.json();
   }, []);
 
-  const loadAttendance = useCallback(async () => {
+  const loadAttendance = useCallback(async (preserveMessages = false) => {
     setLoading(true);
-    setError(null);
+    if (!preserveMessages) setError(null);
     try {
       const date = formatDateInput(new Date());
       const [profile, current, historyResponse, totalsResponse] = await Promise.all([
@@ -122,6 +123,7 @@ const AttendancePage = () => {
         requestJson(`/api/attendance/totals?date=${date}`),
       ]);
       setWorkerName(profile.worker?.fullName ?? "");
+      setIsAdmin(Boolean(profile.isAdmin));
       setCurrentShift(current);
       setHistory((historyResponse as HistoryResponse).data);
       setNextPage(2);
@@ -161,10 +163,10 @@ const AttendancePage = () => {
         throw new Error(messageForError(response.status, "No se pudo registrar el movimiento."));
       }
       setMessage(currentShift ? "Salida registrada correctamente." : "Entrada registrada correctamente.");
-      await loadAttendance();
+      await loadAttendance(true);
     } catch (actionError) {
       setError(actionError instanceof Error ? actionError.message : "No se pudo registrar el movimiento.");
-      await loadAttendance();
+      await loadAttendance(true);
     } finally {
       setProcessing(false);
     }
@@ -203,7 +205,7 @@ const AttendancePage = () => {
           <button
             type="button"
             className={styles.refreshButton}
-            onClick={loadAttendance}
+            onClick={() => loadAttendance()}
             disabled={loading || processing}
             aria-label="Actualizar asistencia"
             title="Actualizar asistencia"
@@ -284,14 +286,16 @@ const AttendancePage = () => {
           ) : (
             <>
               <div className={styles.historyTable}>
-                <div className={styles.tableHeader}>
+                <div className={`${styles.tableHeader} ${isAdmin ? styles.withWorker : ""}`}>
+                  {isAdmin && <span>Trabajador</span>}
                   <span>Fecha</span>
                   <span>Hora de entrada</span>
                   <span>Hora de salida</span>
                   <span>Duración</span>
                 </div>
                 {history.map((shift) => (
-                  <div className={styles.tableRow} key={shift.id}>
+                  <div className={`${styles.tableRow} ${isAdmin ? styles.withWorker : ""}`} key={shift.id}>
+                    {isAdmin && <span data-label="Trabajador">{shift.worker?.fullName ?? "—"}</span>}
                     <span data-label="Fecha">{formatDate(shift.startedAt)}</span>
                     <span data-label="Hora de entrada">{formatTime(shift.startedAt)}</span>
                     <span data-label="Hora de salida">
