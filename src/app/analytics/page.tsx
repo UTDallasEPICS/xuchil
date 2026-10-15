@@ -3,7 +3,7 @@
 // Reads three endpoints:
 //   GET /api/orders                          -> orders + orderItems + productVariant
 //   GET /api/inventory/summary               -> inventoryItems + inventoryLots
-//   GET /api/step-executions/status-counts   -> task counts by status
+//   GET /api/step-executions/status-counts   -> task counts per worker and status + worker list
 // All math happens here in the browser.
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, BarChart3, CheckCircle2, Circle, Loader, Package, TrendingUp, X } from "lucide-react";
@@ -34,6 +34,10 @@ interface RawInventoryItem {
 }
 
 // Shape of GET /api/step-executions/status-counts.
+interface RawTaskData {
+  counts: { workerId: number | null; status: string; count: number }[];
+  workers: { id: number; fullName: string }[];
+}
 interface TaskCounts { notStarted: number; inProgress: number; done: number }
 
 interface OrderPoint { date: string; orderCount: number }
@@ -47,6 +51,20 @@ const EXPIRY_WINDOW_DAYS = 5; // same threshold as the old page
 const FILTER_LABELS: Record<FilterType, string> = { today: "hoy", weekly: "semana", monthly: "mes" };
 
 // --- pure helpers: raw API data -> what the UI shows ---
+
+// Add up task counts for one worker ("all" = everyone, including unassigned tasks).
+// Not started = PENDING + BLOCKED; SKIPPED is left out.
+function toTaskCounts(data: RawTaskData | null, workerId: number | "all"): TaskCounts | null {
+  if (!data) return null;
+  const totals: TaskCounts = { notStarted: 0, inProgress: 0, done: 0 };
+  for (const row of data.counts) {
+    if (workerId !== "all" && row.workerId !== workerId) continue;
+    if (row.status === "PENDING" || row.status === "BLOCKED") totals.notStarted += row.count;
+    else if (row.status === "IN_PROGRESS") totals.inProgress += row.count;
+    else if (row.status === "DONE") totals.done += row.count;
+  }
+  return totals;
+}
 
 // Is this delivered order inside the selected time window?
 function inRange(deliveredAt: Date, filter: FilterType, now: Date): boolean {
@@ -137,7 +155,8 @@ export default function Analytics() {
   const [orders, setOrders] = useState<RawOrder[]>([]);
   const [inventory, setInventory] = useState<RawInventoryItem[]>([]);
   const [openModal, setOpenModal] = useState<"expiry" | "stock" | null>(null);
-  const [tasks, setTasks] = useState<TaskCounts | null>(null);
+  const [taskData, setTaskData] = useState<RawTaskData | null>(null);
+  const [workerFilter, setWorkerFilter] = useState<number | "all">("all");
   const [error, setError] = useState<string | null>(null);
 
   // Fetch once on page load. The old page re-fetched /api/orders on every
@@ -153,7 +172,7 @@ export default function Analytics() {
         if (!ordersRes.ok || !inventoryRes.ok || !tasksRes.ok) throw new Error("respuesta no OK");
         setOrders(await ordersRes.json());
         setInventory(await inventoryRes.json());
-        setTasks(await tasksRes.json());
+        setTaskData(await tasksRes.json());
       } catch (err) {
         console.error("analytics load error", err);
         setError("No se pudieron cargar los datos.");
@@ -167,6 +186,7 @@ export default function Analytics() {
   const trending = useMemo(() => toTrending(orders, filter), [orders, filter]);
   const expiring = useMemo(() => toExpiring(inventory), [inventory]);
   const lowStock = useMemo(() => toLowStock(inventory), [inventory]);
+  const tasks = useMemo(() => toTaskCounts(taskData, workerFilter), [taskData, workerFilter]);
 
   const totalOrders = chartPoints.reduce((sum, p) => sum + p.orderCount, 0);
   // Average delivered orders per day over the selected window, up to 2 decimals
@@ -249,6 +269,19 @@ export default function Analytics() {
 
       {/* Current state of all tasks; not affected by the hoy/semana/mes filter. */}
       <h2 className={styles.sectionTitle}>Tareas (estado actual)</h2>
+      {/* Worker slicer: native <select>, works on mobile without a library. */}
+      <label className={styles.slicer}>
+        Trabajador:
+        <select
+          value={workerFilter}
+          onChange={(e) => setWorkerFilter(e.target.value === "all" ? "all" : Number(e.target.value))}
+        >
+          <option value="all">Todos</option>
+          {taskData?.workers.map((w) => (
+            <option key={w.id} value={w.id}>{w.fullName}</option>
+          ))}
+        </select>
+      </label>
       <div className={`${styles.cardRow} ${styles.cardRowThree}`}>
         <div className={styles.card}>
           <Circle size={28} />
