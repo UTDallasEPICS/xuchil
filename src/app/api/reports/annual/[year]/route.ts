@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAnnualReportData } from "@/lib/reports/annual-report";
 import { serverError } from "@/utils/responses";
+import { verifySession } from "@/lib/session";
 
 export async function GET(
   request: Request,
@@ -8,8 +9,27 @@ export async function GET(
 ) {
   const { year } = await params;
   const reportYear = Number(year);
+  const session = await verifySession();
 
-  if (!Number.isInteger(reportYear)) {
+  if (!session) {
+    return NextResponse.json(
+      { error: "Unauthorized" },
+      {status: 401}
+    );
+  }
+
+  if (!session.isAdmin){
+    return NextResponse.json(
+      {error: "Forbidden"},
+      {status: 403}
+    )
+  }
+
+  const thisYear = new Date().getUTCFullYear();
+
+  if (!Number.isInteger(reportYear)||
+      reportYear < 2000 ||
+      reportYear > thisYear) {
     return NextResponse.json(
       { error: "Invalid year" },
       { status: 400 }

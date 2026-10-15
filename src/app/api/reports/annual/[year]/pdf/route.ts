@@ -9,13 +9,14 @@ export async function GET(
 ) {
     const payload = await verifySession();
 
+    
     if (!payload) {
         return NextResponse.json(
             { error: "Unauthorized" },
             { status: 401 }
         );
     }
-
+    // verify if admin if not send 403 error
     if (!payload.isAdmin) {
         return NextResponse.json(
             { error: "Forbidden" },
@@ -23,10 +24,14 @@ export async function GET(
         );
     }
 
+  //make sure the year entered is valid.
   const { year } = await params;
   const reportYear = Number(year);
+  const thisYear = new Date().getUTCFullYear();
 
-  if (!Number.isInteger(reportYear)) {
+  if (!Number.isInteger(reportYear) ||
+      reportYear < 2000 ||
+      reportYear > thisYear) {
     return Response.json(
       { error: "Invalid year" },
       { status: 400 }

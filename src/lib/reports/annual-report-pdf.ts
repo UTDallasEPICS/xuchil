@@ -34,6 +34,13 @@ const MONTH_NAMES = [
     "Diciembre",
 ];
 
+const COLORS = {
+    green: rgb(92 / 255, 116 / 255, 87 / 255),
+    darkGreen : rgb(33 / 255, 78 / 255, 52 / 255),
+    orange: rgb(1, 177 / 255, 51 / 255),
+    white: rgb(1, 1, 1),
+};
+
 //define types for PDF and table drawing
 
 type PdfContext = {
@@ -83,12 +90,18 @@ export async function generateAnnualReportPdf(
         y: PAGE_HEIGHT - MARGIN,
     };
 
+    drawPageLines(context);
+
+    // draw the cover page
     context.y = drawReportTitle(
         context.page,
         context.boldFont,
         data.year,
         context.y
     );
+
+    // add the cover page
+    addNewPage(context);
 
     context.y -= 20;
 
@@ -107,14 +120,12 @@ export async function generateAnnualReportPdf(
 
     ensureSpace(
         context,
-        getTableHeight(
-            data.popularProducts.length
-        )
+        ROW_HEIGHT * 2
     );
 
     const popularTable =
         drawPopularProductsTable(
-            context.page,
+            context,
             context.font,
             context.boldFont,
             data,
@@ -129,7 +140,7 @@ export async function generateAnnualReportPdf(
 
     ensureSpace(
         context,
-        50
+        110
     );
 
     context.y = drawSectionTitle(
@@ -152,7 +163,7 @@ export async function generateAnnualReportPdf(
 
     ensureSpace(
         context,
-        50
+        110
     );
 
     context.y = drawSectionTitle(
@@ -175,7 +186,7 @@ export async function generateAnnualReportPdf(
 
     ensureSpace(
         context,
-        50
+        110
     );
 
     context.y = drawSectionTitle(
@@ -198,7 +209,7 @@ export async function generateAnnualReportPdf(
 
     ensureSpace(
         context,
-        50
+        110
     );
 
     context.y = drawSectionTitle(
@@ -238,9 +249,36 @@ function addNewPage(
         PAGE_HEIGHT,
     ]);
 
-    context.y = PAGE_HEIGHT - MARGIN;
+    context.y = PAGE_HEIGHT - 100;
+
+    drawPageLines(context);
 }
 
+function drawPageLines(
+    context: PdfContext
+): void {
+
+    context.page.drawText("Reporte final anual", {
+        x: MARGIN,
+        y: PAGE_HEIGHT - 50,
+        size: 10,
+        font: context.font,
+    });
+
+    context.page.drawLine({
+        start: { x: MARGIN, y: PAGE_HEIGHT - 70},
+        end: { x: PAGE_WIDTH - MARGIN, y: PAGE_HEIGHT - 70},
+        thickness: 1,
+        color: COLORS.orange,
+    });
+
+    context.page.drawLine({
+        start: { x: MARGIN, y: 45},
+        end: { x: PAGE_WIDTH - MARGIN, y: 45},
+        thickness: 1,
+        color: COLORS.orange,
+    });
+}
 
 function ensureSpace(
     context: PdfContext,
@@ -256,15 +294,31 @@ function ensureSpace(
 }
 
 
-function getTableHeight(
-    rowCount: number
+//if the product name is longer the row height will adjust dynamically
+function getRowHeight(
+    row: string[],
+    columns: TableColumn[],
+    font: PDFFont
 ): number {
-    // make sure there is an extra row for the header
-    const dataRows =
-        //if there is no data there is still a row for the message
-        rowCount === 0 ? 1 : rowCount;
+    const lineHeight = 10;
+    const padding = 5;
 
-    return (dataRows + 1) * ROW_HEIGHT;
+    const maxLines = Math.max(
+        1,
+        ...columns.map((column, i) =>
+            wrapText(
+                row[i] ?? "",
+                font,
+                9,
+                column.width - padding * 2
+            ).length
+        )
+    );
+
+    return Math.max(
+        ROW_HEIGHT,
+        maxLines * lineHeight + padding * 2
+    );
 }
 
 function addPageNumbers(
@@ -273,12 +327,11 @@ function addPageNumbers(
 ): void {
 
     const pages = pdfDoc.getPages();
-    const totalPages = pages.length;
 
     pages.forEach((page, index) => {
 
         const pageNumber =
-            `Pagina ${index + 1} de ${totalPages}`;
+            `Pagina ${index + 1}`;
 
         const fontSize = 9;
 
@@ -289,13 +342,14 @@ function addPageNumbers(
             );
 
         page.drawText(pageNumber, {
-            x: (PAGE_WIDTH - textWidth) / 2,
+            x: (PAGE_WIDTH - textWidth - 50),
             y: 20,
             size: fontSize,
             font,
         });
     });
 }
+
 
 
 /*
@@ -309,9 +363,9 @@ function drawReportTitle(
     y: number
 ): number {
 
-    page.drawText(`Reporte Anual ${year}`, {
-        x: MARGIN,
-        y,
+    page.drawText(`Reporte final anual ${year}`, {
+        x: PAGE_WIDTH/4,
+        y: PAGE_HEIGHT/2,
         size: 22,
         font: boldFont,
     });
@@ -344,7 +398,7 @@ monthly summaries, product summaries, process times, and delivery summary
 */
 
 function drawPopularProductsTable(
-    page: PDFPage,
+    context: PdfContext,
     font: PDFFont,
     boldFont: PDFFont,
     data: AnnualReportData,
@@ -370,7 +424,7 @@ function drawPopularProductsTable(
     );
 
     return drawTable(
-        page,
+        context,
         font,
         boldFont,
         columns,
@@ -393,11 +447,7 @@ function drawMonthlySummaries(
         //Spacing for the header, the table, and after the table
 
         const requiredHeight =
-            30 +
-            getTableHeight(
-                monthlySummary.products.length
-            ) +
-            20;
+            30 + ROW_HEIGHT*2 + 20;
 
         ensureSpace(
             context,
@@ -439,12 +489,13 @@ function drawMonthlySummaries(
             );
 
         const table = drawTable(
-            context.page,
+            context,
             context.font,
             context.boldFont,
             columns,
             rows,
-            context.y
+            context.y,
+            "No hay productos durante este mes"
         );
 
         context.y = table.y - 20;
@@ -460,7 +511,7 @@ function drawProductSummaries(
 
         const requiredHeight =
             30 +
-            getTableHeight(product.variants.length) +
+            ROW_HEIGHT*2 +
             45;
 
         ensureSpace(
@@ -497,15 +548,18 @@ function drawProductSummaries(
         );
 
         const table = drawTable(
-            context.page,
+            context,
             context.font,
             context.boldFont,
             columns,
             rows,
-            context.y
+            context.y,
+            "No hay productos registrados"
         );
 
         context.y = table.y - 15;
+        
+        ensureSpace(context, 65);
 
         // Total units
         context.page.drawText(
@@ -577,11 +631,11 @@ function drawProcessTimes(
 
     ensureSpace(
         context,
-        getTableHeight(rows.length)
+        ROW_HEIGHT*2
     );
 
     const table = drawTable(
-        context.page,
+        context,
         context.font,
         context.boldFont,
         columns,
@@ -638,11 +692,11 @@ function drawDeliverySummary(
 
     ensureSpace(
         context,
-        getTableHeight(rows.length)
+        ROW_HEIGHT*2
     );
 
     const table = drawTable(
-        context.page,
+        context,
         context.font,
         context.boldFont,
         columns,
@@ -705,7 +759,7 @@ function wrapText(
 }
 
 function drawTable(
-    page: PDFPage,
+    context: PdfContext,
     font: PDFFont,
     boldFont: PDFFont,
     columns: TableColumn[],
@@ -715,25 +769,36 @@ function drawTable(
 ): TableResult {
 
     let y = startY;
-    let x = MARGIN;
+    const drawHeader = () => {
+        let x = MARGIN;
 
-    // Header row
-    for (const column of columns) {
+        // Header row
+        for (const column of columns) {
 
-        drawCell(
-            page,
-            column.title,
-            x,
-            y,
-            column.width,
-            ROW_HEIGHT,
-            boldFont
-        );
+            drawCell(
+                context.page,
+                column.title,
+                x,
+                y,
+                column.width,
+                ROW_HEIGHT,
+                boldFont,
+                COLORS.green,
+                COLORS.white
+            );
 
-        x += column.width;
+            x += column.width;
+        }
+
+        y -= ROW_HEIGHT;
+    };
+
+    if(y - ROW_HEIGHT<MARGIN){
+        addNewPage(context);
+        y = context.y;
     }
 
-    y -= ROW_HEIGHT;
+    drawHeader();
 
     if (rows.length === 0 && emptyMessage) {
 
@@ -743,15 +808,23 @@ function drawTable(
                 sum + column.width,
             0
         );
+    
+        if(y - ROW_HEIGHT< MARGIN){
+            addNewPage(context);
+            y = context.y;
+            drawHeader();
+        }
 
     drawCell(
-        page,
+        context.page,
         emptyMessage,
         MARGIN,
         y,
         totalWidth,
         ROW_HEIGHT,
-        font
+        font,
+        COLORS.darkGreen,
+        COLORS.white
     );
 
     y -= ROW_HEIGHT;
@@ -761,25 +834,33 @@ function drawTable(
 
     // Data rows
     for (const row of rows) {
+        const rowHeight = getRowHeight(row, columns, font)
 
-        x = MARGIN;
+        if(y-rowHeight < MARGIN){
+            addNewPage(context);
+            y = context.y;
+
+            drawHeader();
+        }
+
+        let x = MARGIN;
 
         for (let i = 0; i < columns.length; i++) {
 
             drawCell(
-                page,
+                context.page,
                 row[i] ?? "",
                 x,
                 y,
                 columns[i].width,
-                ROW_HEIGHT,
+                rowHeight,
                 font
             );
 
             x += columns[i].width;
         }
 
-        y -= ROW_HEIGHT;
+        y -= rowHeight;
     }
 
     return { y };
@@ -793,7 +874,9 @@ function drawCell(
     y: number,
     width: number,
     height: number,
-    font: PDFFont
+    font: PDFFont,
+    backgroundColor?: ReturnType<typeof rgb>,
+    textColor?: ReturnType<typeof rgb>
 ): void {
 
     const fontSize = 9;
@@ -807,6 +890,7 @@ function drawCell(
         height,
         borderWidth: 1,
         borderColor: rgb(0, 0, 0),
+        color: backgroundColor,
     });
 
     const lines = wrapText(
@@ -825,6 +909,7 @@ function drawCell(
             y: textY,
             size: fontSize,
             font,
+            color: textColor,
         });
 
         textY -= lineHeight;

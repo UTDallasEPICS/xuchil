@@ -34,8 +34,8 @@ export async function getAnnualReportData(
 */
 
 async function getOrdersForYear(year: number) {
-    const startDate = new Date(year, 0, 1);
-    const endDate = new Date(year + 1, 0, 1);
+    const startDate = new Date(Date.UTC(year, 0, 1));
+    const endDate = new Date(Date.UTC(year + 1, 0, 1));
 
     return prisma.order.findMany({
         where: {
@@ -65,11 +65,12 @@ async function getOrdersForYear(year: number) {
 
 
 async function getProcessRunsForYear(year: number) {
-    const startDate = new Date(year, 0, 1);
-    const endDate = new Date(year + 1, 0, 1);
+    const startDate = new Date(Date.UTC(year, 0, 1));
+    const endDate = new Date(Date.UTC(year + 1, 0, 1));
 
     return prisma.processRun.findMany({
         where: {
+            status: "COMPLETED",
             startedAt: {
                 gte: startDate,
                 lt: endDate,
@@ -184,7 +185,7 @@ function calculateMonthlySummaries(
 
         const monthlyOrders = orders.filter(
             (order) =>
-                order.deliveryDate.getMonth() === month
+                order.deliveryDate.getUTCMonth() === month
         );
 
         for (const order of monthlyOrders) {
@@ -357,9 +358,10 @@ function calculateProductSummaries(
 
         for (const order of orders) {
 
-            if (order.status !== "DELIVERED") {
-                continue;
-            }
+        if (order.status !== "DELIVERED") {
+            continue;
+        }
+
 
             for (const item of order.orderItems) {
 
@@ -371,7 +373,7 @@ function calculateProductSummaries(
                 }
 
                 const month =
-                    order.deliveryDate.getMonth() + 1;
+                    order.deliveryDate.getUTCMonth() + 1;
 
                 const quantity =
                     Number(item.quantity);
@@ -408,40 +410,52 @@ function calculateProcessTimes(
     >
 ): ProcessTimeSummary[] {
 
-    const processTimes: ProcessTimeSummary[] = [];
+    // create a map so the products of the same name are combined
+    const processMap = new Map<string, ProcessTimeSummary>();
 
     for (const run of processRuns) {
 
-        let expectedMinutes = 0;
-        let actualMinutes = 0;
+        const key = '${run.processTemplatId}-${run.productVariantId}';
 
-        for (
-            const step of
-            run.processTemplate.templateSteps
-        ) {
-            expectedMinutes +=
-                step.idealDurationMin ?? 0;
+        let total = processMap.get(key);
+
+        if(!total){
+            total = {
+                process: run.productVariant.name,
+                expectedMinutes: 0,
+                actualMinutes: 0,
+                timePercent: 0,
+            };
+
+            processMap.set(key, total)
         }
 
-        for (const execution of run.stepExecutions) {
-            actualMinutes +=
-                execution.actualDurationMin ?? 0;
+        for( const execution of run.stepExecutions){
+
+            //only include steps that are done and not skipped
+            if (execution.status !== "DONE" ||
+                execution.actualDurationMin==null
+            ) {
+                continue;
+            }
+
+            //Add up the expected time
+            total.expectedMinutes += execution.templateStep.idealDurationMin ?? 0;
+
+            //add up the actual time
+            total.actualMinutes += execution.actualDurationMin;
         }
 
-        const timePercent =
-            expectedMinutes > 0
-                ? (actualMinutes / expectedMinutes) * 100
-                : 0;
+        //calculate the percentage
+        for(const total of processMap.values()){
+            const timePercent = total.expectedMinutes > 0 
+            ?(total.actualMinutes/total.expectedMinutes)*100: 0;
 
-        processTimes.push({
-            process: run.productVariant.name,
-            expectedMinutes,
-            actualMinutes,
+            total.timePercent= Math.round(timePercent*100)/100;
+        }
 
-            timePercent:
-                Math.round(timePercent * 100) / 100,
-        });
+        
     }
 
-    return processTimes;
+    return Array.from(processMap.values());
 }

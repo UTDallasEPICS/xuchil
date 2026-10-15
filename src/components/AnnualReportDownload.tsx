@@ -1,47 +1,113 @@
 "use client";
 
 import { useState } from "react";
+//add the already implemented button component
+import Button from "@/components/Button";
 
 export default function AnnualReportDownload() {
-    const currentYear = new Date().getFullYear();
+    const [year, setYear] = useState(
+        new Date().getFullYear().toString()
+    );
 
-    const [year, setYear] =
-        useState(currentYear);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
 
-    const downloadReport = () => {
-        window.location.href =
-            `/api/reports/annual/${year}/pdf`;
-    };
+    async function handleDownload() {
+        setError("");
+
+        const reportYear = Number(year);
+        const currentYear = new Date().getUTCFullYear();
+
+        // Validate the year before requesting the PDF
+        if (
+            year.trim() === "" ||
+            !Number.isInteger(reportYear) ||
+            reportYear < 2000 ||
+            reportYear > currentYear
+        ) {
+            setError(
+                `Ingresa un año válido entre 2000 y ${currentYear}.`
+            );
+            return;
+        }
+
+        setLoading(true);
+
+        try {
+            const response = await fetch(
+                `/api/reports/annual/${reportYear}/pdf`
+            );
+
+            if (!response.ok) {
+                if (response.status === 401) {
+                    throw new Error("Debes iniciar sesión.");
+                }
+
+                if (response.status === 403) {
+                    throw new Error(
+                        "No tienes permiso para descargar este reporte."
+                    );
+                }
+
+                if (response.status === 400) {
+                    throw new Error("El año seleccionado no es válido.");
+                }
+
+                throw new Error(
+                    "No se pudo generar el reporte. Inténtalo de nuevo."
+                );
+            }
+
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = `annual-report-${reportYear}.pdf`;
+
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+
+            URL.revokeObjectURL(url);
+        } catch (err) {
+            setError(
+                err instanceof Error
+                    ? err.message
+                    : "Ocurrió un error inesperado."
+            );
+        } finally {
+            setLoading(false);
+        }
+    }
 
     return (
         <div>
-            <h2>Reporte anual</h2>
+            <label htmlFor="report-year">
+                Año del reporte
+            </label>
 
-            <div>
-                <label htmlFor="report-year">
-                    Año:
-                </label>
+            <input
+                id="report-year"
+                type="number"
+                min={2000}
+                max={new Date().getUTCFullYear()}
+                value={year}
+                onChange={(e) => setYear(e.target.value)}
+            />
 
-                <input
-                    id="report-year"
-                    type="number"
-                    value={year}
-                    min={2000}
-                    max={currentYear}
-                    onChange={(event) =>
-                        setYear(
-                            Number(event.target.value)
-                        )
-                    }
-                />
-            </div>
-
-            <button
-                type="button"
-                onClick={downloadReport}
+            <Button
+                onClick={handleDownload}
+                disabled={loading}
             >
-                Generar reporte anual
-            </button>
+                {loading ? "Generando reporte..." : "Descargar PDF"}
+            </Button>
+
+            {error && (
+                <p role="alert" className="text-red-600 mt-2">
+                    {error}
+                </p>
+            )}
         </div>
     );
 }
