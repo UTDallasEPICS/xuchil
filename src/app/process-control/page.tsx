@@ -107,7 +107,7 @@ const ProcessControl = () => {
         <ImageCard imageSrc="/new-process.svg" text="Nueva producción" type="large" route="/process-control/new-production" />
         <ImageCard imageSrc="/pending-task.svg" text="Tareas pendientes" type="large" route="/process-control/pending-tasks" />
         <ImageCard imageSrc="/file.svg" text="Plantillas de proceso" type="large" route="/process-control/templates" />
-        <ImageCard imageSrc="/file.svg" text="Tiempos de ciclo" type="large" route="/process-control/cycle-times" />
+        <ImageCard imageSrc="/box-and-whisker.svg" text="Tiempos de ciclo" type="large" route="/process-control/cycle-times" />
       </div>
     </div>
   );
