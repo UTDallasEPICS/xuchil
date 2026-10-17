@@ -1,0 +1,12 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding-bottom: 3rem;
+}
+
+.title {
+  margin: 2rem auto 1rem;
+  text-align: center;
+  color: var(--color-green-dark);
+}
