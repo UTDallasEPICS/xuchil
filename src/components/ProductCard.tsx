@@ -21,7 +21,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   onClick,
 }) => (
   <div className={styles.card} onClick={onClick}>
-    <img src={photo} alt={name} className={styles.photo} />
+    <img src={photo || "/globe.svg"} alt={name} className={styles.photo} />
     <div className={styles.info}>
       <h3 className={styles.name}>{name}</h3>
       {!!presentation && (

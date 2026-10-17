@@ -18,6 +18,8 @@ async function clearDatabase() {
     prisma.templateStep.deleteMany(),
     prisma.processRun.deleteMany(),
     prisma.processTemplate.deleteMany(),
+    prisma.shiftCorrection.deleteMany(),
+    prisma.workerShift.deleteMany(),
     prisma.orderItem.deleteMany(),
     prisma.order.deleteMany(),
     prisma.authUser.deleteMany(),
