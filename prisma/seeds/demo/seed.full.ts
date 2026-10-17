@@ -298,12 +298,27 @@ async function main() {
   console.log('  Lotes de inventario')
 
   
-  // 14. COLABORADORES INVITADOS
+  // 14. TRABAJADOR TEMPORAL (sin roleId, con fecha de expiración)
   
-  await prisma.guestCollaborator.create({
-    data: { id: 1, displayName: "Juan Pérez", contactInfo: null }
+  await prisma.worker.create({
+    data: {
+      id: 6,
+      fullName: "Juan Pérez",
+      roleId: null,
+      phone: null,
+      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    }
   });
-  console.log('  Colaboradores invitados')
+  await prisma.authUser.create({
+    data: {
+      id: 2,
+      workerId: 6,
+      email: "temporal@xuchil.com",
+      passwordHash: await bcrypt.hash("Temporal123", 10),
+      isAdmin: false,
+    }
+  });
+  console.log('  Trabajador temporal (temporal@xuchil.com / Temporal123, vence en 30 días)')
 
   
   // 15. PROCESS RUNS (del mockup tableData.ts)

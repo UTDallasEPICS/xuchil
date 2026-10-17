@@ -129,6 +129,15 @@ const UserProfile = () => {
             >
               Reportes
             </Button>
+
+            <Button
+              size="regular"
+              action="secondary"
+              onClick={() => router.push("/analytics")}
+              style={{ width: "100%" }}
+            >
+              Analíticas
+            </Button>
           </div>
         )}
 

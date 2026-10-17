@@ -95,6 +95,7 @@ Recommended startup on a fresh host:
 pnpm install
 pnpm prisma generate
 pnpm prisma db push
+pnpm db:attendance-index
 pnpm prisma:seed:clean
 pnpm build
 pnpm start
@@ -102,7 +103,13 @@ pnpm start
 
 Or use `pnpm clean:init:prod:start` / `pnpm clean:init:prod:offline:start`.
 
+The attendance index step is required after every schema push. It creates the database constraint that permits at most one open shift per worker and fails setup if the constraint cannot be created.
+
 For demo/test data (development), replace `pnpm prisma:seed:clean` with `pnpm prisma:seed:demo`, or use `pnpm demo:init:prod:start` / `pnpm demo:init:prod:offline:start`.
+
+### Forgotten clock-outs
+
+The current attendance implementation does not define the follow-up behavior for a worker who forgets to clock out. This remains a product requirement: clarify how and when reminders appear, which actions are restricted while an open shift remains unresolved, whether the worker can resolve it directly or requires admin correction, and how shifts spanning multiple calendar days are handled. No reminder system or production-task restriction is implemented until those decisions are approved.
 
 Serve the app over HTTPS in production. Session cookies are marked `Secure` when `NODE_ENV=production`.
 

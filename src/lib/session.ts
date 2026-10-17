@@ -9,6 +9,10 @@ export default interface SessionPayload {
   isAdmin: boolean
 }
 
+// Cookie name is configurable so two local copies of the app can run side by side without
+// overwriting each other's login (cookies are shared per host, not per port).
+export const SESSION_COOKIE = process.env.SESSION_COOKIE_NAME || 'session';
+
 const EXPIRATION_MS = 2 * 24 * 60 * 60 * 1000
 
 const secretKey = process.env.SESSION_SECRET;
@@ -44,7 +48,7 @@ export async function createSession(payload: SessionPayload) {
   const session = await encrypt(payload, expiresAt);
   // set cookie
   const cookieStore = await cookies();
-  cookieStore.set('session', session, {
+  cookieStore.set(SESSION_COOKIE, session, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     expires: expiresAt,
@@ -55,13 +59,13 @@ export async function createSession(payload: SessionPayload) {
 
 export async function updateSession() {
   const cookieStore = await cookies()
-  const session = cookieStore.get('session')?.value
+  const session = cookieStore.get(SESSION_COOKIE)?.value
   const payload = await decrypt(session)
   if (!session || !payload) {
     return null
   }
   const expiresAt = new Date(Date.now() + EXPIRATION_MS);
-  cookieStore.set('session', session, {
+  cookieStore.set(SESSION_COOKIE, session, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     expires: expiresAt,
@@ -72,19 +76,15 @@ export async function updateSession() {
 
 export async function deleteSession() {
   const cookieStore = await cookies()
-  cookieStore.delete('session')
+  cookieStore.delete(SESSION_COOKIE)
 }
 
-export const verifySession = cache(async (): Promise<SessionPayload | null> => {
-  // get cookie
-  const cookieStore = await cookies();
-  const session = cookieStore.get('session')?.value;
-  // decrypt payload
-  const payload = await decrypt(session);
-  if (!payload) {
-    return null;
-  }
-
+// The cookie is a snapshot from login time. Re-read the user from the database on every
+// request so that deactivating a user or changing isAdmin takes effect immediately,
+// instead of only after they log out (the cookie lasts 2 days).
+// Returns the payload with the live isAdmin value, or null if the user may no longer log in.
+// Used by verifySession (API routes) and src/proxy.ts (page routes).
+export async function checkSessionAgainstDb(payload: SessionPayload): Promise<SessionPayload | null> {
   try {
     const authUser = await prisma.authUser.findUnique({
       where: {
@@ -92,6 +92,7 @@ export const verifySession = cache(async (): Promise<SessionPayload | null> => {
       },
       select: {
         isActive: true,
+        isAdmin: true,
         worker: {
           select: {
             isActive: true,
@@ -109,12 +110,25 @@ export const verifySession = cache(async (): Promise<SessionPayload | null> => {
     if (!authUser || !authUser.isActive || worker?.isActive === false || workerExpired) {
       return null;
     }
+
+    return { ...payload, isAdmin: authUser.isAdmin };
   } catch {
     console.log('Failed to validate session');
     return null;
   }
+}
 
-  return payload;
+export const verifySession = cache(async (): Promise<SessionPayload | null> => {
+  // get cookie
+  const cookieStore = await cookies();
+  const session = cookieStore.get(SESSION_COOKIE)?.value;
+  // decrypt payload
+  const payload = await decrypt(session);
+  if (!payload) {
+    return null;
+  }
+
+  return checkSessionAgainstDb(payload);
 })
 
 export const getUser = cache(async () => {
