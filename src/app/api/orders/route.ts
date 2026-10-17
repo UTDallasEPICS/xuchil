@@ -8,6 +8,7 @@ import {serverError, validationError} from "@/utils/responses";
 export async function GET() {
   try {
     const orders = await prisma.order.findMany({
+      where: { status: { not: "CANCELLED" } },
       include: {
         orderItems: {
           include: { productVariant: true, unit: true },

@@ -20,7 +20,7 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
       },
     });
 
-    if (!order) {
+    if (!order || order.status === "CANCELLED") {
       return notFoundError('order')
     }
 
