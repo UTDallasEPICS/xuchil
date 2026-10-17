@@ -14,6 +14,8 @@
  *   mes    -> adds Sustituto de Café 50/5 kg and Galletas de Mezquite 100/4 unidad;
  *             mixed units, so the 3 cards are hidden and only the table shows (4 rows)
  *   The 60-day-old batch must not show in any filter.
+ *   Every filter also shows "1 lote terminado no tiene peso o merma registrados; no se cuentan."
+ *   (TEST-MERMA-SIN-DATOS: finished, no weights entered, left out of the totals above).
  *
  * Expected for the worker login (WORKER, ken@gmail.com in the current dev.db):
  *   only "Mis tareas", with the counts this script prints when it runs; no merma section.
@@ -52,7 +54,7 @@ async function createRun(
   batchCode: string,
   variant: number,
   by: number,
-  stepStatus: (index: number) => "PENDING" | "IN_PROGRESS" | "DONE",
+  stepStatus: (index: number) => "PENDING" | "IN_PROGRESS" | "BLOCKED" | "DONE",
   data: object,
 ) {
   const template = await prisma.processTemplate.findFirstOrThrow({
@@ -95,6 +97,14 @@ async function main() {
       outputUnitId: r.unit,
     });
   }
+  // Finished today but nobody entered the weights: must be left out of the totals, not counted as 0.
+  await createRun(`${PREFIX}SIN-DATOS`, 9, ADMIN_WORKER, () => "DONE", {
+    status: "COMPLETED",
+    startedAt: new Date(now - 3 * HOUR_MS),
+    finishedAt: new Date(now - HOUR_MS),
+    plannedQty: 10,
+    plannedUnitId: 1,
+  });
   // A batch the worker is still on: step 1 in progress, the rest not started.
   await createRun(`${PREFIX}EN-CURSO`, 3, WORKER, (i) => (i === 0 ? "IN_PROGRESS" : "PENDING"), {
     status: "IN_PROGRESS",
@@ -102,7 +112,14 @@ async function main() {
     plannedQty: 10,
     plannedUnitId: 1,
   });
-  console.log(`Creados ${RUNS.length + 1} lotes de prueba`);
+  // A batch the worker paused on step 1 (pause sets the step to BLOCKED and the run to PAUSED).
+  await createRun(`${PREFIX}EN-PAUSA`, 3, WORKER, (i) => (i === 0 ? "BLOCKED" : "PENDING"), {
+    status: "PAUSED",
+    startedAt: new Date(now - HOUR_MS),
+    plannedQty: 10,
+    plannedUnitId: 1,
+  });
+  console.log(`Creados ${RUNS.length + 3} lotes de prueba`);
 
   const mine = await prisma.stepExecution.groupBy({
     by: ["status"],
