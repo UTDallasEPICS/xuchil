@@ -415,7 +415,7 @@ function calculateProcessTimes(
 
     for (const run of processRuns) {
 
-        const key = '${run.processTemplatId}-${run.productVariantId}';
+        const key = `${run.processTemplateId}-${run.productVariantId}`;
 
         let total = processMap.get(key);
 
