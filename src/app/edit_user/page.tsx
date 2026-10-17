@@ -14,7 +14,7 @@ const EditProfile = () => {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [avatar, setAvatar] = useState("");
-  const [avatarPreview, setAvatarPreview] = useState("");
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   useEffect(() => {
@@ -48,7 +48,7 @@ const EditProfile = () => {
         setLastName(nameParts.slice(1).join(" ") || "");
         setEmail(mapped.email);
         setPhone(mapped.phone);
-        setAvatarPreview(mapped.avatar || "/user-placeholder.svg");
+        setAvatarPreview(mapped.avatar || "/globe.svg");
       } catch {
         router.push("/login");
       }
@@ -100,7 +100,8 @@ const EditProfile = () => {
         body: JSON.stringify({
           fullName: `${name} ${lastName}`.trim(),
           phone,
-          profilePhotoUrl: avatar || avatarPreview,
+          // Only send a photo the user uploaded or already had; never the placeholder.
+          profilePhotoUrl: avatar || userData?.avatar || undefined,
         }),
       });
 
@@ -146,7 +147,7 @@ const EditProfile = () => {
         }}
       >
         <img
-          src={avatarPreview}
+          src={avatarPreview ?? undefined}
           alt="Foto de perfil"
           style={{
             width: "140px",
