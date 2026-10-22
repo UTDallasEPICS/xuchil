@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, type ChangeEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarClock, CheckCircle2, Clock3, LogIn, LogOut, RefreshCw } from "lucide-react";
 import Button from "@/components/Button";
@@ -121,6 +121,7 @@ const AttendancePage = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [workerOptions, setWorkerOptions] = useState<WorkerOption[]>([]);
   const [selectedWorkerId, setSelectedWorkerId] = useState("");
+  const selectedWorkerIdRef = useRef("");
   const [history, setHistory] = useState<WorkerShift[]>([]);
   const [totals, setTotals] = useState<AttendanceTotals | null>(null);
   const [nextPage, setNextPage] = useState(1);
@@ -174,8 +175,8 @@ const AttendancePage = () => {
       const profile = await requestJson("/api/users/me");
       const profileIsAdmin = Boolean(profile.isAdmin);
       const profileHasWorker = Boolean(profile.worker?.id);
-      const workerQuery = profileIsAdmin && selectedWorkerId
-        ? `&workerId=${encodeURIComponent(selectedWorkerId)}`
+      const workerQuery = profileIsAdmin && selectedWorkerIdRef.current
+        ? `&workerId=${encodeURIComponent(selectedWorkerIdRef.current)}`
         : "";
       const [historyResult, workersResult, currentResult, totalsResult] = await Promise.allSettled([
         requestJson(`/api/attendance/history?page=1&pageSize=20${workerQuery}`),
@@ -190,6 +191,7 @@ const AttendancePage = () => {
       if (!profileIsAdmin) {
         setWorkerOptions([]);
         setSelectedWorkerId("");
+        selectedWorkerIdRef.current = "";
       }
       if (historyResult.status === "fulfilled") {
         const historyResponse = historyResult.value as HistoryResponse;
@@ -216,9 +218,6 @@ const AttendancePage = () => {
       ].filter((result): result is PromiseRejectedResult => result.status === "rejected");
       if (failedRequests.length) {
         const firstError = failedRequests[0].reason;
-        if (firstError instanceof ApiError && firstError.status === 401) {
-          router.push("/login");
-        }
         throw firstError instanceof Error ? firstError : new Error("No se pudo cargar la asistencia.");
       }
     } catch (requestError) {
@@ -230,7 +229,7 @@ const AttendancePage = () => {
     } finally {
       setLoading(false);
     }
-  }, [requestJson, router, selectedWorkerId]);
+  }, [requestJson, router]);
 
   useEffect(() => {
     loadAttendance();
@@ -286,6 +285,7 @@ const AttendancePage = () => {
   const handleWorkerFilterChange = async (event: ChangeEvent<HTMLSelectElement>) => {
     const workerId = event.target.value;
     setSelectedWorkerId(workerId);
+    selectedWorkerIdRef.current = workerId;
     setLoading(true);
     setError(null);
     try {
@@ -334,8 +334,7 @@ const AttendancePage = () => {
       });
       setCorrectionShift(null);
       setMessage("Corrección guardada correctamente.");
-      await loadHistoryPage(1, selectedWorkerId);
-      setNextPage(2);
+      await loadAttendance(true);
     } catch (requestError) {
       setCorrectionError(requestError instanceof Error ? requestError.message : "No se pudo guardar la corrección.");
     } finally {
