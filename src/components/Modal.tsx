@@ -4,7 +4,8 @@ import Button from "./Button";
 interface ModalProps {
   open: boolean;
   title?: string;
-  message: string;
+  message?: string;
+  children?: React.ReactNode;
   confirmText?: string;
   cancelText?: string;
   onConfirm?: () => void;
@@ -18,6 +19,7 @@ const Modal: React.FC<ModalProps> = ({
   open,
   title,
   message,
+  children,
   confirmText = "Aceptar",
   cancelText = "Cancelar",
   onConfirm,
@@ -65,14 +67,16 @@ const Modal: React.FC<ModalProps> = ({
             {title}
           </h3>
         )}
-        <p style={{ 
-          marginBottom: "24px",
-          lineHeight: "1.5", // Mejor legibilidad
-          wordBreak: "break-word", // Evita desbordamiento de texto
-          whiteSpace: "pre-line",
-        }}>
-          {message}
-        </p>
+        {children ?? (
+          <p style={{
+            marginBottom: "24px",
+            lineHeight: "1.5", // Mejor legibilidad
+            wordBreak: "break-word", // Evita desbordamiento de texto
+            whiteSpace: "pre-line",
+          }}>
+            {message}
+          </p>
+        )}
 
         <div
           style={{
