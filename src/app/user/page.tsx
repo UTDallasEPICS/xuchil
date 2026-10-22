@@ -120,6 +120,14 @@ const UserProfile = () => {
             >
               Administrar y Crear Usuarios
             </Button>
+            <Button
+              size="regular"
+              action="secondary"
+              onClick={() => router.push("/analytics")}
+              style={{ width: "100%", marginTop: "10px" }}
+            >
+              Analíticas
+            </Button>
           </div>
         )}
 

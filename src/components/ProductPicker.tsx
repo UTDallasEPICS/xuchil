@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import styles from "@/styles/ProductPicker.module.css";
 import { Product } from "@/types/Product"
@@ -11,24 +11,15 @@ interface ProductPickerProps {
   onChange?: (p: Product) => void;
 }
 
+// Controlled: the selected product is derived from `valueId`, and `onChange`
+// only fires on a user selection. Syncing props into state and calling
+// `onChange` from an effect caused infinite render loops in OrderPicker.
 const ProductPicker: React.FC<ProductPickerProps> = ({ products, valueId, onChange }) => {
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(products[0] ?? null);
   const [isOpen, setIsOpen] = useState(false);
 
-  useEffect(() => {
-    if (products.length === 0) {
-      setSelectedProduct(null);
-      return;
-    }
-
-    const fromValue = valueId ? products.find((p) => p.id === valueId) : null;
-    const resolved = fromValue ?? products[0];
-    setSelectedProduct(resolved);
-    onChange?.(resolved);
-  }, [products, valueId, onChange]);
+  const selectedProduct = products.find((p) => p.id === valueId) ?? null;
 
   const handleSelectProduct = (product: Product) => {
-    setSelectedProduct(product);
     setIsOpen(false);
     onChange?.(product);
   };
@@ -36,6 +27,7 @@ const ProductPicker: React.FC<ProductPickerProps> = ({ products, valueId, onChan
   return (
     <div className={styles.productPicker}>
       <button
+        type="button"
         className={styles.selectedProduct}
         onClick={() => setIsOpen((o) => !o)}
         aria-haspopup="listbox"
@@ -44,7 +36,7 @@ const ProductPicker: React.FC<ProductPickerProps> = ({ products, valueId, onChan
         {selectedProduct ? (
           <>
             <img
-              src={selectedProduct.image}
+              src={selectedProduct.image || "/globe.svg"}
               alt={selectedProduct.name}
               className={styles.productImage}
             />
@@ -54,7 +46,9 @@ const ProductPicker: React.FC<ProductPickerProps> = ({ products, valueId, onChan
             </span>
           </>
         ) : (
-          <span className={styles.label}>Sin productos disponibles</span>
+          <span className={styles.label}>
+            {products.length > 0 ? "Selecciona un producto" : "Sin productos disponibles"}
+          </span>
         )}
 
         <div className={styles.chevronWrap}>
@@ -72,7 +66,7 @@ const ProductPicker: React.FC<ProductPickerProps> = ({ products, valueId, onChan
               className={styles.productItem}
               onClick={() => handleSelectProduct(p)}
             >
-              <img src={p.image} alt={p.name} className={styles.productImage} />
+              <img src={p.image || "/globe.svg"} alt={p.name} className={styles.productImage} />
               <div className={styles.productInfo}>
                 <strong>{p.name}</strong>
                 <span>{p.presentation}</span>

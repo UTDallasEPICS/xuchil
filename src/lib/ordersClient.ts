@@ -24,22 +24,25 @@ export async function fetchOrdersClient() {
   const res = await fetch("/api/orders", { credentials: "include" });
   if (!res.ok) throw new Error("Failed to fetch orders");
   const data = await res.json();
-  return data.map((o: any) => ({
-    id: o.id,
-    clientName: o.clientName,
-    address: o.addressText || "",
-    deliveryDate: formatDateToMX(o.deliveryDate),
-    deliveryVariant: mapDeliveryVariant(o.deliveryVariant),
-    delivered: !!o.deliveredAt || o.status === "DELIVERED",
-    products: (o.orderItems || []).map((it: any) => ({
-      id: String(it.productVariant?.id ?? it.productVariantId ?? it.id),
-      photo: it.productVariant?.imageUrl || "",
-      name: it.productVariant?.name || "",
-      presentation: it.productVariant?.presentation || "",
-      quantity: Number(it.quantity),
-      units: it.unit?.name || "",
-    })),
-  }));
+  // DELETE /api/orders/:id soft-deletes by setting status to CANCELLED.
+  return data
+    .filter((o: any) => o.status !== "CANCELLED")
+    .map((o: any) => ({
+      id: o.id,
+      clientName: o.clientName,
+      address: o.addressText || "",
+      deliveryDate: formatDateToMX(o.deliveryDate),
+      deliveryVariant: mapDeliveryVariant(o.deliveryVariant),
+      delivered: !!o.deliveredAt || o.status === "DELIVERED",
+      products: (o.orderItems || []).map((it: any) => ({
+        id: String(it.productVariant?.id ?? it.productVariantId ?? it.id),
+        photo: it.productVariant?.imageUrl || "/globe.svg",
+        name: it.productVariant?.name || "",
+        presentation: it.productVariant?.presentation || "",
+        quantity: Number(it.quantity),
+        units: it.unit?.name || "",
+      })),
+    }));
 }
 
 export async function fetchOrderByIdClient(id: number) {
@@ -55,7 +58,7 @@ export async function fetchOrderByIdClient(id: number) {
     delivered: !!o.deliveredAt || o.status === "DELIVERED",
     products: (o.orderItems || []).map((it: any) => ({
       id: String(it.productVariant?.id ?? it.productVariantId ?? it.id),
-      photo: it.productVariant?.imageUrl || "",
+      photo: it.productVariant?.imageUrl || "/globe.svg",
       name: it.productVariant?.name || "",
       presentation: it.productVariant?.presentation || "",
       quantity: Number(it.quantity),

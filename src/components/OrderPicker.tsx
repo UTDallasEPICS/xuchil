@@ -17,10 +17,11 @@ interface OrderPickerProps {
   index: number;
   products: Product[];
   onDelete: () => void;
-  value?: OrderPickerValue;
-  onChange?: (value: OrderPickerValue) => void;
+  value: OrderPickerValue;
+  onChange: (value: OrderPickerValue) => void;
 }
 
+// Controlled: product and quantity live in the parent (OrderedProducts).
 const OrderPicker: React.FC<OrderPickerProps> = ({
   index,
   products,
@@ -28,26 +29,7 @@ const OrderPicker: React.FC<OrderPickerProps> = ({
   value,
   onChange,
 }) => {
-  const fallbackProductId = products[0]?.id ?? "";
-  const [selectedProductId, setSelectedProductId] = useState(value?.productId ?? fallbackProductId);
-  const [units, setUnits] = useState(value?.quantity ?? 1);
   const [showModal, setShowModal] = useState(false);
-
-  React.useEffect(() => {
-    if (value) {
-      setSelectedProductId(value.productId);
-      setUnits(value.quantity);
-      return;
-    }
-
-    if (!selectedProductId && fallbackProductId) {
-      setSelectedProductId(fallbackProductId);
-    }
-  }, [value, selectedProductId, fallbackProductId]);
-
-  React.useEffect(() => {
-    onChange?.({ productId: selectedProductId, quantity: units });
-  }, [selectedProductId, units, onChange]);
 
   return (
     <>
@@ -66,12 +48,16 @@ const OrderPicker: React.FC<OrderPickerProps> = ({
 
         <ProductPicker
           products={products}
-          valueId={selectedProductId}
-          onChange={(product) => setSelectedProductId(product.id)}
+          valueId={value.productId}
+          onChange={(product) => onChange({ ...value, productId: product.id })}
         />
 
         <h3 className={styles.unitsLabel}>Unidades:</h3>
-        <QuantityPicker value={units} onChange={setUnits} min={1} />
+        <QuantityPicker
+          value={value.quantity}
+          onChange={(quantity) => onChange({ ...value, quantity })}
+          min={1}
+        />
       </div>
 
       {showModal && (
