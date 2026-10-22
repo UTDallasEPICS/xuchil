@@ -109,12 +109,15 @@ export default function CycleTimesPage() {
         {/* Metadata subheader bar */}
         {metricsSummary && (
           <div className={styles.metadataBar}>
-            <span>Período: <strong>{period === "all" ? "Histórico Completo" : `Últimos ${period}`}</strong></span>
+            <span>Período: <strong>{period === "7d" && "Últimos 7 días"}
+                {period === "30d" && "Últimos 30 días"}
+                {period === "90d" && "Últimos 90 días"}
+                {period === "all" && "Histórico completo"}</strong></span>
             <span>Unidad: <strong>minutos</strong></span>
             <span>Total corridas analizadas: <strong>{metricsSummary.totalQualifying}</strong></span>
             {metricsSummary.totalExcluded > 0 && (
               <span style={{ color: "#9ca3af" }}>
-                (Excluidas por incompletas/inválidas: {metricsSummary.totalExcluded})
+                (Corridas omitidas por datos incompletos o fuera de rango: {metricsSummary.totalExcluded})
               </span>
             )}
           </div>
@@ -135,9 +138,9 @@ export default function CycleTimesPage() {
           </div>
         )}
 
-        {!chartLoading && !chartError && taskCategories.length === 0 && (
-          <p style={{ textAlign: "center", color: "#9ca3af", padding: "20px" }}>
-            No hay productos disponibles.
+        {!chartLoading && !chartError && !taskCategories.some((cat) => cat.tasks.some((t) => (t.count ?? 0) > 0)) && (
+          <p style={{ textAlign: "center", color: "#6b7280", padding: "10px", background: "#f9fafb", borderRadius: "8px" }}>
+            No hay productos con corridas completas en este período.
           </p>
         )}
 

@@ -42,12 +42,31 @@ const BoxWhiskerChart: React.FC<BoxWhiskerChartProps> = ({
   // If a product has 0 runs, do not render it at all
   const isZeroData = !item || item.count === 0 || (item.min === 0 && item.max === 0);
   if (isZeroData) {
-    return null;
+    return (
+      <div style={{
+        width: '100%',
+        maxWidth,
+        backgroundColor: '#ffffff',
+        borderRadius: '6px',
+        padding: '10px 8px',
+        border: '1px solid #eee',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        fontSize: '12px',
+        color: '#6b7280',
+        marginBottom: '8px',
+      }}>
+        <strong style={{ color: '#374151' }}>{title}</strong>
+        <span>Sin corridas completadas en este período</span>
+      </div>
+    );
   }
 
   const { min, median, max } = item;
   const average = typeof item.average === 'number' ? item.average : median;
   const count = item.count ?? 1;
+  const hasSufficientData = item.hasSufficientData ?? (count >= 3);
 
   // Domain with safe padding to prevent tick labels from clipping
   const xAxisMin = Math.max(0, Math.floor(min - 2));
@@ -65,6 +84,7 @@ const BoxWhiskerChart: React.FC<BoxWhiskerChartProps> = ({
       average,
       min,
       max,
+      errorX: [median-min, max-median],
       index: 0,
     },
   ];
@@ -76,7 +96,7 @@ const BoxWhiskerChart: React.FC<BoxWhiskerChartProps> = ({
       height,
       backgroundColor: '#ffffff',
       borderRadius: '6px',
-      padding: '8px 12px',
+      padding: '8px 8px',
       border: '1px solid #eee',
       marginBottom: '8px',
     }}>
@@ -94,6 +114,11 @@ const BoxWhiskerChart: React.FC<BoxWhiskerChartProps> = ({
           fontWeight: '600',
         }}>
           {title} <span style={{ color: '#777', fontWeight: '400' }}>(N = {count})</span>
+            {!hasSufficientData && (
+            <span style={{ marginLeft: '8px', color: '#b45309', fontSize: '11px', fontWeight: '500' }}>
+              ({item.statusMessage || `Muestra limitada (N = ${count})`})
+            </span>
+          )}
         </h3>
 
         <div style={{ fontSize: '10px', color: '#555' }}>
@@ -135,21 +160,13 @@ const BoxWhiskerChart: React.FC<BoxWhiskerChartProps> = ({
             fill="#214e34"
             shape="square"
             name="Mediana"
-            size={28}
             isAnimationActive={false}
           >
             <ErrorBar
-              dataKey="min"
+              dataKey="errorX"
               direction="x"
               stroke="#666"
-              strokeWidth={1}
-              width={6}
-            />
-            <ErrorBar
-              dataKey="max"
-              direction="x"
-              stroke="#666"
-              strokeWidth={1}
+              strokeWidth={1.5}
               width={6}
             />
           </Scatter>
@@ -160,7 +177,6 @@ const BoxWhiskerChart: React.FC<BoxWhiskerChartProps> = ({
             fill="#d97706"
             shape="circle"
             name="Promedio"
-            size={20}
             isAnimationActive={false}
           />
         </ComposedChart>

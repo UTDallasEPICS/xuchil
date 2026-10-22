@@ -3,6 +3,8 @@ import prisma from "@/lib/db";
 import { ProcessStatus } from "@prisma/client";
 import { serverError } from "@/utils/responses";
 
+const MAX_CYCLE_MS = 7*24*60*60*1000; // 7 days
+
 function calculateMedian(arr: number[]): number {
   if (arr.length === 0) return 0;
   const sorted = [...arr].sort((a, b) => a - b);
@@ -81,10 +83,9 @@ export async function GET(request: Request) {
         }
 
         const grossMs = end - start;
-        const grossMin = Math.round((grossMs / (1000 * 60)) * 10) / 10;
 
         // Exclusion rule 3: Gross duration must be at least 1 minute (excludes immediate/accidental clicks)
-        if (grossMin < 1) {
+        if (grossMs < 60 * 1000 ||grossMs > MAX_CYCLE_MS) {
           totalExcludedRuns++;
           continue;
         }
@@ -100,23 +101,17 @@ export async function GET(request: Request) {
             }
           }
         }
+        const durationMs = mode === " gross" ? grossMs : grossMs - pauseMs;
 
-        const pauseMin = Math.round((pauseMs / (1000 * 60)) * 10) / 10;
-
-        // Exclusion rule 4: If pauses >= gross time, timing record is corrupted
-        if (pauseMin >= grossMin) {
+        // Exclusion rule 4: Exclude if duration is 0 or negative
+        if (durationMs <= 0) {
           totalExcludedRuns++;
           continue;
         }
 
-        const netMin = Math.round((grossMin - pauseMin) * 10) / 10;
-        const duration = mode === "gross" ? grossMin : netMin;
+        const durationMin = Math.round ((durationMs / (1000*60)) * 10)/10;
+        validDurations.push(durationMin);
 
-        if (duration > 0) {
-          validDurations.push(duration);
-        } else {
-          totalExcludedRuns++;
-        }
       }
 
       const count = validDurations.length;
