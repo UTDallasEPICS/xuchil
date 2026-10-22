@@ -1,5 +1,5 @@
 // Pure analytics math for src/app/analytics/page.tsx: raw API data in, what the UI shows out.
-// No React and no fetching here, so tests/specs/analytics.test.ts can check it directly.
+// No React and no fetching here, so it can be tested directly.
 // Functions that depend on today's date take an optional `now` so tests can pin the clock.
 
 export type FilterType = "today" | "weekly" | "monthly";
@@ -30,7 +30,11 @@ export interface RawTaskData {
   counts: { workerId: number | null; status: string; count: number }[];
   workers: { id: number; fullName: string }[];
 }
-export interface TaskCounts { notStarted: number; inProgress: number; done: number }
+// One count per StepStatus in prisma/schema.prisma, shown as-is (one card each) so nobody has
+// to learn which statuses got merged into which card.
+export const TASK_STATUSES = ["PENDING", "IN_PROGRESS", "BLOCKED", "DONE", "SKIPPED"] as const;
+export type TaskStatus = (typeof TASK_STATUSES)[number];
+export type TaskCounts = Record<TaskStatus, number>;
 
 // Shape of GET /api/process-runs/production-waste.
 export interface RawRun {
@@ -56,15 +60,14 @@ export const FILTER_LABELS: Record<FilterType, string> = { today: "hoy", weekly:
 // --- pure helpers: raw API data -> what the UI shows ---
 
 // Add up task counts for one worker ("all" = everyone, including unassigned tasks).
-// Not started = PENDING + BLOCKED; SKIPPED is left out.
+// Statuses are set by the worker's start/pause/finish buttons (api/step-executions/[stepId]/[action]);
+// BLOCKED is what "pause" sets. Nothing in the app sets SKIPPED yet, so that card stays at 0.
 export function toTaskCounts(data: RawTaskData | null, workerId: number | "all"): TaskCounts | null {
   if (!data) return null;
-  const totals: TaskCounts = { notStarted: 0, inProgress: 0, done: 0 };
+  const totals = Object.fromEntries(TASK_STATUSES.map((s) => [s, 0])) as TaskCounts;
   for (const row of data.counts) {
     if (workerId !== "all" && row.workerId !== workerId) continue;
-    if (row.status === "PENDING" || row.status === "BLOCKED") totals.notStarted += row.count;
-    else if (row.status === "IN_PROGRESS") totals.inProgress += row.count;
-    else if (row.status === "DONE") totals.done += row.count;
+    if ((TASK_STATUSES as readonly string[]).includes(row.status)) totals[row.status as TaskStatus] += row.count;
   }
   return totals;
 }
@@ -121,19 +124,29 @@ export function wastePct(produced: number, waste: number): string {
   return total === 0 ? "—" : `${((waste / total) * 100).toLocaleString("es-MX", { maximumFractionDigits: 1 })}%`;
 }
 
+function finishedInRange(runs: RawRun[], filter: FilterType, now: Date): RawRun[] {
+  return runs.filter((r) => r.finishedAt && inRange(new Date(r.finishedAt), filter, now));
+}
+const hasQuantities = (r: RawRun) => r.goodOutputQty != null && r.scrapQty != null;
+
 // One row per product (and output unit) for batches finished in the selected window.
 // Grouped by unit too, so kg and "unidad" are never added together.
+// Batches missing either quantity are left out (not counted as 0); see countMissingWaste.
 export function toWaste(runs: RawRun[], filter: FilterType, now = new Date()): WasteRow[] {
   const grouped: Record<string, WasteRow> = {};
-  for (const r of runs) {
-    if (!r.finishedAt || !inRange(new Date(r.finishedAt), filter, now)) continue;
+  for (const r of finishedInRange(runs, filter, now).filter(hasQuantities)) {
     const unit = r.outputUnit?.name ?? "";
     const key = `${r.productVariant.id}-${unit}`;
     grouped[key] ??= { key, name: r.productVariant.name, unit, produced: 0, waste: 0 };
-    grouped[key].produced += Number(r.goodOutputQty ?? 0);
-    grouped[key].waste += Number(r.scrapQty ?? 0);
+    grouped[key].produced += Number(r.goodOutputQty);
+    grouped[key].waste += Number(r.scrapQty);
   }
   return Object.values(grouped).sort((a, b) => b.waste - a.waste);
+}
+
+// How many batches in the window toWaste left out for missing quantities.
+export function countMissingWaste(runs: RawRun[], filter: FilterType, now = new Date()): number {
+  return finishedInRange(runs, filter, now).filter((r) => !hasQuantities(r)).length;
 }
 
 function itemName(item: RawInventoryItem): string {

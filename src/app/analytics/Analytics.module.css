@@ -1,5 +1,6 @@
 /* CSS Module: every class here is scoped to analytics/page.tsx only. */
 .pageWrapper {
+  box-sizing: border-box; /* globals' .page is width: 100%; count the padding inside it, not on top */
   padding: 0 1rem 3rem;
   max-width: 720px;
   margin: 0 auto;
@@ -87,6 +88,12 @@
 
 .cardRowThree {
   grid-template-columns: repeat(3, 1fr);
+}
+
+/* 5 task cards: as many per row as fit, so phones wrap instead of squeezing. */
+.cardRowFive {
+  width: 100%; /* the page centers its children; without this the row shrinks to one card wide */
+  grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr));
 }
 
 button.card {
