@@ -10,7 +10,7 @@
 //   GET /api/process-runs/production-waste   -> finished batches: good output + scrap (merma)
 // All math happens in the browser, in src/lib/analytics.ts.
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, BarChart3, CheckCircle2, Circle, Factory, Loader, Package, Percent, Trash2, TrendingUp, X } from "lucide-react";
+import { AlertTriangle, BarChart3, CheckCircle2, Circle, CirclePause, Factory, Loader, Package, Percent, SkipForward, Trash2, TrendingUp, X } from "lucide-react";
 import HeaderXuchil from "@/components/HeaderXuchil";
 import styles from "./Analytics.module.css";
 
@@ -20,6 +20,7 @@ import {
   RawInventoryItem,
   RawTaskData,
   RawRun,
+  TaskStatus,
   LOW_STOCK_LIMIT,
   EXPIRY_WINDOW_DAYS,
   FILTER_LABELS,
@@ -28,9 +29,27 @@ import {
   toTrending,
   wastePct,
   toWaste,
+  countMissingWaste,
   toExpiring,
   toLowStock,
 } from "@/lib/analytics";
+
+type Section = "tasks" | "orders" | "inventory" | "runs";
+
+// One card per step status, in the order a task moves through them.
+const TASK_CARDS: { status: TaskStatus; label: string; Icon: typeof Circle }[] = [
+  { status: "PENDING", label: "sin iniciar", Icon: Circle },
+  { status: "IN_PROGRESS", label: "en progreso", Icon: Loader },
+  { status: "BLOCKED", label: "en pausa", Icon: CirclePause },
+  { status: "DONE", label: "completadas", Icon: CheckCircle2 },
+  { status: "SKIPPED", label: "omitidas", Icon: SkipForward },
+];
+
+async function getJson(url: string) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`${url} answered ${res.status}`);
+  return res.json();
+}
 
 export default function Analytics() {
   const [filter, setFilter] = useState<FilterType>("today");
@@ -43,38 +62,38 @@ export default function Analytics() {
   // null until /api/users/me answers, so admin-only sections don't flash for workers.
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Which sections failed to load. Each section shows its own message, so a failed
+  // request is never mistaken for "nothing in this period".
+  const [failed, setFailed] = useState<Section[]>([]);
 
   // Fetch once on page load. The old page re-fetched /api/orders on every
   // filter click; filtering is done in memory now, so one fetch is enough.
+  // Each request is separate: one failing doesn't blank the other sections.
   useEffect(() => {
+    const fail = (section: Section) => (err: unknown) => {
+      console.error(`analytics: ${section} failed to load`, err);
+      setFailed((f) => [...f, section]);
+    };
     async function load() {
+      getJson("/api/step-executions/status-counts").then(setTaskData, fail("tasks"));
+      let admin: boolean;
       try {
-        const [meRes, tasksRes] = await Promise.all([
-          fetch("/api/users/me"),
-          fetch("/api/step-executions/status-counts"),
-        ]);
-        if (!meRes.ok || !tasksRes.ok) throw new Error("respuesta no OK");
-        const admin = Boolean((await meRes.json()).isAdmin);
-        setTaskData(await tasksRes.json());
-        setIsAdmin(admin);
-        if (!admin) return;
-
-        const [ordersRes, inventoryRes, runsRes] = await Promise.all([
-          fetch("/api/orders"),
-          fetch("/api/inventory/summary"),
-          fetch("/api/process-runs/production-waste"),
-        ]);
-        if (!ordersRes.ok || !inventoryRes.ok || !runsRes.ok) throw new Error("respuesta no OK");
-        setOrders(await ordersRes.json());
-        setInventory(await inventoryRes.json());
-        setRuns(await runsRes.json());
+        admin = Boolean((await getJson("/api/users/me")).isAdmin);
       } catch (err) {
-        console.error("analytics load error", err);
+        // Without knowing the role we can't pick which sections to show.
+        console.error("analytics: users/me failed to load", err);
         setError("No se pudieron cargar los datos.");
+        return;
       }
+      setIsAdmin(admin);
+      if (!admin) return;
+      getJson("/api/orders").then(setOrders, fail("orders"));
+      getJson("/api/inventory/summary").then(setInventory, fail("inventory"));
+      getJson("/api/process-runs/production-waste").then(setRuns, fail("runs"));
     }
     load();
   }, []);
+  const didFail = (section: Section) => failed.includes(section);
 
   // useMemo: recompute only when orders or filter change, not on every render.
   const chartPoints = useMemo(() => toOrderPoints(orders, filter), [orders, filter]);
@@ -83,6 +102,7 @@ export default function Analytics() {
   const lowStock = useMemo(() => toLowStock(inventory), [inventory]);
   const tasks = useMemo(() => toTaskCounts(taskData, workerFilter), [taskData, workerFilter]);
   const wasteRows = useMemo(() => toWaste(runs, filter), [runs, filter]);
+  const missingWaste = useMemo(() => countMissingWaste(runs, filter), [runs, filter]);
   // Summary cards only make sense when every batch used the same unit; otherwise read the table.
   const wasteUnits = new Set(wasteRows.map((r) => r.unit));
   const wasteUnit = wasteUnits.size === 1 ? [...wasteUnits][0] : null;
@@ -127,12 +147,12 @@ export default function Analytics() {
       <div className={styles.cardRow}>
         <div className={styles.card}>
           <BarChart3 size={28} />
-          <div className={styles.cardValue}>{totalOrders}</div>
+          <div className={styles.cardValue}>{didFail("orders") ? "—" : totalOrders}</div>
           <div className={styles.cardLabel}>pedidos entregados</div>
         </div>
         <div className={styles.card}>
           <TrendingUp size={28} />
-          <div className={styles.cardValue}>{averageOrders}</div>
+          <div className={styles.cardValue}>{didFail("orders") ? "—" : averageOrders}</div>
           <div className={styles.cardLabel}>
             {filter === "today"
               ? "promedio por día: elige semana o mes"
@@ -142,7 +162,9 @@ export default function Analytics() {
       </div>
 
       <h2 className={styles.sectionTitle}>Pedidos por {filter === "today" ? "hora" : "día"}</h2>
-      {chartPoints.length === 0 ? (
+      {didFail("orders") ? (
+        <p className={styles.error}>No se pudieron cargar los pedidos</p>
+      ) : chartPoints.length === 0 ? (
         <p className={styles.empty}>Sin pedidos entregados en este periodo</p>
       ) : (
         // ponytail: plain CSS bar chart; recharts is not installed on this branch.
@@ -158,7 +180,9 @@ export default function Analytics() {
       )}
 
       <h2 className={styles.sectionTitle}>Productos más vendidos</h2>
-      {trending.length === 0 ? (
+      {didFail("orders") ? (
+        <p className={styles.error}>No se pudieron cargar los pedidos</p>
+      ) : trending.length === 0 ? (
         <p className={styles.empty}>Sin productos en este periodo</p>
       ) : (
         <ul className={styles.trendingList}>
@@ -193,29 +217,24 @@ export default function Analytics() {
         </select>
       </label>
       )}
-      <div className={`${styles.cardRow} ${styles.cardRowThree}`}>
-        <div className={styles.card}>
-          <Circle size={28} />
-          <div className={styles.cardValue}>{tasks?.notStarted ?? "—"}</div>
-          <div className={styles.cardLabel}>sin iniciar</div>
-        </div>
-        <div className={styles.card}>
-          <Loader size={28} />
-          <div className={styles.cardValue}>{tasks?.inProgress ?? "—"}</div>
-          <div className={styles.cardLabel}>en progreso</div>
-        </div>
-        <div className={styles.card}>
-          <CheckCircle2 size={28} />
-          <div className={styles.cardValue}>{tasks?.done ?? "—"}</div>
-          <div className={styles.cardLabel}>completadas</div>
-        </div>
+      {didFail("tasks") && <p className={styles.error}>No se pudieron cargar las tareas</p>}
+      <div className={`${styles.cardRow} ${styles.cardRowFive}`}>
+        {TASK_CARDS.map(({ status, label, Icon }) => (
+          <div key={status} className={styles.card}>
+            <Icon size={28} />
+            <div className={styles.cardValue}>{tasks?.[status] ?? "—"}</div>
+            <div className={styles.cardLabel}>{label}</div>
+          </div>
+        ))}
       </div>
 
       {isAdmin && (
       <>
       <h2 className={styles.sectionTitle}>Producción y merma</h2>
-      {wasteRows.length === 0 ? (
-        <p className={styles.empty}>Sin lotes terminados en este periodo</p>
+      {didFail("runs") ? (
+        <p className={styles.error}>No se pudieron cargar los lotes de producción</p>
+      ) : wasteRows.length === 0 ? (
+        missingWaste === 0 && <p className={styles.empty}>Sin lotes terminados en este periodo</p>
       ) : (
         <>
           {wasteUnit !== null && (
@@ -260,16 +279,23 @@ export default function Analytics() {
         </>
       )}
 
+      {missingWaste > 0 && (
+        <p className={styles.empty}>
+          {missingWaste} {missingWaste === 1 ? "lote terminado no tiene" : "lotes terminados no tienen"} peso o merma registrados; no se cuentan.
+        </p>
+      )}
+
       <h2 className={styles.sectionTitle}>Inventario</h2>
+      {didFail("inventory") && <p className={styles.error}>No se pudo cargar el inventario</p>}
       <div className={styles.cardRow}>
         <button className={styles.card} onClick={() => setOpenModal("expiry")}>
           <AlertTriangle size={28} />
-          <div className={styles.cardValue}>{expiring.length}</div>
+          <div className={styles.cardValue}>{didFail("inventory") ? "—" : expiring.length}</div>
           <div className={styles.cardLabel}>por caducar ({EXPIRY_WINDOW_DAYS} días)</div>
         </button>
         <button className={styles.card} onClick={() => setOpenModal("stock")}>
           <Package size={28} />
-          <div className={styles.cardValue}>{lowStock.length}</div>
+          <div className={styles.cardValue}>{didFail("inventory") ? "—" : lowStock.length}</div>
           <div className={styles.cardLabel}>poco inventario (≤ {LOW_STOCK_LIMIT})</div>
         </button>
       </div>
