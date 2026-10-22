@@ -1,154 +1,36 @@
 "use client";
 // Analytics page, ported from the old `dev` schema to the uao schema.
-// Reads three endpoints:
+// Admins see everything. Workers see only their own task counts; the status-counts
+// endpoint already filters to the worker's own rows on the server.
+// Reads these endpoints (all but users/me and status-counts: admins only):
+//   GET /api/users/me                        -> isAdmin
 //   GET /api/orders                          -> orders + orderItems + productVariant
 //   GET /api/inventory/summary               -> inventoryItems + inventoryLots
 //   GET /api/step-executions/status-counts   -> task counts per worker and status + worker list
-// All math happens here in the browser.
+//   GET /api/process-runs/production-waste   -> finished batches: good output + scrap (merma)
+// All math happens in the browser, in src/lib/analytics.ts.
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, BarChart3, CheckCircle2, Circle, Loader, Package, TrendingUp, X } from "lucide-react";
+import { AlertTriangle, BarChart3, CheckCircle2, Circle, Factory, Loader, Package, Percent, Trash2, TrendingUp, X } from "lucide-react";
 import HeaderXuchil from "@/components/HeaderXuchil";
 import styles from "./Analytics.module.css";
 
-type FilterType = "today" | "weekly" | "monthly";
-
-// Shape of GET /api/orders. Prisma `Decimal` columns arrive as strings in JSON.
-interface RawOrder {
-  id: number;
-  status: "SCHEDULED" | "DELIVERED" | "CANCELLED";
-  deliveredAt: string | null;
-  orderItems: {
-    quantity: string;
-    productVariant: { id: number; name: string; imageUrl: string | null };
-  }[];
-}
-
-// Shape of GET /api/inventory/summary (only the fields used here).
-// New schema: stock lives on InventoryLot rows, not on InventoryItem.
-interface RawInventoryItem {
-  id: number;
-  itemType: "RAW" | "PRODUCT";
-  rawMaterial: { name: string; defaultUnit: { name: string } | null } | null;
-  productVariant: { name: string; defaultUnit: { name: string } | null } | null;
-  inventoryLots: { id: number; qtyOnHand: string | null; expiryAt: string | null }[];
-}
-
-// Shape of GET /api/step-executions/status-counts.
-interface RawTaskData {
-  counts: { workerId: number | null; status: string; count: number }[];
-  workers: { id: number; fullName: string }[];
-}
-interface TaskCounts { notStarted: number; inProgress: number; done: number }
-
-interface OrderPoint { date: string; orderCount: number }
-interface TrendingItem { id: number; name: string; image: string; units: number }
-interface StockRow { key: string; name: string; daysLeft: number | null; quantity: number; unit: string }
-
-const DAY_MS = 1000 * 60 * 60 * 24;
-const LOW_STOCK_LIMIT = 50; // same threshold as the old page
-const EXPIRY_WINDOW_DAYS = 5; // same threshold as the old page
-
-const FILTER_LABELS: Record<FilterType, string> = { today: "hoy", weekly: "semana", monthly: "mes" };
-
-// --- pure helpers: raw API data -> what the UI shows ---
-
-// Add up task counts for one worker ("all" = everyone, including unassigned tasks).
-// Not started = PENDING + BLOCKED; SKIPPED is left out.
-function toTaskCounts(data: RawTaskData | null, workerId: number | "all"): TaskCounts | null {
-  if (!data) return null;
-  const totals: TaskCounts = { notStarted: 0, inProgress: 0, done: 0 };
-  for (const row of data.counts) {
-    if (workerId !== "all" && row.workerId !== workerId) continue;
-    if (row.status === "PENDING" || row.status === "BLOCKED") totals.notStarted += row.count;
-    else if (row.status === "IN_PROGRESS") totals.inProgress += row.count;
-    else if (row.status === "DONE") totals.done += row.count;
-  }
-  return totals;
-}
-
-// Is this delivered order inside the selected time window?
-function inRange(deliveredAt: Date, filter: FilterType, now: Date): boolean {
-  if (filter === "today") return deliveredAt.toDateString() === now.toDateString();
-  const diffDays = (now.getTime() - deliveredAt.getTime()) / DAY_MS;
-  return diffDays >= 0 && diffDays <= (filter === "weekly" ? 7 : 30);
-}
-
-function deliveredInRange(orders: RawOrder[], filter: FilterType): (RawOrder & { deliveredAt: string })[] {
-  const now = new Date();
-  return orders.filter(
-    (o): o is RawOrder & { deliveredAt: string } =>
-      o.status === "DELIVERED" && !!o.deliveredAt && inRange(new Date(o.deliveredAt), filter, now)
-  );
-}
-
-// Count orders per hour (today) or per day (week/month).
-function toOrderPoints(orders: RawOrder[], filter: FilterType): OrderPoint[] {
-  const grouped: Record<string, number> = {};
-  // Sort oldest-first so the object's keys (bars) come out in time order;
-  // JS objects keep string keys in the order they were first added.
-  const sorted = deliveredInRange(orders, filter).sort(
-    (a, b) => new Date(a.deliveredAt).getTime() - new Date(b.deliveredAt).getTime()
-  );
-  for (const o of sorted) {
-    const d = new Date(o.deliveredAt);
-    const label =
-      filter === "today"
-        ? `${d.getHours().toString().padStart(2, "0")}:00`
-        : d.toLocaleDateString("es-MX", { day: "2-digit", month: "2-digit" });
-    grouped[label] = (grouped[label] || 0) + 1;
-  }
-  return Object.entries(grouped).map(([date, orderCount]) => ({ date, orderCount }));
-}
-
-// Top 4 product variants by units delivered.
-function toTrending(orders: RawOrder[], filter: FilterType): TrendingItem[] {
-  const grouped: Record<number, TrendingItem> = {};
-  for (const o of deliveredInRange(orders, filter)) {
-    for (const item of o.orderItems) {
-      const v = item.productVariant;
-      grouped[v.id] ??= { id: v.id, name: v.name, image: v.imageUrl || "/Xuchil.svg", units: 0 };
-      grouped[v.id].units += Number(item.quantity);
-    }
-  }
-  return Object.values(grouped).sort((a, b) => b.units - a.units).slice(0, 4);
-}
-
-function itemName(item: RawInventoryItem): string {
-  return item.rawMaterial?.name ?? item.productVariant?.name ?? `Artículo ${item.id}`;
-}
-function itemUnit(item: RawInventoryItem): string {
-  return item.rawMaterial?.defaultUnit?.name ?? item.productVariant?.defaultUnit?.name ?? "";
-}
-
-// One row per LOT that still has stock and expires within 5 days (or already expired).
-function toExpiring(items: RawInventoryItem[]): StockRow[] {
-  const now = Date.now();
-  const rows: StockRow[] = [];
-  for (const item of items) {
-    for (const lot of item.inventoryLots) {
-      const qty = Number(lot.qtyOnHand ?? 0);
-      if (!lot.expiryAt || qty <= 0) continue;
-      const daysLeft = Math.ceil((new Date(lot.expiryAt).getTime() - now) / DAY_MS);
-      if (daysLeft > EXPIRY_WINDOW_DAYS) continue;
-      rows.push({ key: `lot-${lot.id}`, name: itemName(item), daysLeft, quantity: qty, unit: itemUnit(item) });
-    }
-  }
-  return rows.sort((a, b) => (a.daysLeft ?? 0) - (b.daysLeft ?? 0));
-}
-
-// One row per ITEM whose lots add up to 50 or less.
-function toLowStock(items: RawInventoryItem[]): StockRow[] {
-  return items
-    .map((item) => ({
-      key: `item-${item.id}`,
-      name: itemName(item),
-      daysLeft: null,
-      quantity: item.inventoryLots.reduce((sum, lot) => sum + Number(lot.qtyOnHand ?? 0), 0),
-      unit: itemUnit(item),
-    }))
-    .filter((row) => row.quantity <= LOW_STOCK_LIMIT)
-    .sort((a, b) => a.quantity - b.quantity);
-}
+import {
+  FilterType,
+  RawOrder,
+  RawInventoryItem,
+  RawTaskData,
+  RawRun,
+  LOW_STOCK_LIMIT,
+  EXPIRY_WINDOW_DAYS,
+  FILTER_LABELS,
+  toTaskCounts,
+  toOrderPoints,
+  toTrending,
+  wastePct,
+  toWaste,
+  toExpiring,
+  toLowStock,
+} from "@/lib/analytics";
 
 export default function Analytics() {
   const [filter, setFilter] = useState<FilterType>("today");
@@ -157,6 +39,9 @@ export default function Analytics() {
   const [openModal, setOpenModal] = useState<"expiry" | "stock" | null>(null);
   const [taskData, setTaskData] = useState<RawTaskData | null>(null);
   const [workerFilter, setWorkerFilter] = useState<number | "all">("all");
+  const [runs, setRuns] = useState<RawRun[]>([]);
+  // null until /api/users/me answers, so admin-only sections don't flash for workers.
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Fetch once on page load. The old page re-fetched /api/orders on every
@@ -164,15 +49,25 @@ export default function Analytics() {
   useEffect(() => {
     async function load() {
       try {
-        const [ordersRes, inventoryRes, tasksRes] = await Promise.all([
-          fetch("/api/orders"),
-          fetch("/api/inventory/summary"),
+        const [meRes, tasksRes] = await Promise.all([
+          fetch("/api/users/me"),
           fetch("/api/step-executions/status-counts"),
         ]);
-        if (!ordersRes.ok || !inventoryRes.ok || !tasksRes.ok) throw new Error("respuesta no OK");
+        if (!meRes.ok || !tasksRes.ok) throw new Error("respuesta no OK");
+        const admin = Boolean((await meRes.json()).isAdmin);
+        setTaskData(await tasksRes.json());
+        setIsAdmin(admin);
+        if (!admin) return;
+
+        const [ordersRes, inventoryRes, runsRes] = await Promise.all([
+          fetch("/api/orders"),
+          fetch("/api/inventory/summary"),
+          fetch("/api/process-runs/production-waste"),
+        ]);
+        if (!ordersRes.ok || !inventoryRes.ok || !runsRes.ok) throw new Error("respuesta no OK");
         setOrders(await ordersRes.json());
         setInventory(await inventoryRes.json());
-        setTaskData(await tasksRes.json());
+        setRuns(await runsRes.json());
       } catch (err) {
         console.error("analytics load error", err);
         setError("No se pudieron cargar los datos.");
@@ -187,6 +82,12 @@ export default function Analytics() {
   const expiring = useMemo(() => toExpiring(inventory), [inventory]);
   const lowStock = useMemo(() => toLowStock(inventory), [inventory]);
   const tasks = useMemo(() => toTaskCounts(taskData, workerFilter), [taskData, workerFilter]);
+  const wasteRows = useMemo(() => toWaste(runs, filter), [runs, filter]);
+  // Summary cards only make sense when every batch used the same unit; otherwise read the table.
+  const wasteUnits = new Set(wasteRows.map((r) => r.unit));
+  const wasteUnit = wasteUnits.size === 1 ? [...wasteUnits][0] : null;
+  const totalProduced = wasteRows.reduce((sum, r) => sum + r.produced, 0);
+  const totalWaste = wasteRows.reduce((sum, r) => sum + r.waste, 0);
 
   const totalOrders = chartPoints.reduce((sum, p) => sum + p.orderCount, 0);
   // Average delivered orders per day over the selected window, up to 2 decimals
@@ -204,9 +105,10 @@ export default function Analytics() {
   return (
     <div className={`page ${styles.pageWrapper}`}>
       <HeaderXuchil />
-      <h1 className={styles.title}>Analíticas</h1>
+      <h1 className={styles.title}>{isAdmin === false ? "Mis estadísticas" : "Analíticas"}</h1>
       {error && <p className={styles.error}>{error}</p>}
 
+      {isAdmin && (
       <div className={styles.filterRow}>
         {(Object.keys(FILTER_LABELS) as FilterType[]).map((f) => (
           <button
@@ -218,7 +120,10 @@ export default function Analytics() {
           </button>
         ))}
       </div>
+      )}
 
+      {isAdmin && (
+      <>
       <div className={styles.cardRow}>
         <div className={styles.card}>
           <BarChart3 size={28} />
@@ -267,9 +172,14 @@ export default function Analytics() {
         </ul>
       )}
 
+      </>
+      )}
+
       {/* Current state of all tasks; not affected by the hoy/semana/mes filter. */}
-      <h2 className={styles.sectionTitle}>Tareas (estado actual)</h2>
-      {/* Worker slicer: native <select>, works on mobile without a library. */}
+      <h2 className={styles.sectionTitle}>{isAdmin === false ? "Mis tareas" : "Tareas"} (estado actual)</h2>
+      {/* Worker slicer: native <select>, works on mobile without a library. Admins only;
+          a worker's data is already just their own. */}
+      {isAdmin && (
       <label className={styles.slicer}>
         Trabajador:
         <select
@@ -282,6 +192,7 @@ export default function Analytics() {
           ))}
         </select>
       </label>
+      )}
       <div className={`${styles.cardRow} ${styles.cardRowThree}`}>
         <div className={styles.card}>
           <Circle size={28} />
@@ -300,6 +211,55 @@ export default function Analytics() {
         </div>
       </div>
 
+      {isAdmin && (
+      <>
+      <h2 className={styles.sectionTitle}>Producción y merma</h2>
+      {wasteRows.length === 0 ? (
+        <p className={styles.empty}>Sin lotes terminados en este periodo</p>
+      ) : (
+        <>
+          {wasteUnit !== null && (
+            <div className={`${styles.cardRow} ${styles.cardRowThree}`}>
+              <div className={styles.card}>
+                <Factory size={28} />
+                <div className={styles.cardValue}>{totalProduced.toLocaleString("es-MX")} {wasteUnit}</div>
+                <div className={styles.cardLabel}>producido</div>
+              </div>
+              <div className={styles.card}>
+                <Trash2 size={28} />
+                <div className={styles.cardValue}>{totalWaste.toLocaleString("es-MX")} {wasteUnit}</div>
+                <div className={styles.cardLabel}>merma</div>
+              </div>
+              <div className={styles.card}>
+                <Percent size={28} />
+                <div className={styles.cardValue}>{wastePct(totalProduced, totalWaste)}</div>
+                <div className={styles.cardLabel}>de merma</div>
+              </div>
+            </div>
+          )}
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th>Producido</th>
+                <th>Merma</th>
+                <th>% merma</th>
+              </tr>
+            </thead>
+            <tbody>
+              {wasteRows.map((row) => (
+                <tr key={row.key}>
+                  <td>{row.name}</td>
+                  <td>{row.produced.toLocaleString("es-MX")} {row.unit}</td>
+                  <td>{row.waste.toLocaleString("es-MX")} {row.unit}</td>
+                  <td>{wastePct(row.produced, row.waste)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
+      )}
+
       <h2 className={styles.sectionTitle}>Inventario</h2>
       <div className={styles.cardRow}>
         <button className={styles.card} onClick={() => setOpenModal("expiry")}>
@@ -313,6 +273,8 @@ export default function Analytics() {
           <div className={styles.cardLabel}>poco inventario (≤ {LOW_STOCK_LIMIT})</div>
         </button>
       </div>
+      </>
+      )}
 
       {openModal && (
         <div className={styles.overlay} onClick={() => setOpenModal(null)}>
