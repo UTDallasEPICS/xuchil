@@ -234,7 +234,7 @@ export default function Analytics() {
       {didFail("runs") ? (
         <p className={styles.error}>No se pudieron cargar los lotes de producción</p>
       ) : wasteRows.length === 0 ? (
-        <p className={styles.empty}>Sin lotes terminados en este periodo</p>
+        missingWaste === 0 && <p className={styles.empty}>Sin lotes terminados en este periodo</p>
       ) : (
         <>
           {wasteUnit !== null && (

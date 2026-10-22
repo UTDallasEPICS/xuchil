@@ -1,5 +1,5 @@
 // Pure analytics math for src/app/analytics/page.tsx: raw API data in, what the UI shows out.
-// No React and no fetching here, so tests/specs/analytics.test.ts can check it directly.
+// No React and no fetching here, so it can be tested directly.
 // Functions that depend on today's date take an optional `now` so tests can pin the clock.
 
 export type FilterType = "today" | "weekly" | "monthly";
