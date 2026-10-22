@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import HeaderXuchil from "@/components/HeaderXuchil";
+import Button from "@/components/Button";
 import PendingTaskCard from "@/components/PendingTaskCard";
 import styles from "./PendingTasks.module.css";
 import { PendingTask } from "@/types/PendingTask";
@@ -65,7 +66,20 @@ const PendingTasksPage = () => {
   return (
     <div className="page">
       <HeaderXuchil />
-      <h1>Tareas Pendientes</h1>
+
+      {/* Header bar with Back button */}
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        padding: "1rem 1.5rem",
+        gap: "1rem"
+      }}>
+        <Button size="small" action="secondary" onClick={() => router.push("/process-control")}>
+          ← Back
+        </Button>
+        <h1 style={{ margin: 0, fontSize: "1.5rem" }}>Tareas Pendientes</h1>
+      </div>
+      
       <div className={styles.container}>
         {tasks.map((task) => (
           <div
@@ -92,3 +106,5 @@ const PendingTasksPage = () => {
 };
 
 export default PendingTasksPage;
+
+
