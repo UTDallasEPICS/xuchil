@@ -120,13 +120,19 @@ const UserProfile = () => {
             >
               Administrar y Crear Usuarios
             </Button>
+          </div>
+        )}
+
+        {/* Admins see all analytics; workers see only their own task counts. */}
+        {role && (
+          <div style={{ marginTop: "10px", width: "100%", maxWidth: "420px" }}>
             <Button
               size="regular"
               action="secondary"
               onClick={() => router.push("/analytics")}
-              style={{ width: "100%", marginTop: "10px" }}
+              style={{ width: "100%" }}
             >
-              Analíticas
+              {role === "admin" ? "Analíticas" : "Mis estadísticas"}
             </Button>
           </div>
         )}
