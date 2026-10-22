@@ -3,6 +3,7 @@
 import { useState } from "react";
 //add the already implemented button component
 import Button from "@/components/Button";
+import styles from "@/styles/AnnualReportDownload.module.css"
 
 export default function AnnualReportDownload() {
     const [year, setYear] = useState(
@@ -82,20 +83,29 @@ export default function AnnualReportDownload() {
     }
 
     return (
-        <div>
-            <label htmlFor="report-year">
+        /*implement slicer for the year dropdown*/
+        <div className={styles.slicer}>
+            <label htmlFor="report-year" className={styles.title}>
+                <strong>
                 Año del reporte
+                </strong>
             </label>
-
-            <input
-                id="report-year"
-                type="number"
-                min={2000}
-                max={new Date().getUTCFullYear()}
-                value={year}
+            <br></br>
+            <select
+                value="year"
                 onChange={(e) => setYear(e.target.value)}
-            />
-
+                className={styles.scroll}
+            >
+                {Array.from(
+                    {length: new Date().getUTCFullYear() - 2000 +1 },
+                    (_, i) => new Date().getUTCFullYear() -i
+                ).map((reportYear) => ( 
+                    <option key ={reportYear} value={reportYear}>
+                        {reportYear}
+                    </option>
+                ))}
+                </select>
+            <br></br>
             <Button
                 onClick={handleDownload}
                 disabled={loading}

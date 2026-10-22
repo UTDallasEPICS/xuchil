@@ -140,7 +140,7 @@ export async function generateAnnualReportPdf(
 
     ensureSpace(
         context,
-        110
+        120
     );
 
     context.y = drawSectionTitle(
@@ -163,7 +163,7 @@ export async function generateAnnualReportPdf(
 
     ensureSpace(
         context,
-        110
+        150
     );
 
     context.y = drawSectionTitle(
@@ -186,7 +186,7 @@ export async function generateAnnualReportPdf(
 
     ensureSpace(
         context,
-        110
+        120
     );
 
     context.y = drawSectionTitle(
@@ -506,6 +506,24 @@ function drawProductSummaries(
     context: PdfContext,
     data: AnnualReportData
 ): void {
+
+    if(data.productSummaries.length === 0){
+        ensureSpace(context, 50);
+        
+        context.page.drawText(
+            "No hay productos registrados durante este año.",
+            {
+                x: MARGIN,
+                y: context.y,
+                size: 11,
+                font: context.font,
+                color: COLORS.darkGreen,
+            }
+        );
+
+        context.y -= 30;
+        return;
+    }
 
     for (const product of data.productSummaries) {
 

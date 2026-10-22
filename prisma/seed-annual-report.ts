@@ -1,19 +1,19 @@
 import prisma from "../src/lib/db";
 import type { ProductVariant } from "@prisma/client";
 
-const PREFIX = "test";
+const PREFIX = "TESTING-DATA";
 
 async function main(){
     const category = await prisma.productCategory.upsert({
-        where: {name: "Test"},
+        where: {name: "TESTING-DATA"},
         update: {},
-        create: { name: "Test"},
+        create: { name: "TESTING-DATA"},
     });
 
     const unit = await prisma.unit.upsert({
-        where: {name: "Test unit"},
+        where: {name: "TESTING-DATA"},
         update: {},
-        create: {name:"Test unit"},
+        create: {name:"TESTING-DATA"},
     });
 
 

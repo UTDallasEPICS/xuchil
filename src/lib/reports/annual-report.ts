@@ -415,6 +415,17 @@ function calculateProcessTimes(
 
     for (const run of processRuns) {
 
+        const completeSteps = run.stepExecutions.filter(
+            (execution) =>
+                execution.status === "DONE" &&
+            execution.actualDurationMin != null
+        )
+
+        //only count meaningful runs with data
+        if (completeSteps.length===0){
+            continue;
+        }
+
         const key = `${run.processTemplateId}-${run.productVariantId}`;
 
         let total = processMap.get(key);
@@ -430,32 +441,26 @@ function calculateProcessTimes(
             processMap.set(key, total)
         }
 
-        for( const execution of run.stepExecutions){
-
-            //only include steps that are done and not skipped
-            if (execution.status !== "DONE" ||
-                execution.actualDurationMin==null
-            ) {
-                continue;
-            }
+        for( const execution of completeSteps){
 
             //Add up the expected time
             total.expectedMinutes += execution.templateStep.idealDurationMin ?? 0;
 
             //add up the actual time
-            total.actualMinutes += execution.actualDurationMin;
-        }
-
-        //calculate the percentage
-        for(const total of processMap.values()){
-            const timePercent = total.expectedMinutes > 0 
-            ?(total.actualMinutes/total.expectedMinutes)*100: 0;
-
-            total.timePercent= Math.round(timePercent*100)/100;
-        }
-
-        
+            total.actualMinutes += execution.actualDurationMin!;
+        } 
     }
 
+    //calculate the percentage
+    for(const total of processMap.values()){
+        const timePercent = total.expectedMinutes > 0 
+        ?(total.actualMinutes/total.expectedMinutes)*100: 0;
+
+        total.timePercent= Math.round(timePercent*100)/100;
+    }
+    
+    console.log(processMap.values())
+    
     return Array.from(processMap.values());
 }
+
