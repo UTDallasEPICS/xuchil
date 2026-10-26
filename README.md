@@ -107,6 +107,30 @@ The attendance index step is required after every schema push. It creates the da
 
 For demo/test data (development), replace `pnpm prisma:seed:clean` with `pnpm prisma:seed:demo`, or use `pnpm demo:init:prod:start` / `pnpm demo:init:prod:offline:start`.
 
+### Attendance development workflow
+
+Run all attendance unit and database tests with:
+
+```bash
+pnpm test:attendance
+```
+
+Seed realistic, closed attendance shifts for the workers already in the database with:
+
+```bash
+pnpm prisma:seed:attendance
+```
+
+The standalone attendance seed preserves existing data. It does not reset the database,
+create workers, or modify unrelated records. Its deterministic sample timestamps make
+repeated runs idempotent.
+
+The complete demo dataset, including attendance records, can be loaded with:
+
+```bash
+pnpm prisma:seed:demo:full
+```
+
 ### Forgotten clock-outs
 
 The current attendance implementation does not define the follow-up behavior for a worker who forgets to clock out. This remains a product requirement: clarify how and when reminders appear, which actions are restricted while an open shift remains unresolved, whether the worker can resolve it directly or requires admin correction, and how shifts spanning multiple calendar days are handled. No reminder system or production-task restriction is implemented until those decisions are approved.
