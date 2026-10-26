@@ -6,30 +6,24 @@
  */
 
 import { spawnSync } from 'child_process';
-import { fileURLToPath } from 'url';
-import { dirname, resolve } from 'path';
+import { resolve } from 'path';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const projectRoot = dirname(dirname(__dirname));
+const projectRoot = process.cwd();
 
-// Obtener argumentos
 const args = process.argv.slice(2);
+const specs = args.length > 0 ? args : ['tests/specs/**/*.test.ts'];
 
-// Ejecutar mocha con ts-node/register
-const result = spawnSync('mocha', [
-  '--require',
-  'ts-node/register',
-  'tests/specs/**/*.test.ts',
-  ...args
+const result = spawnSync(process.execPath, [
+  '--import',
+  'tsx',
+  resolve(projectRoot, 'node_modules/mocha/bin/_mocha'),
+  '--no-config',
+  ...specs,
 ], {
   cwd: projectRoot,
   stdio: 'inherit',
-  shell: true,
   env: {
     ...process.env,
-    TS_NODE_TRANSPILE_ONLY: 'true',
-    NODE_OPTIONS: '--loader ts-node/esm'
   }
 });
 
