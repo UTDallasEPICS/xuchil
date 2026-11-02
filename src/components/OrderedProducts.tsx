@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import styles from "@/styles/OrderedProducts.module.css";
 import { Plus } from "lucide-react";
 import OrderPicker, { OrderPickerValue } from "@/components/OrderPicker";
@@ -40,13 +40,20 @@ const OrderedProducts: React.FC<OrderedProductsProps> = ({ products, value, onCh
     setOrders(initialOrders);
   }, [initialOrders]);
 
+  // Keep the latest callback in a ref so a parent passing an inline function
+  // doesn't re-run the effect below on every render.
+  const onChangeRef = useRef(onChange);
   useEffect(() => {
-    onChange?.(
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
+  useEffect(() => {
+    onChangeRef.current?.(
       orders
         .map((order) => order.value)
         .filter((item) => item.productId && item.quantity > 0)
     );
-  }, [orders, onChange]);
+  }, [orders]);
 
   const addOrder = () =>
     setOrders((prev) => {

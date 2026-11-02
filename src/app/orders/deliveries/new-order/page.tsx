@@ -54,7 +54,7 @@ const NewOrderPage = () => {
           id: String(variant.id),
           name: variant.product?.name ?? "Producto",
           presentation: variant.name ?? variant.presentation ?? "",
-          image: variant.imageUrl ?? "/globe.svg",
+          image: variant.imageUrl || "/globe.svg",
           quantity: 0,
           units: variant.defaultUnit?.name ?? "",
           categoryId: String(variant.product?.categoryId ?? ""),

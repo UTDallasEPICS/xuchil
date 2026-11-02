@@ -459,8 +459,6 @@ function calculateProcessTimes(
         total.timePercent= Math.round(timePercent*100)/100;
     }
     
-    console.log(processMap.values())
-    
     return Array.from(processMap.values());
 }
 

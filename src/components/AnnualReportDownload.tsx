@@ -90,9 +90,9 @@ export default function AnnualReportDownload() {
                 Año del reporte
                 </strong>
             </label>
-            <br></br>
             <select
-                value="year"
+                id="report-year"
+                value={year}
                 onChange={(e) => setYear(e.target.value)}
                 className={styles.scroll}
             >
@@ -104,8 +104,7 @@ export default function AnnualReportDownload() {
                         {reportYear}
                     </option>
                 ))}
-                </select>
-            <br></br>
+            </select>
             <Button
                 onClick={handleDownload}
                 disabled={loading}
@@ -114,7 +113,7 @@ export default function AnnualReportDownload() {
             </Button>
 
             {error && (
-                <p role="alert" className="text-red-600 mt-2">
+                <p role="alert" className={styles.error}>
                     {error}
                 </p>
             )}

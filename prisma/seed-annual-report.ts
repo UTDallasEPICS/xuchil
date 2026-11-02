@@ -4,6 +4,12 @@ import type { ProductVariant } from "@prisma/client";
 const PREFIX = "TESTING-DATA";
 
 async function main(){
+    if (process.env.NODE_ENV === "production") {
+        throw new Error(
+            "Annual report seed cannot run in production."
+        );
+    }
+
     const category = await prisma.productCategory.upsert({
         where: {name: "TESTING-DATA"},
         update: {},

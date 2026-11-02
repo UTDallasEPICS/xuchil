@@ -140,7 +140,7 @@ export async function generateAnnualReportPdf(
 
     ensureSpace(
         context,
-        120
+        145
     );
 
     context.y = drawSectionTitle(
@@ -163,7 +163,7 @@ export async function generateAnnualReportPdf(
 
     ensureSpace(
         context,
-        150
+        170
     );
 
     context.y = drawSectionTitle(
