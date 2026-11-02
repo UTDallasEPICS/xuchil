@@ -73,9 +73,14 @@ const BoxWhiskerChart: React.FC<BoxWhiskerChartProps> = ({
   const xAxisMax = Math.ceil(max + 2);
 
   // Custom ticks for Min, Median, Average, and Max
+  const minGap = (xAxisMax - xAxisMin) * 0.08;
   const customTicks = [min, median, average, max]
-    .filter((v, i, self) => self.indexOf(v) === i)
-    .sort((a, b) => a - b);
+    .sort((a, b) => a - b)
+    .reduce<number[]>((acc, v) => {
+      if (acc.length === 0 || v - acc[acc.length - 1] >= minGap) acc.push(v);
+      else if (v === max) acc[acc.length - 1] = v;
+      return acc;
+    }, []);
 
   const chartData = [
     {
@@ -115,8 +120,11 @@ const BoxWhiskerChart: React.FC<BoxWhiskerChartProps> = ({
         }}>
           {title} <span style={{ color: '#777', fontWeight: '400' }}>(N = {count})</span>
             {!hasSufficientData && (
-            <span style={{ marginLeft: '8px', color: '#b45309', fontSize: '11px', fontWeight: '500' }}>
-              ({item.statusMessage || `Muestra limitada (N = ${count})`})
+            <span
+              title={item.statusMessage}
+              style={{ marginLeft: '8px', color: '#b45309', fontSize: '11px', fontWeight: '500', whiteSpace: 'nowrap' }}
+            >
+              (Muestra limitada)
             </span>
           )}
         </h3>
@@ -129,7 +137,7 @@ const BoxWhiskerChart: React.FC<BoxWhiskerChartProps> = ({
         </div>
       </div>
 
-      <ResponsiveContainer width="100%" height="80%">
+      <ResponsiveContainer width="100%" height="88%">
         <ComposedChart
           data={chartData}
           layout="vertical"
@@ -141,7 +149,7 @@ const BoxWhiskerChart: React.FC<BoxWhiskerChartProps> = ({
             ticks={customTicks}
             tickCount={customTicks.length}
             tick={{ fontSize: 9 }}
-            axisLine={{ stroke: '#ccc', strokeWidth: 1 }}
+            axisLine={false}
             tickLine={true}
             allowDecimals={true}
             interval={0}
@@ -154,11 +162,13 @@ const BoxWhiskerChart: React.FC<BoxWhiskerChartProps> = ({
             hide={true}
           />
 
-          {/* Median: reen Square (#214e34) with Min/Max ErrorBar */}
+          {/* Median: Green square (#214e34) with Min/Max ErrorBar */}
           <Scatter
             dataKey="median"
             fill="#214e34"
-            shape="square"
+            shape={(p: any) => (
+              <rect x={p.cx - 5} y={p.cy - 5} width={10} height={10} fill="#214e34" />
+            )}
             name="Mediana"
             isAnimationActive={false}
           >
@@ -175,6 +185,8 @@ const BoxWhiskerChart: React.FC<BoxWhiskerChartProps> = ({
           <Scatter
             dataKey="average"
             fill="#d97706"
+            stroke="#ffffff"
+            strokeWidth={1}
             shape="circle"
             name="Promedio"
             isAnimationActive={false}

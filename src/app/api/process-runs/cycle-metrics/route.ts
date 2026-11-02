@@ -84,7 +84,7 @@ export async function GET(request: Request) {
 
         const grossMs = end - start;
 
-        // Exclusion rule 3: Gross duration must be at least 1 minute (excludes immediate/accidental clicks)
+        // Exclusion rule 3: Gross duration must be at least 1 minute (excludes immediate/accidental clicks) and at most MAX_CYCLE_MS (7 days; excludes stale runs completed long after they started)
         if (grossMs < 60 * 1000 ||grossMs > MAX_CYCLE_MS) {
           totalExcludedRuns++;
           continue;
@@ -101,7 +101,7 @@ export async function GET(request: Request) {
             }
           }
         }
-        const durationMs = mode === " gross" ? grossMs : grossMs - pauseMs;
+        const durationMs = mode === "gross" ? grossMs : grossMs - pauseMs;
 
         // Exclusion rule 4: Exclude if duration is 0 or negative
         if (durationMs <= 0) {

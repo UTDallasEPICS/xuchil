@@ -123,7 +123,7 @@ export default function CycleTimesPage() {
           </div>
         )}
 
-        {chartLoading && (
+        {chartLoading && !metricsSummary && (
           <p style={{ textAlign: "center", color: "#6b7280", padding: "20px" }}>
             Cargando métricas de producción...
           </p>
@@ -138,21 +138,31 @@ export default function CycleTimesPage() {
           </div>
         )}
 
-        {!chartLoading && !chartError && !taskCategories.some((cat) => cat.tasks.some((t) => (t.count ?? 0) > 0)) && (
+        {metricsSummary && !chartError && !taskCategories.some((cat) => cat.tasks.some((t) => (t.count ?? 0) > 0)) && (
           <p style={{ textAlign: "center", color: "#6b7280", padding: "10px", background: "#f9fafb", borderRadius: "8px" }}>
             No hay productos con corridas completas en este período.
           </p>
         )}
 
         {/* Products list with charts */}
-        {!chartLoading && !chartError && (
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            {taskCategories.map((category) => (
+        {metricsSummary && !chartError && (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              opacity: chartLoading ? 0.5 : 1,
+              transition: "opacity 0.15s",
+              pointerEvents: chartLoading ? "none" : "auto",
+            }}
+          >
+            {taskCategories
+              .filter((category) => category.tasks.some((t) => (t.count ?? 0) > 0))
+              .map((category) => (
               <div key={category.productId} style={{ width: "100%" }}>
                 <BoxWhiskerChart
                   data={category.tasks}
                   title={category.category}
-                  height={50}
+                  height={56}
                   unit="minutos"
                 />
               </div>
