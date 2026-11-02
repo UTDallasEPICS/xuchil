@@ -21,6 +21,7 @@
   max-width: 400px;
   margin: 0 auto 1.5rem;
   padding: 0 1rem;
+  box-sizing: border-box;
 }
 
 .sectionTitle {

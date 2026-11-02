@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import HeaderXuchil from "@/components/HeaderXuchil";
 import Button from "@/components/Button";
@@ -75,7 +75,7 @@ const PendingTasksPage = () => {
         gap: "1rem"
       }}>
         <Button size="small" action="secondary" onClick={() => router.push("/process-control")}>
-          ← Back
+          ← Volver
         </Button>
         <h1 style={{ margin: 0, fontSize: "1.5rem" }}>Tareas Pendientes</h1>
       </div>

@@ -42,7 +42,7 @@
   justify-content: center;
   width: 44px;
   height: 44px;
-  border-radius: 8px; gap: 6px; font-size: 0.75rem; font-weight: 600;
+  border-radius: 50%;
   background: var(--color-green-dark);
   color: white;
   font-weight: 700;
@@ -86,7 +86,10 @@
 .actionBtn {
   min-height: 32px;
   padding: 4px 10px;
-  border-radius: 8px; gap: 6px; font-size: 0.75rem; font-weight: 600;
+  border-radius: 8px;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
   border: none;
   display: flex;
   align-items: center;
@@ -118,4 +121,10 @@
   background: transparent;
   border: 2px solid var(--color-green-dark);
   color: var(--color-green-dark);
+}
+
+@media (max-width: 380px) {
+  .actionBtn span {
+    display: none;
+  }
 }
