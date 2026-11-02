@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient, ProcessStatus } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
@@ -116,6 +116,170 @@ async function main() {
   });
   console.log('  Materiales requeridos creados');
 
+  // ==========================================
+  // CORRIDAS DE PRODUCCIÓN Y PAUSAS (ProcessRun & ProcessPause)
+  // ==========================================
+  console.log('  Creando corridas de producción con métricas de prueba...');
+
+  const now = new Date();
+  const dayAgo = (days: number) => new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+
+  // 1. HARINA DE MEZQUITE (ProductVariant 1, Template 1)
+  // 7 Corridas: Gran rango (180 a 600 min), Mediana (240) != Promedio (293.6)
+  const mezquiteRuns = [
+    // [GrossMin, PauseMin, DaysAgo] -> Net duration
+    { gross: 180, pause: 0, days: 2 },  // Net: 180 min (7d, 30d, 90d)
+    { gross: 210, pause: 30, days: 3 }, // Net: 180 min (7d, 30d, 90d)
+    { gross: 240, pause: 15, days: 5 }, // Net: 225 min (7d, 30d, 90d)
+    { gross: 260, pause: 20, days: 12 },// Net: 240 min (30d, 90d)
+    { gross: 310, pause: 40, days: 18 },// Net: 270 min (30d, 90d)
+    { gross: 420, pause: 60, days: 25 },// Net: 360 min (30d, 90d)
+    { gross: 680, pause: 80, days: 50 },// Net: 600 min (90d, todo) -> Runaway batch
+  ];
+
+  for (let i = 0; i < mezquiteRuns.length; i++) {
+    const { gross, pause, days } = mezquiteRuns[i];
+    const finishTime = dayAgo(days);
+    const startTime = new Date(finishTime.getTime() - gross * 60 * 1000);
+
+    await prisma.processRun.create({
+      data: {
+        productVariantId: 1,
+        processTemplateId: 1,
+        batchCode: `LOTE-MEZQUITE-${i + 1}-${Date.now()}`,
+        status: ProcessStatus.COMPLETED,
+        startedAt: startTime,
+        finishedAt: finishTime,
+        goodOutputQty: 50,
+        ...(pause > 0
+          ? {
+              processPauses: {
+                create: [
+                  {
+                    startedAt: new Date(startTime.getTime() + 20 * 60 * 1000),
+                    endedAt: new Date(startTime.getTime() + (20 + pause) * 60 * 1000),
+                    reason: "Mantenimiento / Limpieza",
+                  },
+                ],
+              },
+            }
+          : {}),
+      },
+    });
+  }
+
+  // 2. SUSTITUTO DE CAFÉ (ProductVariant 11, Template 2)
+  // 2 Corridas: Muestra limitada (N = 2 < 3)
+  const cafeRuns = [
+    { gross: 150, pause: 10, days: 4 }, // Net: 140 min
+    { gross: 230, pause: 20, days: 10 },// Net: 210 min
+  ];
+
+  for (let i = 0; i < cafeRuns.length; i++) {
+    const { gross, pause, days } = cafeRuns[i];
+    const finishTime = dayAgo(days);
+    const startTime = new Date(finishTime.getTime() - gross * 60 * 1000);
+
+    await prisma.processRun.create({
+      data: {
+        productVariantId: 11,
+        processTemplateId: 2,
+        batchCode: `LOTE-CAFE-${i + 1}-${Date.now()}`,
+        status: ProcessStatus.COMPLETED,
+        startedAt: startTime,
+        finishedAt: finishTime,
+        goodOutputQty: 30,
+        processPauses: {
+          create: [
+            {
+              startedAt: new Date(startTime.getTime() + 15 * 60 * 1000),
+              endedAt: new Date(startTime.getTime() + (15 + pause) * 60 * 1000),
+              reason: "Espera de tostadora",
+            },
+          ],
+        },
+      },
+    });
+  }
+
+  // 3. GALLETAS DE AMARANTO (ProductVariant 5, Template 3)
+  // 4 Corridas: Duraciones moderadas (80 a 170 min)
+  const galletasRuns = [
+    { gross: 90, pause: 10, days: 1 },  // Net: 80 min
+    { gross: 110, pause: 15, days: 4 }, // Net: 95 min
+    { gross: 125, pause: 5, days: 8 },  // Net: 120 min
+    { gross: 200, pause: 30, days: 16 },// Net: 170 min
+  ];
+
+  for (let i = 0; i < galletasRuns.length; i++) {
+    const { gross, pause, days } = galletasRuns[i];
+    const finishTime = dayAgo(days);
+    const startTime = new Date(finishTime.getTime() - gross * 60 * 1000);
+
+    await prisma.processRun.create({
+      data: {
+        productVariantId: 5,
+        processTemplateId: 3,
+        batchCode: `LOTE-GALLETA-${i + 1}-${Date.now()}`,
+        status: ProcessStatus.COMPLETED,
+        startedAt: startTime,
+        finishedAt: finishTime,
+        goodOutputQty: 100,
+      },
+    });
+  }
+
+  // 4. CORRIDAS INVÁLIDAS / CORRUPTAS (Prueba de Reglas de Exclusión)
+
+  // Invalida 1: Timestamp invertido / duración negativa (finishedAt < startedAt) -> DEBE EXCLUIRSE
+  await prisma.processRun.create({
+    data: {
+      productVariantId: 1,
+      processTemplateId: 1,
+      batchCode: `INVALIDA-NEGATIVA-${Date.now()}`,
+      status: ProcessStatus.COMPLETED,
+      startedAt: new Date(),
+      finishedAt: new Date(Date.now() - 45 * 60 * 1000), // 45 min en el pasado
+    },
+  });
+
+  // Invalida 2: Duración sub-minuto (< 1 min, click accidental) -> DEBE EXCLUIRSE
+  const clickStart = dayAgo(3);
+  await prisma.processRun.create({
+    data: {
+      productVariantId: 1,
+      processTemplateId: 1,
+      batchCode: `INVALIDA-SUBMINUTO-${Date.now()}`,
+      status: ProcessStatus.COMPLETED,
+      startedAt: clickStart,
+      finishedAt: new Date(clickStart.getTime() + 15 * 1000), // 15 segundos
+    },
+  });
+
+  // Invalida 3: Pausa mayor que la duración total de la corrida -> DEBE EXCLUIRSE
+  const corruptStart = dayAgo(4);
+  const corruptEnd = new Date(corruptStart.getTime() + 30 * 60 * 1000); // 30 min bruta
+  await prisma.processRun.create({
+    data: {
+      productVariantId: 11,
+      processTemplateId: 2,
+      batchCode: `INVALIDA-PAUSA-CORRUPTA-${Date.now()}`,
+      status: ProcessStatus.COMPLETED,
+      startedAt: corruptStart,
+      finishedAt: corruptEnd,
+      processPauses: {
+        create: [
+          {
+            startedAt: corruptStart,
+            endedAt: new Date(corruptStart.getTime() + 60 * 60 * 1000), // 60 min de pausa (> 30 min)
+            reason: "Pausa corrupta",
+          },
+        ],
+      },
+    },
+  });
+
+  console.log('  Corridas de producción creadas exitosamente.');
   console.log(`Seeding processes completed!`);
 }
 

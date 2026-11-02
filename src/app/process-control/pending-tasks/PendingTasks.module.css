@@ -1,13 +1,19 @@
 .container {
-    justify-self: center;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-    justify-content: center;
-    margin-top: 20px;
-    max-width: 400px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+  margin: 20px auto 0;
+  max-width: 400px;
 }
 
-.cardContainer{
-    margin-bottom: -16;
+.cardContainer {
+  margin-bottom: -16px;
+}
+
+@media (max-width: 768px) {
+  .container {
+    max-width: 100%;
+    padding: 0 10px;
+  }
 }

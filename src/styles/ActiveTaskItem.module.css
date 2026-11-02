@@ -32,7 +32,7 @@
 
 .taskMeta {
   font-size: 0.75rem;
-  color: var(--color-text-light);
+  color: #374151;
   margin: 2px 0 0;
 }
 
@@ -84,9 +84,12 @@
 }
 
 .actionBtn {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
+  min-height: 32px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
   border: none;
   display: flex;
   align-items: center;
@@ -118,4 +121,10 @@
   background: transparent;
   border: 2px solid var(--color-green-dark);
   color: var(--color-green-dark);
+}
+
+@media (max-width: 380px) {
+  .actionBtn span {
+    display: none;
+  }
 }

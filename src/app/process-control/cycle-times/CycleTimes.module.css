@@ -1,0 +1,130 @@
+.pageWrapper {
+  position: relative;
+  padding: 0 1rem 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.headerContainer {
+  width: 100%;
+  max-width: 640px;
+  margin: 1.5rem auto 1rem;
+  padding: 0;
+  text-align: center;
+}
+
+.headerContainer h1 {
+  margin-bottom: 0.25rem;
+  color: var(--color-green-dark);
+  font-size: 1.75rem;
+}
+
+.headerContainer p {
+  margin: 0;
+  color: var(--color-gray-dark);
+  font-size: 0.95rem;
+}
+
+.backButtonWrapper {
+  width: 100%;
+  max-width: 640px;
+  display: flex;
+  justify-content: flex-start;
+  margin: 1rem auto 0;
+}
+
+.section {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e5e7eb;
+  width: 100%;
+  max-width: 640px;
+  box-sizing: border-box;
+  margin-top: 1rem;
+}
+
+.controlsBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid #ff7300;
+  padding-bottom: 12px;
+}
+
+.modeBtn {
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #374151;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.15s;
+}
+
+.modeBtn:hover {
+  background: #f9fafb;
+}
+
+.periodGroup {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.periodBtn {
+  font-size: 11px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: none;
+  background: #e5e7eb;
+  color: #374151;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.15s;
+}
+
+.periodBtnActive {
+  background: var(--color-green-dark);
+  color: #ffffff;
+}
+
+.metadataBar {
+  display: flex;
+  gap: 14px;
+  font-size: 11px;
+  color: #4b5563;
+  margin-bottom: 1rem;
+  padding: 8px 12px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #f3f4f6;
+  flex-wrap: wrap;
+}
+
+.legendBar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 11px;
+  color: #6b7280;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #f3f4f6;
+  flex-wrap: wrap;
+}
+
+@media (min-width: 768px) {
+  .pageWrapper {
+    padding-inline: 2rem;
+  }
+}
