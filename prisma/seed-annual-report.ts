@@ -143,6 +143,26 @@ async function main(){
         )
     );
 
+    // create delivered orders in every month of 2025 and 2026 so every monthly table has data
+    for (const year of [2025, 2026]) {
+        for (let month = 0; month < 12; month++) {
+            for (let j = 0; j < 5; j++) {
+                const variant = variants[(month * 3 + j * 7) % variants.length];
+                const quantity = 5 + ((month + 1) * (j + 3)) % 23 + j;
+                const date = new Date(Date.UTC(year, month, 10 + j, 12)).toISOString();
+
+                await createTestOrder(
+                    `monthly-${year}-${month + 1}-${j + 1}`,
+                    date,
+                    "DELIVERED",
+                    variant.id,
+                    quantity,
+                    (["MAIL", "PERSONAL", "CONSIGNMENT"] as const)[(month + j) % 3]
+                );
+            }
+        }
+    }
+
     // Create a process template that has two steps, mixing and packaging
     const template = await prisma.processTemplate.upsert({
         where: {

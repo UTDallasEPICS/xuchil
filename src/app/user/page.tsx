@@ -134,7 +134,13 @@ const UserProfile = () => {
 
         {/* Admins see all analytics; workers see only their own task counts. */}
         {role && (
-          <div style={{ marginTop: "10px", width: "100%", maxWidth: "420px" }}>
+          <div
+            style={{
+              marginTop: role === "admin" ? "-4px" : "10px",
+              width: "100%",
+              maxWidth: "420px",
+            }}
+          >
             <Button
               size="regular"
               action="secondary"

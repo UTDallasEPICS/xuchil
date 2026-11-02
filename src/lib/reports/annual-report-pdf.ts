@@ -114,7 +114,6 @@ export async function generateAnnualReportPdf(
 
     //this section generates the popular products table
 
-    context.y -= 10;
 
     // this makes sure the table fits on the page, otherwise it adds a new page
 
@@ -134,7 +133,7 @@ export async function generateAnnualReportPdf(
 
     context.y = popularTable.y;
 
-    context.y -= 30;
+    context.y -= 34;
 
     //this section generates the monthly summaries tables
 
@@ -150,7 +149,6 @@ export async function generateAnnualReportPdf(
         context.y
     );
 
-    context.y -= 15;
 
     drawMonthlySummaries(
         context,
@@ -159,7 +157,7 @@ export async function generateAnnualReportPdf(
 
     //this section generates the product summaries tables
 
-    context.y -= 20;
+    context.y -= 34;
 
     ensureSpace(
         context,
@@ -173,7 +171,6 @@ export async function generateAnnualReportPdf(
         context.y
     );
 
-    context.y -= 15;
 
     drawProductSummaries(
         context,
@@ -182,7 +179,7 @@ export async function generateAnnualReportPdf(
 
     //this section generates the process times table
 
-    context.y -= 20;
+    context.y -= 34;
 
     ensureSpace(
         context,
@@ -196,7 +193,6 @@ export async function generateAnnualReportPdf(
         context.y
     );
 
-    context.y -= 15;
 
     drawProcessTimes(
         context,
@@ -205,7 +201,7 @@ export async function generateAnnualReportPdf(
 
     //this section generates the delivery summary table
 
-    context.y -= 30;
+    context.y -= 34;
 
     ensureSpace(
         context,
@@ -219,7 +215,6 @@ export async function generateAnnualReportPdf(
         context.y
     );
 
-    context.y -= 15;
 
     drawDeliverySummary(
         context,
@@ -378,17 +373,19 @@ function drawSectionTitle(
     page: PDFPage,
     boldFont: PDFFont,
     title: string,
-    y: number
+    y: number,
+    size = 16,
+    gapBelow = 18
 ): number {
 
     page.drawText(title, {
         x: MARGIN,
         y,
-        size: 16,
+        size,
         font: boldFont,
     });
 
-    return y - 20;
+    return y - gapBelow;
 }
 
 
@@ -459,10 +456,10 @@ function drawMonthlySummaries(
             context.page,
             context.boldFont,
             monthName,
-            context.y
+            context.y,
+            12,
+            15
         );
-
-        context.y -= 5;
 
         const columns: TableColumn[] = [
             {
@@ -498,7 +495,7 @@ function drawMonthlySummaries(
             "No hay productos durante este mes"
         );
 
-        context.y = table.y - 20;
+        context.y = table.y - 32;
     }
 }
 
@@ -542,10 +539,10 @@ function drawProductSummaries(
             context.page,
             context.boldFont,
             product.product,
-            context.y
+            context.y,
+            12,
+            15
         );
-
-        context.y -= 5;
 
         const columns: TableColumn[] = [
             {
