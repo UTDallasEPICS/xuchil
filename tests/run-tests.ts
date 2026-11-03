@@ -18,6 +18,9 @@ const result = spawnSync(process.execPath, [
   'tsx',
   resolve(projectRoot, 'node_modules/mocha/bin/_mocha'),
   '--no-config',
+  '--timeout',
+  '30000',
+  '--exit',
   ...specs,
 ], {
   cwd: projectRoot,

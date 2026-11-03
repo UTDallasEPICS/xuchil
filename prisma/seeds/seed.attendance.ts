@@ -1,14 +1,34 @@
 import { PrismaClient } from '@prisma/client';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { currentAttendanceDate, dateOnlyToUtc } from '../../src/lib/attendance';
 
 const prisma = new PrismaClient();
 
-const SAMPLE_SHIFTS = [
-  { startedAt: '2025-11-17T08:00:00.000Z', endedAt: '2025-11-17T16:00:00.000Z' },
-  { startedAt: '2025-11-18T08:15:00.000Z', endedAt: '2025-11-18T16:30:00.000Z' },
-  { startedAt: '2025-11-19T07:45:00.000Z', endedAt: '2025-11-19T15:45:00.000Z' },
+const SHIFT_TIMES = [
+  { start: [8, 0], end: [16, 0] },
+  { start: [8, 15], end: [16, 30] },
+  { start: [7, 45], end: [15, 45] },
 ] as const;
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function buildSampleShifts(now = new Date()) {
+  const today = currentAttendanceDate(now);
+  const shifts: { startedAt: Date; endedAt: Date }[] = [];
+  for (let offset = 1; shifts.length < SHIFT_TIMES.length; offset++) {
+    const day = new Date(today.getTime() - offset * DAY_MS);
+    const weekday = day.getUTCDay();
+    if (weekday === 0 || weekday === 6) continue;
+    const midnight = dateOnlyToUtc(day).getTime();
+    const { start, end } = SHIFT_TIMES[shifts.length];
+    shifts.push({
+      startedAt: new Date(midnight + (start[0] * 60 + start[1]) * 60000),
+      endedAt: new Date(midnight + (end[0] * 60 + end[1]) * 60000),
+    });
+  }
+  return shifts;
+}
 
 export async function seedAttendance(client: PrismaClient): Promise<number> {
   const workers = await client.worker.findMany({
@@ -21,13 +41,14 @@ export async function seedAttendance(client: PrismaClient): Promise<number> {
     return 0;
   }
 
+  const sampleShifts = buildSampleShifts();
   const workerIds = workers.map(({ id }) => id);
   const existingShifts = await client.workerShift.findMany({
     where: {
       workerId: { in: workerIds },
       startedAt: {
-        gte: new Date(SAMPLE_SHIFTS[0].startedAt),
-        lt: new Date('2025-11-20T00:00:00.000Z'),
+        gte: new Date(Math.min(...sampleShifts.map(({ startedAt }) => startedAt.getTime()))),
+        lte: new Date(Math.max(...sampleShifts.map(({ startedAt }) => startedAt.getTime()))),
       },
     },
     select: { workerId: true, startedAt: true },
@@ -39,12 +60,12 @@ export async function seedAttendance(client: PrismaClient): Promise<number> {
   );
 
   const shiftsToCreate = workers.flatMap(({ id: workerId }) =>
-    SAMPLE_SHIFTS.filter(({ startedAt }) =>
-      !existingKeys.has(`${workerId}:${startedAt}`),
+    sampleShifts.filter(({ startedAt }) =>
+      !existingKeys.has(`${workerId}:${startedAt.toISOString()}`),
     ).map(({ startedAt, endedAt }) => ({
       workerId,
-      startedAt: new Date(startedAt),
-      endedAt: new Date(endedAt),
+      startedAt,
+      endedAt,
     })),
   );
 

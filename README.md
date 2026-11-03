@@ -122,8 +122,9 @@ pnpm prisma:seed:attendance
 ```
 
 The standalone attendance seed preserves existing data. It does not reset the database,
-create workers, or modify unrelated records. Its deterministic sample timestamps make
-repeated runs idempotent.
+create workers, or modify unrelated records. It creates one closed shift per worker for
+each of the last three weekdays (excluding today). Rerunning on the same day creates
+nothing new; rerunning on a later day adds shifts for the newly covered days.
 
 The complete demo dataset, including attendance records, can be loaded with:
 
