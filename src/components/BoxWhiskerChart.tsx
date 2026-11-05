@@ -13,7 +13,9 @@ import {
 export interface TaskTimeData {
   taskName: string;
   min: number;
+  q1?: number;
   median: number;
+  q3?: number;
   average?: number;
   max: number;
   count?: number;
@@ -64,35 +66,20 @@ const BoxWhiskerChart: React.FC<BoxWhiskerChartProps> = ({
   }
 
   const { min, median, max } = item;
+  const q1 = item.q1 ?? min;
+  const q3 = item.q3 ?? max;
   const average = typeof item.average === 'number' ? item.average : median;
   const count = item.count ?? 1;
   const hasSufficientData = item.hasSufficientData ?? (count >= 3);
 
-  // Domain with safe padding to prevent tick labels from clipping
-  const xAxisMin = Math.max(0, Math.floor(min - 2));
-  const xAxisMax = Math.ceil(max + 2);
+  // Domain range with padding
+  const domainPadding = Math.max(2, (max - min) * 0.08);
+  const domainMin = Math.max(0, Math.floor(min - domainPadding));
+  const domainMax = Math.ceil(max + domainPadding);
+  const domainRange = domainMax - domainMin || 1;
 
-  // Custom ticks for Min, Median, Average, and Max
-  const minGap = (xAxisMax - xAxisMin) * 0.08;
-  const customTicks = [min, median, average, max]
-    .sort((a, b) => a - b)
-    .reduce<number[]>((acc, v) => {
-      if (acc.length === 0 || v - acc[acc.length - 1] >= minGap) acc.push(v);
-      else if (v === max) acc[acc.length - 1] = v;
-      return acc;
-    }, []);
-
-  const chartData = [
-    {
-      taskName: item.taskName,
-      median,
-      average,
-      min,
-      max,
-      errorX: [median-min, max-median],
-      index: 0,
-    },
-  ];
+  // Converts any numeric value to an X pixel position on a 600px canvas
+  const toX = (val: number) => 35 + ((val - domainMin) / domainRange) * (600 - 70);
 
   return (
     <div style={{
@@ -131,68 +118,75 @@ const BoxWhiskerChart: React.FC<BoxWhiskerChartProps> = ({
 
         <div style={{ fontSize: '10px', color: '#555' }}>
           <span>Mín: {min}</span> |{' '}
+          <span>Q1: <strong>{q1}</strong></span> |{' '}
           <span style={{ color: '#214e34', fontWeight: '600' }}>Mediana: {median}</span> |{' '}
           <span style={{ color: '#d97706', fontWeight: '600' }}>Promedio: {average}</span> |{' '}
+          <span>Q3: <strong>{q3}</strong></span> |{' '}
           <span>Máx: {max} {unit}</span>
         </div>
       </div>
 
-      <ResponsiveContainer width="100%" height="88%">
-        <ComposedChart
-          data={chartData}
-          layout="vertical"
-          margin={{ top: 2, right: 25, left: 25, bottom: 4 }}
-        >
-          <XAxis
-            type="number"
-            domain={[xAxisMin, xAxisMax]}
-            ticks={customTicks}
-            tickCount={customTicks.length}
-            tick={{ fontSize: 9 }}
-            axisLine={false}
-            tickLine={true}
-            allowDecimals={true}
-            interval={0}
-            scale="linear"
-            tickFormatter={(val) => `${val}`}
-          />
-          <YAxis
-            type="category"
-            dataKey="index"
-            hide={true}
-          />
+      {/* Box & Whisker Chart */}
+      <svg viewBox="0 0 600 52" style={{ width: '100%', height: '52px', overflow: 'visible' }}>
+         {min === max ? (
+          /* Clean single-point display when N = 1 */
+          <g>
+            <line x1={35} y1={22} x2={565} y2={22} stroke="#e5e7eb" strokeWidth={1.5} />
+            <circle cx={toX(median)} cy={22} r={6} fill="#214e34" stroke="#ffffff" strokeWidth={2} />
+            <line x1={toX(median)} y1={22} x2={toX(median)} y2={35} stroke="#214e34" strokeWidth={1} />
+            <text x={toX(median)} y={47} textAnchor="middle" fontSize={10} fontWeight="700" fill="#214e34">
+              {median} {unit}
+            </text>
+          </g>
+        ) : (
+        <g>
+        {/* Left Whisker (Min to Q1) with End Cap */}
+        <line x1={toX(min)} y1={18} x2={toX(q1)} y2={18} stroke="#4b5563" strokeWidth={1.5} />
+        <line x1={toX(min)} y1={11} x2={toX(min)} y2={25} stroke="#4b5563" strokeWidth={2} />
 
-          {/* Median: Green square (#214e34) with Min/Max ErrorBar */}
-          <Scatter
-            dataKey="median"
-            fill="#214e34"
-            shape={(p: any) => (
-              <rect x={p.cx - 5} y={p.cy - 5} width={10} height={10} fill="#214e34" />
-            )}
-            name="Mediana"
-            isAnimationActive={false}
-          >
-            <ErrorBar
-              dataKey="errorX"
-              direction="x"
-              stroke="#666"
-              strokeWidth={1.5}
-              width={6}
-            />
-          </Scatter>
+        {/* Box (Q1 to Q3) */}
+        <rect
+          x={toX(q1)}
+          y={8}
+          width={Math.max(toX(q3) - toX(q1), 2)}
+          height={20}
+          fill="#dcfce7"
+          stroke="#214e34"
+          strokeWidth={1.5}
+          rx={2}
+        />
 
-          {/* Average: Orange Circle (#d97706) */}
-          <Scatter
-            dataKey="average"
-            fill="#d97706"
-            stroke="#ffffff"
-            strokeWidth={1}
-            shape="circle"
-            name="Promedio"
-            isAnimationActive={false}
-          />
-        </ComposedChart>
-      </ResponsiveContainer>
+        {/* Median Line */}
+        <line x1={toX(median)} y1={8} x2={toX(median)} y2={28} stroke="#214e34" strokeWidth={2.5} />
+
+        {/* Right Whisker (Q3 to Max) with End Cap */}
+        <line x1={toX(q3)} y1={18} x2={toX(max)} y2={18} stroke="#4b5563" strokeWidth={1.5} />
+        <line x1={toX(max)} y1={11} x2={toX(max)} y2={25} stroke="#4b5563" strokeWidth={2} />
+
+        {/* Average Circle Marker */}
+        {average !== undefined && (
+          <circle cx={toX(average)} cy={18} r={4.5} fill="#d97706" stroke="#ffffff" strokeWidth={1.5} />
+        )}
+
+        {/* Axis Baseline & Ticks */}
+        <line x1={toX(min)} y1={35} x2={toX(max)} y2={35} stroke="#d1d5db" strokeWidth={1} />
+        {[
+          { val: min, label: 'Mín' },
+          { val: q1, label: 'Q1' },
+          { val: median, label: 'Med' },
+          { val: q3, label: 'Q3' },
+          { val: max, label: 'Máx' },
+        ].map((pt, i) => (
+          <g key={i}>
+            <line x1={toX(pt.val)} y1={35} x2={toX(pt.val)} y2={39} stroke="#9ca3af" strokeWidth={1} />
+            <text x={toX(pt.val)} y={49} textAnchor="middle" fontSize={9} fill="#4b5563">
+              {pt.val}
+            </text>
+          </g>
+        ))}
+        </g>
+        )}
+      </svg>
     </div>
   );
 };

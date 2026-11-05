@@ -5,6 +5,11 @@ const prisma = new PrismaClient()
 async function main() {
   console.log(`Start seeding processes...`)
 
+  await prisma.processPause.deleteMany();
+  await prisma.processRun.deleteMany();
+  await prisma.stepRequiredMaterial.deleteMany();
+  await prisma.templateStep.deleteMany();
+  await prisma.processTemplate.deleteMany();
   
   // PLANTILLAS DE PROCESO (ProcessTemplate)
   

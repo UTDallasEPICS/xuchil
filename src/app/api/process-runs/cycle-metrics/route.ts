@@ -15,6 +15,17 @@ function calculateMedian(arr: number[]): number {
   return Math.round(sorted[mid] * 10) / 10;
 }
 
+//Q1 and Q3 of boxes
+function getPercentile(sorted: number[], p: number): number {
+  if (sorted.length === 0) return 0;
+  if (sorted.length === 1) return sorted[0];
+  const index = p * (sorted.length - 1);
+  const lower = Math.floor(index);
+  const upper = Math.ceil(index);
+  const weight = index - lower;
+  return Math.round((sorted[lower] * (1 - weight) + sorted[upper] * weight) * 10) / 10;
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -29,26 +40,35 @@ export async function GET(request: Request) {
     else if (period === "90d") cutoffDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
 
     // 2. Query active products with completed process runs
-    const products = await prisma.product.findMany({
+    const categoryRecords = await prisma.productCategory.findMany({
       where: { isActive: true },
       select: {
         id: true,
         name: true,
-        sku: true,
-        variants: {
+        products: {
+          where: { isActive: true },
           select: {
-            processRuns: {
-              where: {
-                status: ProcessStatus.COMPLETED,
-                ...(cutoffDate ? { finishedAt: { gte: cutoffDate } } : {}),
-              },
+            id: true,
+            name: true,
+            variants: {
+              where: { isActive: true },
               select: {
                 id: true,
-                batchCode: true,
-                startedAt: true,
-                finishedAt: true,
-                processPauses: {
-                  select: { startedAt: true, endedAt: true },
+                name: true,
+                processRuns: {
+                  where: {
+                    status: ProcessStatus.COMPLETED,
+                    ...(cutoffDate ? { finishedAt: { gte: cutoffDate } } : {}),
+                  },
+                  select: {
+                    id: true,
+                    batchCode: true,
+                    startedAt: true,
+                    finishedAt: true,
+                    processPauses: {
+                      select: { startedAt: true, endedAt: true },
+                    },
+                  },
                 },
               },
             },
@@ -62,8 +82,10 @@ export async function GET(request: Request) {
     let totalExcludedRuns = 0;
 
     // 3. Calculate results grouped by parent product
-    const categories = products.map((prod) => {
-      const allRuns = prod.variants.flatMap((v) => v.processRuns);
+    const categories = categoryRecords.map((cat) => {
+      const allVariants = cat.products.flatMap((p) => p.variants);
+      const tasks = allVariants.map((variant) => {
+      const allRuns = variant.processRuns;
       const validDurations: number[] = [];
 
       for (const run of allRuns) {
@@ -120,50 +142,51 @@ export async function GET(request: Request) {
       // Handle products with 0 completed runs in this period
       if (count === 0) {
         return {
-          category: prod.name,
-          productId: prod.id,
-          tasks: [
-            {
-              taskName: prod.name,
-              min: 0,
-              median: 0,
-              average: 0,
-              max: 0,
-              count: 0,
-              hasSufficientData: false,
-              statusMessage: "Sin corridas completadas en este período",
-            },
-          ],
+          taskName: variant.name,
+          min: 0,
+          q1: 0,
+          median: 0,
+          q3: 0,
+          average: 0,
+          max: 0,
+          count: 0,
+          hasSufficientData: false,
+          statusMessage: "Sin corridas completadas en este período",
+
         };
       }
 
       validDurations.sort((a, b) => a - b);
       const min = validDurations[0];
       const max = validDurations[count - 1];
+      const q1 = getPercentile(validDurations, 0.25);
+      const q3 = getPercentile(validDurations, 0.75);
       const median = calculateMedian(validDurations);
       const sum = validDurations.reduce((acc, curr) => acc + curr, 0);
       const average = Math.round((sum / count) * 10) / 10;
       const hasSufficientData = count >= 3;
 
       return {
-        category: prod.name,
-        productId: prod.id,
-        tasks: [
-          {
-            taskName: prod.name,
-            min,
-            median,
-            average,
-            max,
-            count,
-            hasSufficientData,
-            statusMessage: hasSufficientData
-              ? undefined
-              : `Muestra limitada (N = ${count}, mínimo recomendado: 3)`,
-          },
-        ],
-      };
+        taskName: variant.name,
+        min,
+        q1,
+        median,
+        q3,
+        average,
+        max,
+        count,
+        hasSufficientData,
+        statusMessage: hasSufficientData
+          ? undefined
+          : `Muestra limitada (N = ${count}, mínimo recomendado: 3)`,
+        };
     });
+    return {
+      category: cat.name,
+      categoryId: cat.id,
+      tasks,
+    };
+  });
 
     return NextResponse.json({
       period,
