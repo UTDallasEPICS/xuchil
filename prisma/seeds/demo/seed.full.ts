@@ -9,6 +9,7 @@ import {
   OrderStatus
 } from '@prisma/client'
 import bcrypt from 'bcrypt'
+import { seedAttendance } from '../seed.attendance'
 
 const prisma = new PrismaClient()
 
@@ -319,6 +320,8 @@ async function main() {
     }
   });
   console.log('  Trabajador temporal (temporal@xuchil.com / Temporal123, vence en 30 días)')
+
+  await seedAttendance(prisma)
 
   
   // 15. PROCESS RUNS (del mockup tableData.ts)

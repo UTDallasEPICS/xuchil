@@ -93,6 +93,16 @@
   margin-top: 0.5rem;
 }
 
+.adminActions {
+  width: 100%;
+  max-width: 420px;
+  margin-top: 20px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 /* Guest Section */
 .guestSection {
   width: 100%;

@@ -5,7 +5,8 @@ import { SESSION_COOKIE, decrypt, checkSessionAgainstDb } from '@/lib/session'
 const PUBLIC_PATHS = ['/login'];
 // Pages only admins may open. Anyone else gets the 404 page (src/app/not-found.tsx),
 // so the page's existence isn't revealed. Matches the path and everything under it.
-const ADMIN_PATHS = ['/analytics'];
+// /analytics is open to workers: its API routes only send a worker their own numbers.
+const ADMIN_PATHS: string[] = [];
 const PUBLIC_API_PREFIXES = ['/api/auth', '/api/health'];
 
 function isPublicApiPath(path: string): boolean {
