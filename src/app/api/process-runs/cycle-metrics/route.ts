@@ -123,9 +123,13 @@ export async function GET(request: Request) {
             }
           }
         }
+        if (pauseMs >= grossMs) {
+          totalExcludedRuns++;
+          continue;
+        }
         const durationMs = mode === "gross" ? grossMs : grossMs - pauseMs;
 
-        // Exclusion rule 4: Exclude if duration is 0 or negative
+        // Exclude if duration is 0 or negative
         if (durationMs <= 0) {
           totalExcludedRuns++;
           continue;
@@ -164,7 +168,7 @@ export async function GET(request: Request) {
       const median = calculateMedian(validDurations);
       const sum = validDurations.reduce((acc, curr) => acc + curr, 0);
       const average = Math.round((sum / count) * 10) / 10;
-      const hasSufficientData = count >= 3;
+      const hasSufficientData = count >= 4;
 
       return {
         taskName: variant.name,

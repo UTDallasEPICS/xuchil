@@ -70,7 +70,7 @@ const BoxWhiskerChart: React.FC<BoxWhiskerChartProps> = ({
   const q3 = item.q3 ?? max;
   const average = typeof item.average === 'number' ? item.average : median;
   const count = item.count ?? 1;
-  const hasSufficientData = item.hasSufficientData ?? (count >= 3);
+  const hasSufficientData = item.hasSufficientData ?? (count >= 4);
 
   // Domain range with padding
   const domainPadding = Math.max(2, (max - min) * 0.08);
