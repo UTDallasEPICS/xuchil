@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
+import { reserveNextSequence } from "@/lib/code-sequences";
 import { idError, notFoundError, serverError } from "@/utils/responses";
 
 export const dynamic = "force-dynamic";
@@ -28,26 +29,33 @@ export async function GET(request: NextRequest) {
       return notFoundError("product category");
     }
 
-    const prefix = prefixFromName(category.name);
+    const { prefix, nextSequence } = await prisma.$transaction(async (tx) => {
+      const prefix = prefixFromName(category.name);
+      const products = await tx.product.findMany({
+        where: { categoryId },
+        select: { sku: true },
+      });
 
-    const products = await prisma.product.findMany({
-      where: { categoryId },
-      select: { sku: true },
-    });
-
-    const pattern = new RegExp(`^${prefix}(\\d+)$`, "i");
-    let maxSequence = 0;
-    for (const { sku } of products) {
-      const match = sku.match(pattern);
-      if (match) {
-        const value = parseInt(match[1], 10);
-        if (value > maxSequence) {
-          maxSequence = value;
+      const pattern = new RegExp(`^${prefix}(\\d+)$`, "i");
+      let maxSequence = 0;
+      for (const { sku } of products) {
+        const match = sku.match(pattern);
+        if (match) {
+          const value = parseInt(match[1], 10);
+          if (value > maxSequence) {
+            maxSequence = value;
+          }
         }
       }
-    }
 
-    const nextSequence = maxSequence + 1;
+      const nextSequence = await reserveNextSequence(
+        tx,
+        `product:${categoryId}`,
+        maxSequence + 1
+      );
+      return { prefix, nextSequence };
+    });
+
     const sku = `${prefix}${String(nextSequence).padStart(PAD, "0")}`;
     const convention = `3 letras de la categoria ("${prefix}") seguidas de un consecutivo de ${PAD} digitos: ${prefix}001, ${prefix}002, ...`;
 

@@ -173,7 +173,11 @@ const NewBaseProductPage = () => {
         <select
           className={styles.select}
           value={categoryId}
-          onChange={(e) => setCategoryId(e.target.value)}
+          onChange={(e) => {
+            setCategoryId(e.target.value);
+            setSku("");
+            setSkuHint(null);
+          }}
         >
           <option value="">Seleccionar...</option>
           {categories.map((category) => (
@@ -226,15 +230,16 @@ const NewBaseProductPage = () => {
           <TextField
             placeholder="Ej. HAR001"
             value={sku}
-            onChange={(e) => setSku(e.target.value)}
+            readOnly
+            aria-readonly="true"
           />
           <button
             type="button"
             className={styles.generateButton}
             onClick={handleGenerateSku}
-            disabled={generatingSku}
+            disabled={generatingSku || Boolean(sku)}
           >
-            {generatingSku ? "Generando..." : "Generar"}
+            {generatingSku ? "Generando..." : sku ? "SKU asignado" : "Generar"}
           </button>
         </div>
       </div>

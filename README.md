@@ -85,6 +85,11 @@ Required variables:
 - `SESSION_SECRET`: long random secret shared by every running instance.
 - `DATABASE_URL`: defaults to `file:./dev.db` for SQLite. On ephemeral hosts, point this to a persistent path or mounted volume.
 
+Los SKU de productos y códigos de materias primas se reservan en la base de
+datos mediante contadores persistentes. Por eso no se reinician al levantar
+de nuevo el servidor; en despliegues con SQLite es necesario usar una ruta o
+volumen persistente para `DATABASE_URL`.
+
 Optional variables:
 
 - `CORS_ALLOWED_ORIGINS`: comma-separated allowlist for cross-origin browser clients. Leave unset when the UI and `/api` are served from the same origin.

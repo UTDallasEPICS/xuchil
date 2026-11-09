@@ -3,7 +3,8 @@
 import React, { useEffect, useRef } from "react";
 import styles from "@/styles/TextField.module.css";
 
-interface TextFieldProps {
+interface TextFieldProps
+  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   placeholder?: string;
   value?: string;
   onChange?: (event: React.ChangeEvent<HTMLTextAreaElement>) => void;
@@ -21,6 +22,7 @@ const TextField: React.FC<TextFieldProps> = ({
   rows,
   block = false,
   autoGrow = false,
+  ...props
 }) => {
   const ref = useRef<HTMLTextAreaElement>(null);
 
@@ -34,6 +36,7 @@ const TextField: React.FC<TextFieldProps> = ({
 
   return (
     <textarea
+      {...props}
       ref={ref}
       id={id}
       rows={rows ?? (autoGrow ? 2 : undefined)}

@@ -479,7 +479,11 @@ const TemplatesPage = () => {
                         {showCreateProduct && (
                             <div className={styles.formCard}>
                                 <label>Categoría:</label>
-                                <select value={newCategoryId} onChange={(e) => setNewCategoryId(e.target.value)} className={styles.select}>
+                                <select value={newCategoryId} onChange={(e) => {
+                                    setNewCategoryId(e.target.value);
+                                    setNewProductSku("");
+                                    setSkuHint(null);
+                                }} className={styles.select}>
                                     <option value="">Seleccionar...</option>
                                     {categories.map((c) => (
                                         <option key={c.id} value={c.id}>{c.name}</option>
@@ -501,8 +505,8 @@ const TemplatesPage = () => {
                                 <input value={newProductName} onChange={(e) => setNewProductName(e.target.value)} placeholder="Ej: Galletas de avena" className={styles.input} />
                                 <label>SKU:</label>
                                 <div className={styles.formActions}>
-                                    <input value={newProductSku} onChange={(e) => setNewProductSku(e.target.value)} placeholder="Ej: GAL001" className={styles.input} />
-                                    <Button size="small" action="secondary" onClick={handleGenerateSku}>Generar</Button>
+                                    <input value={newProductSku} readOnly aria-readonly="true" placeholder="Ej: GAL001" className={styles.input} />
+                                    <Button size="small" action="secondary" onClick={handleGenerateSku} disabled={Boolean(newProductSku)}>Generar</Button>
                                 </div>
                                 {skuHint ? <p className={styles.emptyText}>{skuHint}</p> : null}
                                 <label>Nombre de la variante:</label>

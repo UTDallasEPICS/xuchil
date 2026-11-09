@@ -468,7 +468,11 @@ const NewProcessPage = () => {
                   <select
                     className={styles.input}
                     value={newCategoryId}
-                    onChange={(e) => setNewCategoryId(e.target.value)}
+                    onChange={(e) => {
+                      setNewCategoryId(e.target.value);
+                      setNewProductSku("");
+                      setSkuHint(null);
+                    }}
                   >
                     <option value="">Seleccionar...</option>
                     {categories.map((category) => (
@@ -513,11 +517,12 @@ const NewProcessPage = () => {
                       type="text"
                       className={styles.input}
                       value={newProductSku}
-                      onChange={(e) => setNewProductSku(e.target.value)}
+                      readOnly
+                      aria-readonly="true"
                       placeholder="Ej: GAL001"
                     />
-                    <Button type="button" action="secondary" onClick={handleGenerateSku}>
-                      Generar
+                    <Button type="button" action="secondary" onClick={handleGenerateSku} disabled={Boolean(newProductSku)}>
+                      {newProductSku ? "SKU asignado" : "Generar"}
                     </Button>
                   </div>
                   {skuHint ? <p className={styles.label}>{skuHint}</p> : null}
