@@ -41,6 +41,12 @@ pnpm test:selenium
 pnpm test:selenium:headless
 ```
 
+Edge es el navegador predeterminado. Para usar Chromium:
+```bash
+BROWSER=chrome pnpm test:selenium:headless
+```
+El navegador y su driver deben estar instalados en el entorno de pruebas.
+
 ### Opción D: Modo watch (ejecuta automáticamente al guardar archivos)
 ```bash
 pnpm test:selenium:watch

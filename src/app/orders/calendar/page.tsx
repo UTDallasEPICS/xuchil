@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useRef, useEffect } from "react";
+import { useMemo, useState, useEffect, type CSSProperties } from "react";
 import { ChevronLeft, ChevronRight, X as CloseIcon, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import DeliveryType from "@/components/DeliveryType";
@@ -19,10 +19,6 @@ type DayCell = {
   orders: Order[];
 };
 
-function getMonthKey(date: Date) {
-  return `${date.getFullYear()}-${date.getMonth()}`;
-}
-
 function buildCalendarMatrix(
   baseDate: Date,
   ordersByDate: Map<string, Order[]>
@@ -36,7 +32,7 @@ function buildCalendarMatrix(
   end.setDate(last.getDate() + (6 - last.getDay()));
 
   const matrix: DayCell[][] = [];
-  let cursor = new Date(start);
+  const cursor = new Date(start);
 
   while (cursor <= end) {
     const week: DayCell[] = [];
@@ -84,8 +80,6 @@ const Calendar = () => {
   const router = useRouter();
   const [viewDate, setViewDate] = useState<Date>(new Date());
   const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
-  const ordersCache = useRef<Map<string, Order[]>>(new Map());
   const [selectedOrders, setSelectedOrders] = useState<Order[] | null>(null);
   const [selectedDate,   setSelectedDate]   = useState<Date | null>(null);
   const hasOrders = !!(selectedOrders && selectedOrders.length);
@@ -97,29 +91,19 @@ const Calendar = () => {
 
   useEffect(() => {
     let mounted = true;
-    setLoading(true);
     fetchOrdersClient()
       .then((data) => mounted && setOrders(data))
       .catch((err) => console.error("Failed to load orders", err))
-      .finally(() => mounted && setLoading(false));
     return () => {
       mounted = false;
     };
   }, []);
 
   const monthOrders = useMemo(() => {
-    const key = getMonthKey(viewDate);
-
-    if (!ordersCache.current.has(key)) {
-      const filtered = orders.filter((o) => {
-        const [dd, mm, yyyy] = o.deliveryDate.split("/").map(Number);
-        return (
-          yyyy === viewDate.getFullYear() && mm - 1 === viewDate.getMonth()
-        );
-      });
-      ordersCache.current.set(key, filtered);
-    }
-    return ordersCache.current.get(key)!;
+    return orders.filter((o) => {
+      const [, mm, yyyy] = o.deliveryDate.split("/").map(Number);
+      return yyyy === viewDate.getFullYear() && mm - 1 === viewDate.getMonth();
+    });
   }, [viewDate, orders]);
 
   const ordersByDate = useMemo(() => {
@@ -226,7 +210,6 @@ const Calendar = () => {
                           const sameDay =
                             selectedDate &&
                             keyFromLocalDate(selectedDate) === k;
-                          const pileClassNames = styles.pileRow;
                           const scale =
                             visible.length === 1 ? 1 :
                             visible.length === 2 ? 0.82 : 0.68;
@@ -234,7 +217,7 @@ const Calendar = () => {
                             <div className={styles.pileAnchor}>
                               <div
                                 className={styles.pileRow}
-                                style={{ ["--pile-scale" as any]: scale }}
+                                style={{ "--pile-scale": scale } as CSSProperties}
                               >
                                 {visible.map(([variant, qty], idx) => (
                                   <span

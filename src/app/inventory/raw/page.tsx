@@ -21,6 +21,27 @@ type InventoryRawRow = {
   note?: string;
 };
 
+interface RawInventoryItem {
+    id: number;
+    inventoryLots?: Array<{
+        qtyOnHand?: number | string | null;
+        unit?: { name?: string | null } | null;
+    }>;
+    rawMaterial?: {
+        id?: number;
+        name?: string | null;
+        imageUrl?: string | null;
+        defaultUnit?: { name?: string | null } | null;
+    } | null;
+}
+
+interface AvailabilityEntry {
+    rawMaterialId: number;
+    defaultUnitFactor?: number;
+    reservedBase: number;
+    availableInDefaultUnit?: number;
+}
+
 const formatQty = (value: number) =>
   Number.isInteger(value) ? String(value) : value.toFixed(3).replace(/\.?0+$/, "");
 
@@ -39,20 +60,20 @@ export default function RawInventoryPage() {
                 fetch("/api/raw-materials/availability", { credentials: "include" }),
             ]);
             if (!summaryRes.ok) return;
-            const data = await summaryRes.json();
+            const data: RawInventoryItem[] = await summaryRes.json();
             if (!mounted) return;
 
-            const availabilityByMaterial = new Map<number, any>();
+            const availabilityByMaterial = new Map<number, AvailabilityEntry>();
             if (availabilityRes.ok) {
-                const availability = await availabilityRes.json();
+                const availability: AvailabilityEntry[] = await availabilityRes.json();
                 for (const entry of availability) {
                     availabilityByMaterial.set(entry.rawMaterialId, entry);
                 }
             }
 
-            const mapped = data.map((item: any) => {
+            const mapped = data.map((item) => {
                 const qty = (item.inventoryLots || []).reduce(
-                    (sum: number, lot: any) => sum + Number(lot.qtyOnHand || 0),
+                    (sum, lot) => sum + Number(lot.qtyOnHand || 0),
                     0
                 );
                 const units =
@@ -60,7 +81,10 @@ export default function RawInventoryPage() {
                     item.inventoryLots?.[0]?.unit?.name ||
                     "";
 
-                const availability = availabilityByMaterial.get(item.rawMaterial?.id);
+                const rawMaterialId = item.rawMaterial?.id;
+                const availability = rawMaterialId === undefined
+                    ? undefined
+                    : availabilityByMaterial.get(rawMaterialId);
                 let note: string | undefined;
                 if (availability) {
                     const factor = availability.defaultUnitFactor || 1;

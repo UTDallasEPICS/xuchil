@@ -19,6 +19,22 @@ interface ActiveTask {
   isResultsStage: boolean;
 }
 
+interface PendingStep {
+  id: number;
+  status: string;
+  startedAt?: string | null;
+  templateStep?: { name?: string | null } | null;
+}
+
+interface PendingProcessRun {
+  id: number;
+  status: string;
+  productVariantId: number | string;
+  processTemplateId: number;
+  productVariant?: { productId?: number | string; name?: string | null } | null;
+  stepExecutions?: PendingStep[];
+}
+
 const ProcessControl = () => {
   const router = useRouter();
   const [activeTasks, setActiveTasks] = useState<ActiveTask[]>([]);
@@ -27,15 +43,15 @@ const ProcessControl = () => {
     try {
       const res = await fetch("/api/process-runs/pending", { credentials: "include" });
       if (!res.ok) return;
-      const runs = await res.json();
+      const runs: PendingProcessRun[] = await res.json();
 
-      const mapped: ActiveTask[] = runs.map((run: any) => {
+      const mapped: ActiveTask[] = runs.map((run) => {
         const orderedSteps = [...(run.stepExecutions || [])];
         const allStepsDone =
           orderedSteps.length > 0 &&
-          orderedSteps.every((step: any) => step.status === "DONE");
+          orderedSteps.every((step) => step.status === "DONE");
         const currentStepIndex = orderedSteps.findIndex(
-          (step: any) =>
+          (step) =>
             step.status === "IN_PROGRESS" ||
             step.status === "PENDING" ||
             step.status === "BLOCKED"
@@ -69,6 +85,7 @@ const ProcessControl = () => {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadActiveTasks();
   }, [loadActiveTasks]);
 

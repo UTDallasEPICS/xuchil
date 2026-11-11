@@ -7,6 +7,43 @@
 
 type Query = Record<string, string | number | undefined>;
 
+export interface LogbookTask {
+  id: string | number;
+  templateStep?: { name?: string | null; idealDurationMin?: number | null } | null;
+  processRun?: {
+    batchCode?: string | null;
+    productVariant?: { name?: string | null } | null;
+  } | null;
+  startedAt?: string | null;
+  actualDurationMin?: number | null;
+  finishedAt?: string | null;
+  worker?: { fullName?: string | null } | null;
+  stepMaterialUsages?: LogbookMaterialUsage[];
+  inputQty?: number | null;
+  inputUnit?: { name?: string | null } | null;
+  notes?: string | null;
+}
+
+export interface LogbookMaterialUsage {
+  qty: number;
+  rawMaterial?: { name?: string | null } | null;
+  unit?: { name?: string | null } | null;
+}
+
+export interface LogbookProcessRun {
+  id: string | number;
+  batchCode?: string | null;
+  productVariant?: { name?: string | null } | null;
+  startedAt?: string | null;
+  finishedAt?: string | null;
+  creator?: { fullName?: string | null } | null;
+  stepExecutions?: LogbookTask[];
+  goodOutputQty?: number | null;
+  scrapQty?: number | null;
+  outputUnit?: { name?: string | null } | null;
+  notes?: string | null;
+}
+
 function qs(params?: Query) {
   if (!params) return "";
   const sp = new URLSearchParams();
@@ -32,14 +69,17 @@ export async function fetchMyTasks(params?: {
   dateTo?: string;   // YYYY-MM-DD
   productVariantId?: number;
 }) {
-  return getJSON<any[]>(`/api/logbook/my-tasks${qs(params)}`);
+  return getJSON<LogbookTask[]>(`/api/logbook/my-tasks${qs(params)}`);
 }
 
 // STAFF: step execution detail
-export async function fetchStepExecutionDetail(stepExecutionId: number) {
-  const data = await getJSON<{ stepExecution?: any } | any>(`/api/logbook/tasks/${stepExecutionId}`);
+export async function fetchStepExecutionDetail(stepExecutionId: number): Promise<LogbookTask> {
+  const data = await getJSON<{ stepExecution?: LogbookTask } | LogbookTask>(`/api/logbook/tasks/${stepExecutionId}`);
   // Some handlers wrap the payload ({ stepExecution, status }), normalize:
-  return (data && ("stepExecution" in data)) ? (data as any).stepExecution : data;
+  if ("stepExecution" in data && data.stepExecution) {
+    return data.stepExecution;
+  }
+  return data as LogbookTask;
 }
 
 // ADMIN: process runs history (completed/cancelled)
@@ -50,11 +90,14 @@ export async function fetchProcessRuns(params?: {
   dateTo?: string;
   productVariantId?: number;
 }) {
-  return getJSON<any[]>(`/api/logbook/process-runs${qs(params)}`);
+  return getJSON<LogbookProcessRun[]>(`/api/logbook/process-runs${qs(params)}`);
 }
 
 // ADMIN: process run detail
-export async function fetchProcessRunDetail(processRunId: number) {
-  const data = await getJSON<{ processRun?: any } | any>(`/api/logbook/process-runs/${processRunId}`);
-  return (data && ("processRun" in data)) ? (data as any).processRun : data;
+export async function fetchProcessRunDetail(processRunId: number): Promise<LogbookProcessRun> {
+  const data = await getJSON<{ processRun?: LogbookProcessRun } | LogbookProcessRun>(`/api/logbook/process-runs/${processRunId}`);
+  if ("processRun" in data && data.processRun) {
+    return data.processRun;
+  }
+  return data as LogbookProcessRun;
 }

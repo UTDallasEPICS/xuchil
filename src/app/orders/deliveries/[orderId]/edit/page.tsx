@@ -16,6 +16,18 @@ import { Product } from "@/types/Product";
 
 import styles from "./EditOrder.module.css";
 
+type OrderDetails = Awaited<ReturnType<typeof fetchOrderByIdClient>>;
+
+interface ApiProductVariant {
+  id: number | string;
+  name?: string | null;
+  presentation?: string | null;
+  imageUrl?: string | null;
+  product?: { name?: string | null; categoryId?: number | string | null } | null;
+  inventory?: Array<{ onHand?: number | string | null }>;
+  defaultUnit?: { name?: string | null } | null;
+}
+
 type OrderItemDraft = {
   productId: string;
   quantity: number;
@@ -48,7 +60,7 @@ const EditOrderPage = () => {
   const { orderId } = useParams<{ orderId: string }>();
   const router = useRouter();
 
-  const [order, setOrder] = useState<any | null>(null);
+  const [order, setOrder] = useState<OrderDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<Product[]>([]);
   const [clientName, setClientName] = useState("");
@@ -66,6 +78,7 @@ const EditOrderPage = () => {
     let mounted = true;
     const idNum = Number(orderId);
     if (Number.isNaN(idNum)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setOrder(null);
       setLoading(false);
       return;
@@ -85,11 +98,12 @@ const EditOrderPage = () => {
   useEffect(() => {
     if (!order) return;
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setClientName(order.clientName ?? "");
     setAddress(order.address ?? "");
     setDeliveryVariant(order.deliveryVariant ?? "mail");
     setDeliveryDate(order.deliveryDate ? parseDateMx(order.deliveryDate) : null);
-    const mappedItems = (order.products || []).map((product: any) => ({
+    const mappedItems = (order.products || []).map((product) => ({
       productId: String(product.id),
       quantity: Number(product.quantity || 0),
     }));
@@ -103,11 +117,11 @@ const EditOrderPage = () => {
     async function loadProducts() {
       const response = await fetch("/api/product-variants", { credentials: "include" });
       if (!response.ok) return;
-      const data = await response.json();
+      const data: ApiProductVariant[] = await response.json();
       if (!mounted) return;
 
       setProducts(
-        data.map((variant: any) => ({
+        data.map((variant) => ({
           id: String(variant.id),
           name: variant.product?.name ?? "Producto",
           presentation: variant.name ?? variant.presentation ?? "",

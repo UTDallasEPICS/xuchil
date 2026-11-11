@@ -20,6 +20,8 @@ import {
 
 import styles from "./OrderDetails.module.css";
 
+type OrderDetails = Awaited<ReturnType<typeof fetchOrderByIdClient>>;
+
 const formatMXDateLong = (raw: string) => {
   if (!raw) return "Sin fecha";
   const [dd, mm, yyyy] = raw.split("/").map(Number);
@@ -35,7 +37,7 @@ const OrderDetailsPage = () => {
   const { orderId } = useParams<{ orderId: string }>();
   const router = useRouter();
 
-  const [order, setOrder] = useState<any | null>(null);
+  const [order, setOrder] = useState<OrderDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [statusError, setStatusError] = useState<string | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState(false);
@@ -44,6 +46,7 @@ const OrderDetailsPage = () => {
     let mounted = true;
     const idNum = Number(orderId);
     if (Number.isNaN(idNum)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setOrder(null);
       setLoading(false);
       return;
@@ -92,8 +95,8 @@ const OrderDetailsPage = () => {
     setUpdatingStatus(true);
     try {
       const newStatus = delivered ? "SCHEDULED" : "DELIVERED";
-      const updated = await putOrderStatusClient(id, newStatus as any);
-      setOrder((prev: any) => {
+      const updated = await putOrderStatusClient(id, newStatus);
+      setOrder((prev) => {
         if (!prev) return prev;
         return {
           ...prev,
@@ -200,7 +203,7 @@ const OrderDetailsPage = () => {
         </div>
 
         <div className={styles.productContainer}>
-          {products.map((product: any) => (
+          {products.map((product) => (
             <ProductCard key={product.id} {...product} />
           ))}
         </div>

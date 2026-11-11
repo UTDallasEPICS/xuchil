@@ -44,6 +44,33 @@
   font-size: var(--font-size-h2);
 }
 
+.typeTabs {
+  display: flex;
+  gap: 10px;
+}
+
+.typeTab {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid var(--color-gray-light);
+  border-radius: 10px;
+  background-color: var(--color-field);
+  color: var(--color-green-dark);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.typeTabActive {
+  border: 2px solid var(--color-green-dark);
+  background-color: rgb(var(--rgb-green-light) / 0.14);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
 .sectionLabel {
   margin: 8px 0 0 2px;
   font-family: var(--font-body);

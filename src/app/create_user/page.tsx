@@ -15,6 +15,21 @@ interface SystemUser {
   expiresAt: string | null;
 }
 
+interface ApiAuthUser {
+  id: number;
+  email?: string | null;
+  fullName?: string | null;
+  role?: string | null;
+  isActive?: boolean;
+  worker?: {
+    fullName?: string | null;
+    phone?: string | null;
+    roleId?: number | null;
+    expiresAt?: string | null;
+    isActive?: boolean;
+  } | null;
+}
+
 const CreateUserPage = () => {
   const router = useRouter();
   const [userType, setUserType] = useState<"permanente" | "temporal">("permanente");
@@ -51,10 +66,6 @@ const CreateUserPage = () => {
   const [editRole, setEditRole] = useState<"empleado" | "temporal">("empleado");
   const [additionalDays, setAdditionalDays] = useState("0");
 
-  useEffect(() => {
-    loadSystemUsers();
-  }, []);
-
   const loadSystemUsers = async () => {
     try {
       const response = await fetch("/api/users", { credentials: "include" });
@@ -64,7 +75,7 @@ const CreateUserPage = () => {
         if (dataAuthUsers && dataAuthUsers.length > 0) {
           const ahora = new Date();
 
-          const usuariosMapeados = dataAuthUsers.map((user: any) => {
+          const usuariosMapeados = (dataAuthUsers as ApiAuthUser[]).map((user): SystemUser => {
             const nombreReal =
               user.worker?.fullName || user.fullName || "Trabajador sin nombre";
             const contactoReal =
@@ -100,6 +111,11 @@ const CreateUserPage = () => {
       console.error("Error al mapear con la estructura AuthUser:", e);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadSystemUsers();
+  }, []);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -243,50 +259,28 @@ const CreateUserPage = () => {
         <h1 className={styles.title}>Administración de Personal</h1>
       </header>
 
-      <div style={{ display: "flex", gap: "10px" }}>
+      <div className={styles.typeTabs}>
         <button
           type="button"
+          className={`${styles.typeTab} ${
+            userType === "permanente" ? styles.typeTabActive : ""
+          }`}
           onClick={() => setUserType("permanente")}
-          style={{
-            flex: 1,
-            padding: "10px",
-            borderRadius: "10px",
-            border:
-              userType === "permanente"
-                ? "2px solid var(--color-green-dark)"
-                : "1px solid var(--color-gray-light)",
-            backgroundColor:
-              userType === "permanente" ? "rgb(var(--rgb-green-light) / 0.14)" : "var(--color-field)",
-            color: "var(--color-green-dark)",
-            fontWeight: "bold",
-            cursor: "pointer",
-          }}
         >
           Permanente
         </button>
         <button
           type="button"
+          className={`${styles.typeTab} ${
+            userType === "temporal" ? styles.typeTabActive : ""
+          }`}
           onClick={() => setUserType("temporal")}
-          style={{
-            flex: 1,
-            padding: "10px",
-            borderRadius: "10px",
-            border:
-              userType === "temporal"
-                ? "2px solid var(--color-green-dark)"
-                : "1px solid var(--color-gray-light)",
-            backgroundColor:
-              userType === "temporal" ? "rgb(var(--rgb-green-light) / 0.14)" : "var(--color-field)",
-            color: "var(--color-green-dark)",
-            fontWeight: "bold",
-            cursor: "pointer",
-          }}
         >
           Temporal
         </button>
       </div>
 
-      <form onSubmit={handleRegister} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+      <form onSubmit={handleRegister} className={styles.form}>
         <p className={styles.sectionLabel}>
           {userType === "permanente" ? "Datos del usuario" : "Nuevo trabajador temporal"}
         </p>
@@ -669,7 +663,10 @@ const CreateUserPage = () => {
               </label>
               <select
                 value={editRole}
-                onChange={(e) => setEditRole(e.target.value as any)}
+                onChange={(e) => {
+                  const role = e.target.value;
+                  if (role === "empleado" || role === "temporal") setEditRole(role);
+                }}
                 className={styles.input}
               >
                 <option value="empleado">Permanente (Fijo)</option>

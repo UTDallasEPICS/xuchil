@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import Button from "@/components/Button";
 import HeaderXuchil from "@/components/HeaderXuchil";
 import Modal from "@/components/Modal";
+import styles from "./Login.module.css";
 
 const Login = () => {
   const router = useRouter();
@@ -38,57 +39,18 @@ const Login = () => {
   };
 
   return (
-    <div className="login-page">
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          minHeight: "100vh",
-          justifyContent: "center",
-          backgroundColor: "var(--color-background)",
-          width: "100%",
-        }}
-      >
+    <div className={styles.page}>
         <HeaderXuchil />
 
-        <div
-          style={{
-            backgroundColor: "var(--color-green-light)",
-            borderRadius: "25px",
-            padding: "24px 16px",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            width: "80%",
-            maxWidth: "320px",
-            marginBlockEnd: "5rem",
-            marginTop: "1rem",
-          }}
-        >
-          <h1
-            style={{
-              color: "#f3f3f3",
-              fontWeight: "bold",
-              fontSize: "1.8rem",
-              marginBottom: "16px",
-            }}
-          >
-            Bienvenido
-          </h1>
+        <div className={styles.card}>
+          <h1 className={styles.title}>Bienvenido</h1>
 
           <input
             type="text"
             placeholder="Usuario"
             value={user}
             onChange={(e) => setUser(e.target.value)}
-            style={{
-              width: "70%",
-              padding: "10px",
-              borderRadius: "6px",
-              border: "none",
-              marginBottom: "12px",
-            }}
+            className={styles.input}
           />
 
           <input
@@ -96,35 +58,16 @@ const Login = () => {
             placeholder="Contraseña"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            style={{
-              width: "70%",
-              padding: "10px",
-              borderRadius: "6px",
-              border: "none",
-              marginBottom: "16px",
-            }}
+            className={styles.input}
           />
 
-          <div style={{ 
-            width: "100%", 
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-          }}>
+          <div className={styles.submit}>
             <Button size="regular" action="primary" onClick={handleLogin}>
               Iniciar sesión
             </Button>
           </div>
 
-          <p
-            style={{
-              fontSize: "0.85rem",
-              color: "var(--color-text-light)",
-              marginTop: "12px",
-            }}
-          >
-            ¿Perdiste tu contraseña?
-          </p>
+          <p className={styles.help}>¿Perdiste tu contraseña?</p>
         </div>
 
         <Modal
@@ -135,7 +78,6 @@ const Login = () => {
           onlyConfirm
           onConfirm={() => setShowErrorModal(false)}
         />
-      </div>
     </div>
   );
 };

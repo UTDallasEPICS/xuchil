@@ -1,6 +1,6 @@
-import { initDriver, quitDriver, navigateTo } from '../config';
-import BrowserHelper from '../helpers/browser';
-import { loginAsAdmin } from '../helpers/session';
+import { initDriver, quitDriver, navigateTo } from '../config.ts';
+import BrowserHelper from '../helpers/browser.ts';
+import { loginAsAdmin } from '../helpers/session.ts';
 
 describe('Módulo de Inventario', () => {
   let browser: BrowserHelper;

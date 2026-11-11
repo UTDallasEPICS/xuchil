@@ -12,6 +12,18 @@ interface UnitOption {
   factorToBase?: number;
 }
 
+interface ApiVariant {
+  id: number | string;
+  name: string;
+  contentUnitId?: number | null;
+  defaultUnitId?: number | null;
+}
+
+interface ApiPendingRun {
+  id: number;
+  productVariantId: number | string;
+}
+
 const DEFAULT_PACKAGE_TYPES = ["Bolsa", "Caja", "Frasco", "Sobre"];
 const PACKAGE_TYPES_STORAGE_KEY = "xuchil.packageTypes";
 
@@ -63,6 +75,7 @@ const ProcessResultsContent: React.FC = () => {
         .filter((item) => !/^\d+(?:\.\d+)?\s*(kg|g|gr|gramos|l|ml)$/i.test(item));
 
       const merged = Array.from(new Set([...DEFAULT_PACKAGE_TYPES, ...clean]));
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPackageTypes(merged);
     } catch {
       setPackageTypes(DEFAULT_PACKAGE_TYPES);
@@ -80,9 +93,10 @@ const ProcessResultsContent: React.FC = () => {
         try {
           const unitsRes = await fetch("/api/units", { credentials: "include" });
           if (unitsRes.ok) {
-            const unitsData = await unitsRes.json();
+            const unitsData: Array<UnitOption & { factorToBase?: number | string }> =
+              await unitsRes.json();
             setUnits(
-              unitsData.map((unit: any) => ({
+              unitsData.map((unit) => ({
                 id: unit.id,
                 name: unit.name,
                 factorToBase: Number(unit.factorToBase ?? 1),
@@ -101,8 +115,8 @@ const ProcessResultsContent: React.FC = () => {
 
         const varRes = await fetch(`/api/product-variants`, { credentials: "include" });
         if (varRes.ok) {
-          const variants = await varRes.json();
-          const v = variants.find((item: any) => String(item.id) === String(variantId));
+          const variants: ApiVariant[] = await varRes.json();
+          const v = variants.find((item) => String(item.id) === String(variantId));
           if (v) {
             setVariantName(v.name);
             if (v.contentUnitId) {
@@ -126,9 +140,9 @@ const ProcessResultsContent: React.FC = () => {
             credentials: "include",
           });
           if (pendingRes.ok) {
-            const runs = await pendingRes.json();
+            const runs: ApiPendingRun[] = await pendingRes.json();
             const activeRun = runs.find(
-              (run: any) => String(run.productVariantId) === String(variantId)
+              (run) => String(run.productVariantId) === String(variantId)
             );
             if (activeRun) {
               resolvedRunId = activeRun.id;
@@ -176,6 +190,7 @@ const ProcessResultsContent: React.FC = () => {
         const unitName = units.find((u) => u.id === selectedUnitId)?.name || "";
         const packageUnitName = packageUnit?.name || unitName;
         const pres = packageType || "empaques";
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setPackagePreview(`= ${packages} ${pres} de ${content} ${packageUnitName}`);
       } else {
         setPackagePreview(null);
@@ -198,6 +213,7 @@ const ProcessResultsContent: React.FC = () => {
       const result = prodQty - convertedWaste;
 
       if (result > 0) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setResultantQty(String(Number(result.toFixed(3))));
       }
     }
@@ -234,12 +250,14 @@ const ProcessResultsContent: React.FC = () => {
 
   useEffect(() => {
     if (!packageContentUnitId && selectedUnitId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPackageContentUnitId(selectedUnitId);
     }
   }, [selectedUnitId, packageContentUnitId]);
 
   useEffect(() => {
     if (!wasteUnitId && selectedUnitId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setWasteUnitId(selectedUnitId);
     }
   }, [selectedUnitId, wasteUnitId]);

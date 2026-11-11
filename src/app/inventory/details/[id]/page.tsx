@@ -20,6 +20,36 @@ interface UnitOption {
   name: string;
 }
 
+interface InventoryDetailResponse {
+  itemType: string;
+  defaultUnitId?: number | null;
+  rawMaterial?: {
+    defaultUnitId?: number | null;
+    name?: string | null;
+    defaultUnit?: { name?: string | null } | null;
+  } | null;
+  productVariant?: {
+    defaultUnitId?: number | null;
+    product?: { name?: string | null } | null;
+    name?: string | null;
+    presentation?: string | null;
+    defaultUnit?: { name?: string | null } | null;
+  } | null;
+  inventoryLots?: Array<{
+    id: number;
+    unitId?: number | null;
+    unit?: { name?: string | null } | null;
+    qtyOnHand?: number | string | null;
+  }>;
+}
+
+interface InventoryMovementResponse {
+  direction: string;
+  qty: number | string;
+  reason: string;
+  movedAt?: string | null;
+}
+
 const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 
 function fechaCorta(valor: string) {
@@ -54,10 +84,10 @@ export default function InventoryDetailPage() {
   const load = useCallback(async () => {
     const itemResponse = await fetch(`/api/inventory/items/${id}`, { credentials: "include" });
     if (!itemResponse.ok) return;
-    const data = await itemResponse.json();
+    const data: InventoryDetailResponse = await itemResponse.json();
 
     const qty = (data.inventoryLots || []).reduce(
-      (sum: number, lot: any) => sum + Number(lot.qtyOnHand || 0),
+      (sum, lot) => sum + Number(lot.qtyOnHand || 0),
       0
     );
 
@@ -95,7 +125,7 @@ export default function InventoryDetailPage() {
       });
       if (!movementResponse.ok) continue;
       const movements = await movementResponse.json();
-      movements.forEach((movement: any) => {
+      (movements as InventoryMovementResponse[]).forEach((movement) => {
         movementRows.push({
           movimiento: `${movement.direction} ${movement.qty} (${movement.reason})`,
           fecha: movement.movedAt
@@ -119,6 +149,7 @@ export default function InventoryDetailPage() {
     }
 
     loadUnits();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
 
     return () => {

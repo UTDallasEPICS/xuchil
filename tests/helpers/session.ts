@@ -1,6 +1,6 @@
-import BrowserHelper from './browser';
-import { Selectors } from './selectors';
-import { navigateTo } from '../config';
+import BrowserHelper from './browser.ts';
+import { Selectors } from './selectors.ts';
+import { navigateTo } from '../config.ts';
 
 export async function loginAsAdmin(browser: BrowserHelper): Promise<void> {
   await navigateTo('/login');

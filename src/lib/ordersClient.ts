@@ -1,3 +1,5 @@
+import { Order } from "@/types/Order";
+
 export function formatDateToMX(dateStr: string | Date) {
   const d = typeof dateStr === "string" ? new Date(dateStr) : dateStr;
   if (Number.isNaN(d.getTime())) return "";
@@ -23,17 +25,55 @@ function mapDeliveryVariant(serverVariant: string) {
 export async function fetchOrdersClient() {
   const res = await fetch("/api/orders", { credentials: "include" });
   if (!res.ok) throw new Error("Failed to fetch orders");
-  const data = await res.json();
-  return data
-    .filter((o: any) => o.status !== "CANCELLED")
-    .map((o: any) => ({
+    const data: ApiOrder[] = await res.json();
+    return data.filter((o) => o.status !== "CANCELLED").map(mapOrder);
+}
+
+export async function fetchOrderByIdClient(id: number) {
+  const res = await fetch(`/api/orders/${id}`, { credentials: "include" });
+  if (!res.ok) throw new Error("Failed to fetch order");
+    const o: ApiOrder = await res.json();
+  return {
+      ...mapOrder(o),
+    raw: o,
+  };
+}
+
+  interface ApiOrderItem {
+    id: number | string;
+    productVariantId?: number | string;
+    quantity: number | string;
+    productVariant?: {
+      id?: number | string;
+      imageUrl?: string | null;
+      name?: string | null;
+      presentation?: string | null;
+    } | null;
+    unit?: { name?: string | null } | null;
+  }
+
+  interface ApiOrder {
+    id: number;
+    clientName: string;
+    addressText?: string | null;
+    deliveryDate: string;
+    deliveryVariant: string;
+    deliveredAt?: string | null;
+    consignmentPartner?: string | null;
+    notes?: string | null;
+    status: string;
+    orderItems?: ApiOrderItem[];
+  }
+
+  function mapOrder(o: ApiOrder): Order & { raw?: ApiOrder } {
+    return {
       id: o.id,
       clientName: o.clientName,
       address: o.addressText || "",
       deliveryDate: formatDateToMX(o.deliveryDate),
       deliveryVariant: mapDeliveryVariant(o.deliveryVariant),
       delivered: !!o.deliveredAt || o.status === "DELIVERED",
-      products: (o.orderItems || []).map((it: any) => ({
+      products: (o.orderItems || []).map((it: ApiOrderItem) => ({
         id: String(it.productVariant?.id ?? it.productVariantId ?? it.id),
         photo: it.productVariant?.imageUrl || "/globe.svg",
         name: it.productVariant?.name || "",
@@ -41,32 +81,8 @@ export async function fetchOrdersClient() {
         quantity: Number(it.quantity),
         units: it.unit?.name || "",
       })),
-    }));
-}
-
-export async function fetchOrderByIdClient(id: number) {
-  const res = await fetch(`/api/orders/${id}`, { credentials: "include" });
-  if (!res.ok) throw new Error("Failed to fetch order");
-  const o = await res.json();
-  return {
-    id: o.id,
-    clientName: o.clientName,
-    address: o.addressText || "",
-    deliveryDate: formatDateToMX(o.deliveryDate),
-    deliveryVariant: mapDeliveryVariant(o.deliveryVariant),
-    delivered: !!o.deliveredAt || o.status === "DELIVERED",
-    products: (o.orderItems || []).map((it: any) => ({
-      id: String(it.productVariant?.id ?? it.productVariantId ?? it.id),
-      photo: it.productVariant?.imageUrl || "/globe.svg",
-      name: it.productVariant?.name || "",
-      presentation: it.productVariant?.presentation || "",
-      quantity: Number(it.quantity),
-      units: it.unit?.name || "",
-    })),
-    raw: o,
-  };
-}
-
+    };
+  }
 export async function putOrderStatusClient(id: number, status: "SCHEDULED" | "DELIVERED" | "CANCELLED") {
   const res = await fetch(`/api/orders/${id}/status`, {
     method: "PUT",

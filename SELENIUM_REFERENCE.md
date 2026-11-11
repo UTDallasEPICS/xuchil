@@ -66,7 +66,8 @@ const config: TestConfig = {
 ```
 
 ### Cambiar navegador
-En `tests/config.ts` - cambiar de Edge a Firefox o Chrome (requiere instalar webdriver adicional)
+La suite usa Edge por defecto. Para usar Chrome/Chromium, define `BROWSER=chrome`
+antes de ejecutar las pruebas. El navegador y su driver deben estar instalados.
 
 ### Cambiar selectores de elementos
 En `tests/helpers/selectors.ts`:

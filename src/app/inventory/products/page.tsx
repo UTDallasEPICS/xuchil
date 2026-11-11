@@ -20,6 +20,23 @@ type InventoryProductRow = {
     units: string;
 };
 
+interface InventoryLot {
+    qtyOnHand?: number | string | null;
+    unit?: { name?: string | null } | null;
+}
+
+interface ProductInventoryItem {
+    id: number;
+    inventoryLots?: InventoryLot[];
+    productVariant?: {
+        imageUrl?: string | null;
+        name?: string | null;
+        presentation?: string | null;
+        defaultUnit?: { name?: string | null } | null;
+        product?: { name?: string | null } | null;
+    } | null;
+}
+
 export default function ProductsInventoryPage() {
     const [search, setSearch] = useState("");
     const [products, setProducts] = useState<InventoryProductRow[]>([]);
@@ -32,12 +49,12 @@ export default function ProductsInventoryPage() {
         async function load() {
             const response = await fetch("/api/inventory/summary?item_type=PRODUCT", { credentials: "include" });
             if (!response.ok) return;
-            const data = await response.json();
+            const data: ProductInventoryItem[] = await response.json();
             if (!mounted) return;
 
-            const mapped = data.map((item: any) => {
+            const mapped = data.map((item) => {
                 const qty = (item.inventoryLots || []).reduce(
-                    (sum: number, lot: any) => sum + Number(lot.qtyOnHand || 0),
+                    (sum, lot) => sum + Number(lot.qtyOnHand || 0),
                     0
                 );
                 const units =

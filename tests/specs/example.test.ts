@@ -6,10 +6,10 @@
  * pnpm test:selenium
  */
 
-import { initDriver, quitDriver, navigateTo } from '../config';
-import BrowserHelper from '../helpers/browser';
-import { Selectors } from '../helpers/selectors';
-import { loginAsAdmin } from '../helpers/session';
+import { initDriver, quitDriver, navigateTo } from '../config.ts';
+import BrowserHelper from '../helpers/browser.ts';
+import { Selectors } from '../helpers/selectors.ts';
+import { loginAsAdmin } from '../helpers/session.ts';
 
 describe('Ejemplo Simple', () => {
   let browser: BrowserHelper;

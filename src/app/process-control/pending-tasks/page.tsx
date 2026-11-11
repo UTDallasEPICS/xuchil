@@ -6,6 +6,25 @@ import PendingTaskCard from "@/components/PendingTaskCard";
 import styles from "./PendingTasks.module.css";
 import { PendingTask } from "@/types/PendingTask";
 
+interface PendingStep {
+  id: number;
+  status: string;
+  startedAt?: string | null;
+  templateStep?: { name?: string | null } | null;
+  worker?: { fullName?: string | null } | null;
+  stepParticipants?: Array<{ worker?: { fullName?: string | null } | null }>;
+}
+
+interface PendingProcessRun {
+  id: number;
+  productVariantId: number | string;
+  processTemplateId: number;
+  startedAt?: string | null;
+  creator?: { fullName?: string | null } | null;
+  productVariant?: { productId?: number | string; name?: string | null } | null;
+  stepExecutions?: PendingStep[];
+}
+
 const PendingTasksPage = () => {
   const [tasks, setTasks] = useState<PendingTask[]>([]);
   const router = useRouter();
@@ -16,16 +35,16 @@ const PendingTasksPage = () => {
     async function load() {
       const response = await fetch("/api/process-runs/pending", { credentials: "include" });
       if (!response.ok) return;
-      const data = await response.json();
+      const data: PendingProcessRun[] = await response.json();
       if (!mounted) return;
 
-      const mapped: PendingTask[] = data.map((run: any) => {
+      const mapped: PendingTask[] = data.map((run) => {
         const orderedSteps = [...(run.stepExecutions || [])];
         const allStepsDone =
           orderedSteps.length > 0 &&
-          orderedSteps.every((step: any) => step.status === "DONE");
+          orderedSteps.every((step) => step.status === "DONE");
         const currentStepIndex = orderedSteps.findIndex(
-          (step: any) =>
+          (step) =>
             step.status === "IN_PROGRESS" ||
             step.status === "PENDING" ||
             step.status === "BLOCKED"
@@ -38,7 +57,7 @@ const PendingTasksPage = () => {
         const currentStepWorker =
           currentStep?.worker?.fullName ??
           currentStep?.stepParticipants?.find(
-            (participant: any) => participant.worker?.fullName
+            (participant) => participant.worker?.fullName
           )?.worker?.fullName;
 
         return {

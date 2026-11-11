@@ -22,6 +22,31 @@ interface Registro {
   href: string;
 }
 
+interface LogbookTask {
+  id: string | number;
+  templateStep?: { name?: string | null } | null;
+  processRun?: {
+    batchCode?: string | null;
+    productVariant?: { name?: string | null } | null;
+  } | null;
+  startedAt?: string | null;
+  actualDurationMin?: number | null;
+}
+
+interface LogbookProcessRun {
+  id: string | number;
+  batchCode?: string | null;
+  productVariant?: { name?: string | null } | null;
+  startedAt?: string | null;
+  finishedAt?: string | null;
+  creator?: { fullName?: string | null } | null;
+}
+
+interface AdminUser {
+  email?: string | null;
+  worker?: { id?: string | number; fullName?: string | null } | null;
+}
+
 function formatoFecha(d: Date | null) {
   return d ? d.toLocaleDateString("es-MX") : "Sin fecha";
 }
@@ -78,10 +103,10 @@ const Logbook = () => {
           setAdminUserOptions([
             userFilterOptions[0],
             ...users
-              .filter((user: any) => user.worker?.id)
-              .map((user: any) => ({
+              .filter((user: AdminUser) => user.worker?.id)
+              .map((user: AdminUser) => ({
                 label: user.worker?.fullName ?? user.email,
-                value: String(user.worker.id),
+                value: String(user.worker?.id),
               })),
           ]);
         }
@@ -111,10 +136,10 @@ const Logbook = () => {
           const data = await fetchMyTasks({ dateFrom, dateTo });
           setRegistros(
             data
-              .filter((t: any) =>
+              .filter((t: LogbookTask) =>
                 coincideProducto(t.processRun?.productVariant?.name || "")
               )
-              .map((t: any) => ({
+              .map((t: LogbookTask) => ({
                 id: t.id,
                 titulo: t.templateStep?.name ?? "Tarea",
                 lote: t.processRun?.batchCode ?? "—",
@@ -127,13 +152,16 @@ const Logbook = () => {
               }))
           );
         } else {
-          const params: any = { dateFrom, dateTo };
-          if ((selectedUser as any)?.value) params.workerId = (selectedUser as any).value;
+          const params: { dateFrom?: string; dateTo?: string; workerId?: string } = {
+            dateFrom,
+            dateTo,
+          };
+          if (selectedUser.value) params.workerId = selectedUser.value;
           const data = await fetchProcessRuns(params);
           setRegistros(
             data
-              .filter((r: any) => coincideProducto(r.productVariant?.name || ""))
-              .map((r: any) => {
+              .filter((r: LogbookProcessRun) => coincideProducto(r.productVariant?.name || ""))
+              .map((r: LogbookProcessRun) => {
                 const inicio = r.startedAt ? new Date(r.startedAt) : null;
                 const fin = r.finishedAt ? new Date(r.finishedAt) : null;
                 return {
@@ -151,8 +179,8 @@ const Logbook = () => {
               })
           );
         }
-      } catch (e: any) {
-        setError(e?.message ?? "Error al cargar datos");
+      } catch (e: unknown) {
+        setError(e instanceof Error ? e.message : "Error al cargar datos");
       } finally {
         setLoading(false);
       }

@@ -75,7 +75,17 @@ const NewProductPage = () => {
       return;
     }
 
-    const payload = {
+    const payload: {
+      productId: number;
+      name: string;
+      presentation?: string;
+      imageUrl?: string;
+      isActive: boolean;
+      defaultUnitId?: number;
+      initialStock?: number;
+      receivedAt?: string;
+      lotCode?: string;
+    } = {
       productId,
       name: name.trim() || "Variante",
       presentation: presentation.trim() || undefined,
@@ -85,7 +95,7 @@ const NewProductPage = () => {
       initialStock: quantity > 0 ? quantity : undefined,
       receivedAt: quantity > 0 ? new Date().toISOString() : undefined,
       lotCode: quantity > 0 ? `PROD-${productId}-${Date.now()}` : undefined,
-    } as any;
+    };
 
     try {
       const response = await fetch("/api/product-variants", {
@@ -101,8 +111,8 @@ const NewProductPage = () => {
       }
 
       router.replace("/inventory/products");
-    } catch (err: any) {
-      setError(err.message || "Error al crear variante");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Error al crear variante");
     } finally {
       setLoading(false);
     }

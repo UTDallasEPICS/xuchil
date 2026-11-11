@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 import { templateStepSchema } from '@/lib/schemas';
-import { z } from "zod";
 import {idError, serverError, validationError} from "@/utils/responses";
 import {verifySession} from "@/lib/session";
 
@@ -57,7 +56,7 @@ export async function POST(
       },
     });
     return NextResponse.json(created, { status: 201 });
-  } catch (e) {
-    return serverError("template step", "create", e)
+  } catch (error) {
+    return serverError("template step", "create", error)
   }
 }

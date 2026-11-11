@@ -63,9 +63,9 @@ Agrega estos scripts a tu `package.json`:
 ```json
 {
   "scripts": {
-    "test:selenium": "mocha --require ts-node/register tests/specs/**/*.test.ts",
+    "test:selenium": "tsx node_modules/mocha/bin/mocha.js \"tests/specs/**/*.test.ts\"",
     "test:selenium:headless": "HEADLESS=true pnpm test:selenium",
-    "test:selenium:watch": "mocha --watch --require ts-node/register tests/specs/**/*.test.ts"
+    "test:selenium:watch": "tsx node_modules/mocha/bin/mocha.js --watch \"tests/specs/**/*.test.ts\""
   }
 }
 ```
@@ -84,10 +84,14 @@ pnpm test:selenium
 pnpm test:selenium:headless
 ```
 
+La suite usa Edge por defecto. En entornos con Chromium instalado puedes usar
+`BROWSER=chrome pnpm test:selenium:headless`. El navegador y su driver deben
+estar instalados en el sistema de pruebas.
+
 ### Ejecutar un archivo de pruebas específico
 
 ```bash
-mocha --require ts-node/register tests/specs/auth.test.ts
+pnpm exec tsx node_modules/mocha/bin/mocha.js tests/specs/auth.test.ts
 ```
 
 ### Ejecutar con modo watch (se ejecutan al guardar)

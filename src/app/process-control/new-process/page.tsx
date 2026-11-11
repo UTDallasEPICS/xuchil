@@ -166,9 +166,13 @@ const NewProcessPage = () => {
     }
   };
 
-  const updateStep = (stepId: number, field: keyof ProcessStep, value: any) => {
+  const updateStep = (
+    stepId: number,
+    field: keyof ProcessStep,
+    value: ProcessStep[keyof ProcessStep]
+  ) => {
     setSteps(steps.map(step =>
-      step.id === stepId ? { ...step, [field]: value } : step
+      step.id === stepId ? ({ ...step, [field]: value } as ProcessStep) : step
     ));
   };
 
@@ -188,12 +192,17 @@ const NewProcessPage = () => {
     ));
   };
 
-  const updateMaterial = (stepId: number, index: number, field: keyof StepMaterial, value: any) => {
+  const updateMaterial = (
+    stepId: number,
+    index: number,
+    field: keyof StepMaterial,
+    value: string | number
+  ) => {
     setSteps(steps.map(step => {
       if (step.id !== stepId) return step;
       const materials = step.materials.map((material, i) => {
         if (i !== index) return material;
-        const updated = { ...material, [field]: value };
+        const updated = { ...material, [field]: value } as StepMaterial;
         // When picking a raw material, default the unit to its own default unit.
         if (field === "rawMaterialId") {
           const selected = rawMaterials.find((rm) => String(rm.id) === String(value));

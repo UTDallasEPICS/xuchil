@@ -9,6 +9,63 @@ import styles from "./ProcessStep.module.css";
 import { ProcessStep } from "@/types/ProcessStep";
 import { ProductVariant } from "@/types/ProductVariant";
 
+interface ApiVariant {
+  id: number | string;
+  name: string;
+  imageUrl?: string | null;
+}
+
+interface ApiStepExecution {
+  id: number;
+  status: string;
+  startedAt?: string | null;
+}
+
+interface ApiProcessPause {
+  startedAt: string;
+  endedAt?: string | null;
+}
+
+interface ApiReservation {
+  templateStepId: number;
+  rawMaterialId: number;
+  status: string;
+  qty: number | string;
+}
+
+interface ApiPendingRun {
+  id: number;
+  productVariantId: number | string;
+  processTemplateId: number;
+  stepExecutions?: ApiStepExecution[];
+  processPauses?: ApiProcessPause[];
+  materialReservations?: ApiReservation[];
+}
+
+interface ApiTemplate {
+  id: number;
+  isActive: boolean;
+}
+
+interface ApiTemplateStep {
+  id: number;
+  name: string;
+  idealDurationMin?: number | null;
+  requiresInput: boolean;
+  instructions?: string | null;
+  stepRequiredMaterials?: Array<{
+    rawMaterialId: number;
+    qtyPerUnitOutput: number | string;
+    unitId: number;
+    rawMaterial?: { name?: string | null } | null;
+    unit?: { name?: string | null } | null;
+  }>;
+}
+
+interface ApiTemplateDetail {
+  templateSteps?: ApiTemplateStep[];
+}
+
 const ProcessStepPage = () => {
   const { productId, variantId, stepId } = useParams();
   const router = useRouter();
@@ -57,9 +114,9 @@ const ProcessStepPage = () => {
         if (mounted) setLoadError("No se pudieron cargar las variantes del producto.");
         return;
       }
-      const variants = await variantRes.json();
+      const variants: ApiVariant[] = await variantRes.json();
       const stringVariantId = variantId as string;
-      const variant = variants.find((item: any) => String(item.id) === stringVariantId);
+      const variant = variants.find((item) => String(item.id) === stringVariantId);
       if (!variant) {
         if (mounted) setLoadError("No se encontró la variante seleccionada.");
         return;
@@ -74,7 +131,7 @@ const ProcessStepPage = () => {
       // Load active runs first: a resume link may not carry templateId, in which
       // case the template is derived from the run already in progress.
       const pendingRes = await fetch("/api/process-runs/pending", { credentials: "include" });
-      const pendingRuns = pendingRes.ok ? await pendingRes.json() : [];
+      const pendingRuns: ApiPendingRun[] = pendingRes.ok ? await pendingRes.json() : [];
 
       // Resolve which process template to execute, in priority order:
       // 1) explicit selection from the selector screen (templateId query param),
@@ -84,7 +141,7 @@ const ProcessStepPage = () => {
 
       const activeRun =
         pendingRuns.find(
-          (run: any) =>
+          (run) =>
             String(run.productVariantId) === stringVariantId &&
             (chosenTemplateId == null || run.processTemplateId === chosenTemplateId)
         ) || null;
@@ -99,8 +156,8 @@ const ProcessStepPage = () => {
           if (mounted) setLoadError("No se pudieron cargar las plantillas de proceso.");
           return;
         }
-        const templates = await templatesRes.json();
-        const activeTemplate = templates.find((template: any) => template.isActive) || templates[0];
+        const templates: ApiTemplate[] = await templatesRes.json();
+        const activeTemplate = templates.find((template) => template.isActive) || templates[0];
         if (!activeTemplate) {
           if (mounted) {
             setCurrentVariant(mappedVariant);
@@ -116,16 +173,16 @@ const ProcessStepPage = () => {
         if (mounted) setLoadError("No se pudo cargar el detalle de la plantilla.");
         return;
       }
-      const templateDetail = await templateDetailRes.json();
+      const templateDetail: ApiTemplateDetail = await templateDetailRes.json();
 
-      const allSteps: ProcessStep[] = (templateDetail.templateSteps || []).map((step: any) => ({
+      const allSteps: ProcessStep[] = (templateDetail.templateSteps || []).map((step) => ({
         id: step.id,
         title: step.name,
         estimatedTime: step.idealDurationMin ?? 0,
         hasInput: step.requiresInput,
         unit: "",
         description: step.instructions ?? "",
-        materials: (step.stepRequiredMaterials || []).map((srm: any) => ({
+        materials: (step.stepRequiredMaterials || []).map((srm) => ({
           rawMaterialId: srm.rawMaterialId,
           name: srm.rawMaterial?.name ?? `Materia prima ${srm.rawMaterialId}`,
           qtyPerUnitOutput: Number(srm.qtyPerUnitOutput),
@@ -147,7 +204,7 @@ const ProcessStepPage = () => {
       }
 
       // Active process run for this variant+template (resolved above).
-      const foundRun: any = activeRun;
+      const foundRun = activeRun;
       if (foundRun) {
         if (mounted) {
           setProcessRunId(activeRun.id);
@@ -204,7 +261,7 @@ const ProcessStepPage = () => {
       setReserveQty(rq);
 
       // Default consume quantities for the current step (from reservations if any).
-      const reservations: any[] = foundRun?.materialReservations ?? [];
+      const reservations: ApiReservation[] = foundRun?.materialReservations ?? [];
       setRunHasReservations(reservations.length > 0);
       const cq: Record<number, number> = {};
       for (const m of activeStep?.materials ?? []) {
@@ -297,7 +354,7 @@ const ProcessStepPage = () => {
     setReserving(true);
     try {
       let runId = processRunId;
-      let createdStepExecs: any[] | null = null;
+      let createdStepExecs: ApiStepExecution[] | null = null;
       if (!runId) {
         const numericVariantId = parseInt(variantId as string, 10);
         const runRes = await fetch("/api/process-runs", {
@@ -334,7 +391,9 @@ const ProcessStepPage = () => {
         if (!reserveRes.ok) {
           const err = await reserveRes.json().catch(() => ({}));
           if (reserveRes.status === 409 && Array.isArray(err.insufficient)) {
-            const names = err.insufficient.map((i: any) => i.name).join(", ");
+            const names = (err.insufficient as Array<{ name: string }>)
+              .map((item) => item.name)
+              .join(", ");
             throw new Error(`Materia prima insuficiente: ${names}.`);
           }
           throw new Error(err.error || "No se pudo apartar la materia prima.");

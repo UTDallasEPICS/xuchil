@@ -3,7 +3,12 @@ import React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Calendar, Clock, Check, MessageSquare } from "lucide-react";
 import styles from "@/styles/DetailProcess.module.css";
-import { fetchProcessRunDetail, fetchStepExecutionDetail } from "@/app/api/logbook";
+import {
+  fetchProcessRunDetail,
+  fetchStepExecutionDetail,
+  type LogbookProcessRun,
+  type LogbookTask,
+} from "@/app/api/logbook";
 
 const hora = (v?: string | null) =>
   v
@@ -96,8 +101,8 @@ const DetailProcessContent = () => {
 
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  const [processRun, setProcessRun] = React.useState<any | null>(null);
-  const [stepDetail, setStepDetail] = React.useState<any | null>(null);
+  const [processRun, setProcessRun] = React.useState<LogbookProcessRun | null>(null);
+  const [stepDetail, setStepDetail] = React.useState<LogbookTask | null>(null);
   const [materialSummary, setMaterialSummary] = React.useState<
     Array<{ name: string; qty: number; unit?: string }>
   >([]);
@@ -135,18 +140,20 @@ const DetailProcessContent = () => {
           const pr = await fetchProcessRunDetail(parseInt(id));
           setProcessRun(pr);
 
-          const seIds = (pr?.stepExecutions ?? []).map((se: any) => se.id);
+          const seIds = (pr?.stepExecutions ?? []).map((se) => Number(se.id));
           const details = await Promise.all(
             seIds.map((sid: number) => fetchStepExecutionDetail(sid).catch(() => null))
           );
           const acc = new Map<string, { qty: number; unit?: string }>();
-          details.filter(Boolean).forEach((d: any) => {
-            (d?.stepMaterialUsages ?? []).forEach((u: any) => {
+          details
+            .filter((d): d is LogbookTask => Boolean(d))
+            .forEach((d) => {
+            (d.stepMaterialUsages ?? []).forEach((u) => {
               const key = u.rawMaterial?.name ?? "Materia prima";
               const prev = acc.get(key) ?? { qty: 0, unit: u.unit?.name };
               acc.set(key, {
                 qty: prev.qty + (u.qty ?? 0),
-                unit: u.unit?.name || prev.unit,
+                unit: u.unit?.name ?? prev.unit ?? undefined,
               });
             });
           });
@@ -160,8 +167,8 @@ const DetailProcessContent = () => {
         } else {
           setStepDetail(await fetchStepExecutionDetail(parseInt(id)));
         }
-      } catch (e: any) {
-        setError(e?.message ?? "Error al cargar detalle");
+      } catch (e: unknown) {
+        setError(e instanceof Error ? e.message : "Error al cargar detalle");
       } finally {
         setLoading(false);
       }
@@ -170,7 +177,7 @@ const DetailProcessContent = () => {
   }, [id, isAdminMode]);
 
   const pasos = processRun?.stepExecutions ?? [];
-  const hechos = pasos.filter((se: any) => !!se.finishedAt).length;
+  const hechos = pasos.filter((se) => !!se.finishedAt).length;
   const totalMin = minutosEntre(processRun?.startedAt, processRun?.finishedAt);
 
   const resultados: Array<{ label: string; valor: string }> = [];
@@ -221,20 +228,20 @@ const DetailProcessContent = () => {
             <div className={styles.headText}>
               <h1 className={styles.title}>
                 {isAdminMode
-                  ? processRun.productVariant?.name ?? "—"
-                  : stepDetail.processRun?.productVariant?.name ?? "—"}
+                  ? processRun?.productVariant?.name ?? "—"
+                  : stepDetail?.processRun?.productVariant?.name ?? "—"}
                 <span className={styles.lote}>
                   {" · "}
                   {isAdminMode
-                    ? `Lote ${processRun.batchCode ?? processRun.id}`
-                    : stepDetail.templateStep?.name ?? "Actividad"}
+                    ? `Lote ${processRun?.batchCode ?? processRun?.id}`
+                    : stepDetail?.templateStep?.name ?? "Actividad"}
                 </span>
               </h1>
 
               <p className={styles.meta}>
                 <span className={styles.metaItem}>
                   <Calendar size={14} className={styles.metaIcon} />
-                  {fecha(isAdminMode ? processRun.startedAt : stepDetail.startedAt)}
+                  {fecha(isAdminMode ? processRun?.startedAt : stepDetail?.startedAt)}
                 </span>
 
                 {isAdminMode && duracion(totalMin) && (
@@ -257,7 +264,7 @@ const DetailProcessContent = () => {
           <div className={styles.card}>
             <ul className={styles.timeline}>
               {isAdminMode ? (
-                pasos.map((se: any) => (
+                pasos.map((se) => (
                   <Paso
                     key={se.id}
                     nombre={se.templateStep?.name ?? "Paso"}
@@ -270,12 +277,12 @@ const DetailProcessContent = () => {
                 ))
               ) : (
                 <Paso
-                  nombre={stepDetail.templateStep?.name ?? "Actividad"}
-                  desde={stepDetail.startedAt}
-                  hasta={stepDetail.finishedAt}
-                  responsable={stepDetail.worker?.fullName ?? currentUser}
-                  metaMin={stepDetail.templateStep?.idealDurationMin}
-                  hecho={!!stepDetail.finishedAt}
+                  nombre={stepDetail?.templateStep?.name ?? "Actividad"}
+                  desde={stepDetail?.startedAt}
+                  hasta={stepDetail?.finishedAt}
+                  responsable={stepDetail?.worker?.fullName ?? currentUser}
+                  metaMin={stepDetail?.templateStep?.idealDurationMin}
+                  hecho={!!stepDetail?.finishedAt}
                 />
               )}
             </ul>
