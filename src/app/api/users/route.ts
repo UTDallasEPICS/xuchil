@@ -95,10 +95,15 @@ export async function PUT(req: NextRequest) {
   }
   try {
     const body = await req.json();
-    const { userId, isActive, role, additionalDays } = body;
+    const { userId, isActive, role, additionalDays, newPassword } = body;
 
     if (!userId) {
       return NextResponse.json({ error: "userId is required" }, { status: 400 });
+    }
+
+    // Optional admin password reset. Empty/absent = keep current password.
+    if (newPassword !== undefined && (typeof newPassword !== "string" || newPassword.length < 8)) {
+      return NextResponse.json({ error: "newPassword must be at least 8 characters" }, { status: 400 });
     }
 
     // 1. Encontrar el AuthUser y su Worker asociado actualmente
@@ -137,6 +142,7 @@ export async function PUT(req: NextRequest) {
       where: { id: userId },
       data: {
         isActive: isActive, // Cambio de estado general en AuthUser
+        passwordHash: newPassword ? await bcrypt.hash(newPassword, 10) : undefined,
         worker: {
           update: {
             isActive: isActive, // Cambio de estado general en Worker
@@ -145,7 +151,8 @@ export async function PUT(req: NextRequest) {
           }
         }
       },
-      include: { worker: true }
+      include: { worker: true },
+      omit: { passwordHash: true } // never send the hash back to the browser
     });
 
     return NextResponse.json(updatedUser);
