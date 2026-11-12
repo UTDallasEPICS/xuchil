@@ -67,5 +67,5 @@ export default async function proxy(req: NextRequest) {
 // excluded, or logged-out requests for them get redirected to /login and images like the
 // login page logo render as their alt text.
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico$|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico$|Xuchil\\.svg$).*)'],
 }
