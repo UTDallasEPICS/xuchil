@@ -14,6 +14,7 @@ import {
   MapPin,
   Package,
   AlertCircle,
+  AlertTriangle,
   CheckCircle2,
   Clock,
 } from "lucide-react";
@@ -40,6 +41,7 @@ const OrderDetailsPage = () => {
   const [order, setOrder] = useState<OrderDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [statusError, setStatusError] = useState<string | null>(null);
+  const [stockWarnings, setStockWarnings] = useState<string[]>([]);
   const [updatingStatus, setUpdatingStatus] = useState(false);
 
   useEffect(() => {
@@ -92,6 +94,7 @@ const OrderDetailsPage = () => {
 
   const handleDelivered = async () => {
     setStatusError(null);
+    setStockWarnings([]);
     setUpdatingStatus(true);
     try {
       const newStatus = delivered ? "SCHEDULED" : "DELIVERED";
@@ -103,6 +106,9 @@ const OrderDetailsPage = () => {
           delivered: updated?.status === "DELIVERED" || Boolean(updated?.deliveredAt),
         };
       });
+      if (Array.isArray(updated?.stockWarnings) && updated.stockWarnings.length > 0) {
+        setStockWarnings(updated.stockWarnings);
+      }
       router.refresh();
     } catch (err) {
       console.error("Failed to update order status", err);
@@ -163,6 +169,20 @@ const OrderDetailsPage = () => {
         <div className={styles.errorBanner} role="alert">
           <AlertCircle size={18} strokeWidth={2.2} />
           <span>{statusError}</span>
+        </div>
+      )}
+
+      {stockWarnings.length > 0 && (
+        <div className={styles.warningBanner} role="status">
+          <AlertTriangle size={18} strokeWidth={2.2} className={styles.warningIcon} />
+          <div className={styles.warningContent}>
+            <strong>El pedido se marcó como entregado con faltante en inventario:</strong>
+            <ul className={styles.warningList}>
+              {stockWarnings.map((w, idx) => (
+                <li key={idx}>{w}</li>
+              ))}
+            </ul>
+          </div>
         </div>
       )}
 

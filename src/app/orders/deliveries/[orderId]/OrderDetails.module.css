@@ -109,6 +109,36 @@
   font-weight: 700;
 }
 
+.warningBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background-color: rgb(var(--rgb-earth) / 0.12);
+  border: 1px solid rgb(var(--rgb-earth) / 0.4);
+  color: var(--color-earth);
+  font-size: 0.86rem;
+  line-height: 1.4;
+  text-align: left;
+}
+
+.warningIcon {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.warningContent {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.warningList {
+  margin: 2px 0 0 0;
+  padding-left: 18px;
+}
+
 .card {
   width: 100%;
   padding: 18px 20px;
