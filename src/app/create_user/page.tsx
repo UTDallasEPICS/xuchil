@@ -37,12 +37,13 @@ const CreateUserPage = () => {
 
 
   const [notificationModal, setNotificationModal] = useState({ open: false, title: "", message: "", error: false });
-  const [editModalOpen, setEditModalOpen] = useState(false);
   
   const [selectedUser, setSelectedUser] = useState<SystemUser | null>(null);
   const [editIsActive, setEditIsActive] = useState(true);
   const [editRole, setEditRole] = useState<"empleado" | "temporal">("empleado");
   const [additionalDays, setAdditionalDays] = useState("0");
+  const [editPassword, setEditPassword] = useState("");
+  const [editConfirmPassword, setEditConfirmPassword] = useState("");
 
   useEffect(() => {
     loadSystemUsers();
@@ -139,11 +140,25 @@ const CreateUserPage = () => {
     setEditIsActive(user.isActive);
     setEditRole(user.role);
     setAdditionalDays("0");
-    setEditModalOpen(true);
+    setEditPassword("");
+    setEditConfirmPassword("");
   };
+
+  // Panel renders at the bottom of the page; bring it into view when a user is picked.
+  useEffect(() => {
+    if (selectedUser) document.getElementById("edit-panel")?.scrollIntoView({ behavior: "smooth" });
+  }, [selectedUser]);
 
 const handleUpdateUser = async () => {
     if (!selectedUser) return;
+    if (editPassword && editPassword.length < 8) {
+      setNotificationModal({ open: true, title: "Error", message: "La nueva contraseña debe tener al menos 8 caracteres.", error: true });
+      return;
+    }
+    if (editPassword !== editConfirmPassword) {
+      setNotificationModal({ open: true, title: "Error", message: "Las contraseñas no coinciden.", error: true });
+      return;
+    }
     setLoading(true);
 
     try {
@@ -155,7 +170,8 @@ const handleUpdateUser = async () => {
           userId: selectedUser.id,
           isActive: editIsActive,
           role: editRole,
-          additionalDays: Number.parseInt(additionalDays, 10) || 0
+          additionalDays: Number.parseInt(additionalDays, 10) || 0,
+          newPassword: editPassword || undefined,
         }),
       });
 
@@ -167,11 +183,9 @@ const handleUpdateUser = async () => {
       // Si todo sale bien, cerramos el panel de edición y disparamos alerta en texto plano
       setSelectedUser(null);
       setNotificationModal({ open: true, title: "Actualizado", message: "Los datos del trabajador se actualizaron de manera correcta.", error: false });
-      setEditModalOpen(true); // Abrimos la alerta simple
       await loadSystemUsers();
     } catch {
       setNotificationModal({ open: true, title: "Error de red", message: "Fallo de comunicación con la base de datos.", error: true });
-      setEditModalOpen(true);
     } finally {
       setLoading(false);
     }
@@ -252,20 +266,9 @@ const handleUpdateUser = async () => {
 
       </div>
 
-      {/* Modal de confirmación para cuando guardas cambios */}
-      <Modal 
-        open={editModalOpen} 
-        title={notificationModal.title} 
-        message={notificationModal.message} 
-        confirmText="Aceptar" 
-        onlyConfirm 
-        onConfirm={() => setEditModalOpen(false)} 
-        danger={notificationModal.error} 
-      />
-
       {/* 🛠️ PANEL DE EDICIÓN FLUIDO (A salvo de TypeScript) */}
         {selectedUser && (
-          <div style={{ marginTop: "30px", backgroundColor: "#f8fafc", padding: "20px", borderRadius: "16px", border: "2px solid #cbd5e1" }}>
+          <div id="edit-panel" style={{ marginTop: "30px", backgroundColor: "#f8fafc", padding: "20px", borderRadius: "16px", border: "2px solid #cbd5e1" }}>
             <h3 style={{ color: "#1C352D", margin: "0 0 15px 0", fontSize: "1.1rem" }}>
               Editando a: <span style={{ fontWeight: "bold" }}>{selectedUser.displayName}</span>
             </h3>
@@ -311,6 +314,32 @@ const handleUpdateUser = async () => {
                   />
                 </div>
               )}
+
+              {/* Campo 4: Restablecer contraseña (opcional) */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+                <label htmlFor="edit-password" style={{ fontWeight: "bold", fontSize: "0.85rem", color: "#334155" }}>Restablecer contraseña:</label>
+                <input
+                  id="edit-password"
+                  type="password"
+                  autoComplete="new-password"
+                  placeholder="Dejar vacío para no cambiarla"
+                  value={editPassword}
+                  onChange={(e) => setEditPassword(e.target.value)}
+                  style={{ padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", backgroundColor: "#fff" }}
+                />
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+                <label htmlFor="edit-confirm-password" style={{ fontWeight: "bold", fontSize: "0.85rem", color: "#334155" }}>Confirmar contraseña:</label>
+                <input
+                  id="edit-confirm-password"
+                  type="password"
+                  autoComplete="new-password"
+                  value={editConfirmPassword}
+                  onChange={(e) => setEditConfirmPassword(e.target.value)}
+                  style={{ padding: "10px", borderRadius: "8px", border: "1px solid #cbd5e1", backgroundColor: "#fff" }}
+                />
+              </div>
 
               {/* Botones de acción del panel */}
               <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
