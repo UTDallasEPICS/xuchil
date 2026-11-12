@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, AlertCircle } from "lucide-react";
+import { ArrowLeft, AlertCircle, AlertTriangle } from "lucide-react";
 import TextField from "@/components/TextField";
 import DatePicker from "@/components/DatePicker";
 import OrderedProducts from "@/components/OrderedProducts";
@@ -11,6 +11,17 @@ import Modal from "@/components/Modal";
 import { Product } from "@/types/Product";
 import { deliveryVariants, availableVariants } from "@/constants/deliveryConfig";
 import styles from "./NewOrder.module.css";
+
+interface ApiProductVariant {
+  id: number | string;
+  name?: string | null;
+  presentation?: string | null;
+  imageUrl?: string | null;
+  availableStock?: number | string | null;
+  product?: { name?: string | null; categoryId?: number | string | null } | null;
+  inventory?: Array<{ onHand?: number | string | null }>;
+  defaultUnit?: { name?: string | null } | null;
+}
 
 type OrderItemDraft = {
   productId: string;
@@ -55,16 +66,16 @@ const NewOrderPage = () => {
     async function loadProducts() {
       const response = await fetch("/api/product-variants", { credentials: "include" });
       if (!response.ok) return;
-      const data = await response.json();
+      const data: ApiProductVariant[] = await response.json();
       if (!mounted) return;
 
       setProducts(
-        data.map((variant: any) => ({
+        data.map((variant) => ({
           id: String(variant.id),
           name: variant.product?.name ?? "Producto",
           presentation: variant.name ?? variant.presentation ?? "",
           image: variant.imageUrl || "/globe.svg",
-          quantity: Number(variant.inventory?.[0]?.onHand ?? 0),
+          quantity: Number(variant.availableStock ?? variant.inventory?.[0]?.onHand ?? 0),
           units: variant.defaultUnit?.name ?? "",
           categoryId: String(variant.product?.categoryId ?? ""),
           variantId: String(variant.id),
@@ -78,6 +89,35 @@ const NewOrderPage = () => {
       mounted = false;
     };
   }, []);
+
+  const lowStockItems = useMemo(() => {
+    if (products.length === 0 || orderItems.length === 0) return [];
+    const requestedByProduct = new Map<string, number>();
+    for (const item of orderItems) {
+      if (!item.productId || item.quantity <= 0) continue;
+      requestedByProduct.set(
+        item.productId,
+        (requestedByProduct.get(item.productId) ?? 0) + item.quantity
+      );
+    }
+
+    const warnings: { label: string; requested: number; available: number }[] = [];
+    for (const [productId, requested] of requestedByProduct.entries()) {
+      const product = products.find((p) => p.id === productId);
+      if (!product) continue;
+      if (requested > product.quantity) {
+        const label = product.presentation
+          ? `${product.name} (${product.presentation})`
+          : product.name;
+        warnings.push({
+          label,
+          requested,
+          available: product.quantity,
+        });
+      }
+    }
+    return warnings;
+  }, [products, orderItems]);
 
   const handleSubmit = async () => {
     setFormError(null);
@@ -250,6 +290,23 @@ const NewOrderPage = () => {
             <OrderedProducts products={products} onChange={setOrderItems} />
           ) : (
             <p className={styles.loadingText}>Cargando productos...</p>
+          )}
+
+          {lowStockItems.length > 0 && (
+            <div className={styles.warningBanner} role="status">
+              <AlertTriangle size={18} strokeWidth={2.2} className={styles.warningIcon} />
+              <div className={styles.warningContent}>
+                <strong>Stock actual insuficiente (se guardará como pre-pedido):</strong>
+                <ul className={styles.warningList}>
+                  {lowStockItems.map((item) => (
+                    <li key={item.label}>
+                      {item.label}: solicitas <strong>{item.requested}</strong> y hay{" "}
+                      <strong>{item.available}</strong> disponibles.
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
           )}
         </div>
 

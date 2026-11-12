@@ -1,9 +1,9 @@
-import {NextRequest, NextResponse} from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { productVariantWithStockSchema } from "@/lib/schemas";
 import { serverError, validationError } from "@/utils/responses";
 import { verifySession } from "@/lib/session";
-import { ItemType, MovementDirection, MovementReason } from "@prisma/client";
+import { ItemType, MovementDirection, MovementReason, Prisma } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     const productIdRaw = searchParams.get("product_id");
     const categoryIdRaw = searchParams.get("category_id");
 
-    const where: any = { isActive: true };
+    const where: Prisma.ProductVariantWhereInput = { isActive: true };
     if (productIdRaw) {
       const productId = parseInt(productIdRaw, 10);
       if (!Number.isNaN(productId)) {
@@ -30,11 +30,37 @@ export async function GET(request: NextRequest) {
       include: {
         product: true,
         defaultUnit: true,
+        inventoryItems: {
+          include: {
+            inventoryLots: {
+              select: {
+                qtyOnHand: true,
+              },
+            },
+          },
+        },
       },
       orderBy: { name: "asc" },
     });
 
-    return NextResponse.json(variants);
+    const enrichedVariants = variants.map((variant) => {
+      const availableStock = (variant.inventoryItems ?? []).reduce(
+        (sum, item) =>
+          sum +
+          (item.inventoryLots ?? []).reduce(
+            (lotSum, lot) => lotSum + Math.max(0, Number(lot.qtyOnHand ?? 0)),
+            0
+          ),
+        0
+      );
+
+      return {
+        ...variant,
+        availableStock,
+      };
+    });
+
+    return NextResponse.json(enrichedVariants);
   } catch (error) {
     return serverError("product variants", "fetch", error);
   }

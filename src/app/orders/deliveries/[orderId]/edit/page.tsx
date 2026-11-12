@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Trash2, AlertCircle } from "lucide-react";
+import { ArrowLeft, Trash2, AlertCircle, AlertTriangle } from "lucide-react";
 import Button from "@/components/Button";
 import TextField from "@/components/TextField";
 import DatePicker from "@/components/DatePicker";
@@ -23,6 +23,7 @@ interface ApiProductVariant {
   name?: string | null;
   presentation?: string | null;
   imageUrl?: string | null;
+  availableStock?: number | string | null;
   product?: { name?: string | null; categoryId?: number | string | null } | null;
   inventory?: Array<{ onHand?: number | string | null }>;
   defaultUnit?: { name?: string | null } | null;
@@ -126,7 +127,7 @@ const EditOrderPage = () => {
           name: variant.product?.name ?? "Producto",
           presentation: variant.name ?? variant.presentation ?? "",
           image: variant.imageUrl || "/globe.svg",
-          quantity: Number(variant.inventory?.[0]?.onHand ?? 0),
+          quantity: Number(variant.availableStock ?? variant.inventory?.[0]?.onHand ?? 0),
           units: variant.defaultUnit?.name ?? "",
           categoryId: String(variant.product?.categoryId ?? ""),
           variantId: String(variant.id),
@@ -140,6 +141,35 @@ const EditOrderPage = () => {
       mounted = false;
     };
   }, []);
+
+  const lowStockItems = useMemo(() => {
+    if (products.length === 0 || orderItems.length === 0 || order?.delivered) return [];
+    const requestedByProduct = new Map<string, number>();
+    for (const item of orderItems) {
+      if (!item.productId || item.quantity <= 0) continue;
+      requestedByProduct.set(
+        item.productId,
+        (requestedByProduct.get(item.productId) ?? 0) + item.quantity
+      );
+    }
+
+    const warnings: { label: string; requested: number; available: number }[] = [];
+    for (const [productId, requested] of requestedByProduct.entries()) {
+      const product = products.find((p) => p.id === productId);
+      if (!product) continue;
+      if (requested > product.quantity) {
+        const label = product.presentation
+          ? `${product.name} (${product.presentation})`
+          : product.name;
+        warnings.push({
+          label,
+          requested,
+          available: product.quantity,
+        });
+      }
+    }
+    return warnings;
+  }, [products, orderItems, order?.delivered]);
 
   const handleCancel = () => router.back();
 
@@ -388,6 +418,23 @@ const EditOrderPage = () => {
             />
           ) : (
             <p className={styles.loadingText}>Cargando productos...</p>
+          )}
+
+          {lowStockItems.length > 0 && (
+            <div className={styles.warningBanner} role="status">
+              <AlertTriangle size={18} strokeWidth={2.2} className={styles.warningIcon} />
+              <div className={styles.warningContent}>
+                <strong>Stock actual insuficiente (se actualizará como pre-pedido):</strong>
+                <ul className={styles.warningList}>
+                  {lowStockItems.map((item) => (
+                    <li key={item.label}>
+                      {item.label}: solicitas <strong>{item.requested}</strong> y hay{" "}
+                      <strong>{item.available}</strong> disponibles.
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
           )}
         </div>
 
