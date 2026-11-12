@@ -14,6 +14,18 @@ import {
 } from '../../src/lib/attendance-calculations';
 import {canManageAttendance} from '../../src/lib/attendance';
 import {shiftCorrectionSchema} from '../../src/lib/schemas';
+import {calculateActivityComparison} from '../../src/lib/attendance-activity-calculations';
+import {parseComparisonFilters} from '../../src/lib/attendance-comparison';
+
+const interval = (start: string, end: string | null, kind?: 'production' | 'nonProduction') => ({
+  workerId: 7,
+  startedAt: new Date(start),
+  endedAt: end ? new Date(end) : null,
+  ...(kind ? {kind} : {}),
+});
+
+const reportStart = new Date('2026-09-25T00:00:00.000Z');
+const reportEnd = new Date('2026-09-26T00:00:00.000Z');
 
 describe('attendance calculations and authorization', () => {
   it('forces regular workers to their session worker', () => {
@@ -69,6 +81,18 @@ describe('attendance calculations and authorization', () => {
     assert.ok(updatedEndedAt > originalStartedAt);
   });
 
+  it('uses corrected attendance timestamps in the comparison', () => {
+    const result = calculateActivityComparison(
+      [interval('2026-09-25T08:00:00.000Z', '2026-09-25T11:00:00.000Z')],
+      [interval('2026-09-25T08:00:00.000Z', '2026-09-25T10:00:00.000Z', 'production')],
+      reportStart,
+      reportEnd,
+    );
+
+    assert.equal(result.workers[0].attendanceMinutes, 180);
+    assert.equal(result.workers[0].unallocatedMinutes, 60);
+  });
+
   it('rejects invalid timestamp ranges and overlapping open shifts', () => {
     const correction = shiftCorrectionSchema.parse({
       startedAt: '2026-09-25T18:00:00.000Z',
@@ -91,6 +115,21 @@ describe('attendance calculations and authorization', () => {
     assert.ok(parseDateOnly('2026-09-25'));
     assert.equal(parseDateOnly('2026-02-30'), null);
     assert.equal(parseDateOnly('09/25/2026'), null);
+  });
+
+  it('validates comparison API date and worker filters', () => {
+    assert.equal(
+      parseComparisonFilters(new URLSearchParams('dateFrom=2026-09-25&dateTo=2026-09-26&workerId=7')).ok,
+      true,
+    );
+    assert.equal(
+      parseComparisonFilters(new URLSearchParams('dateFrom=2026-09-26&dateTo=2026-09-25')).ok,
+      false,
+    );
+    assert.equal(
+      parseComparisonFilters(new URLSearchParams('dateFrom=2026-09-25&dateTo=2026-09-25&workerId=0')).ok,
+      false,
+    );
   });
 
   it('uses the Mexico City calendar date when UTC is already on the next day', () => {
@@ -141,5 +180,156 @@ describe('attendance calculations and authorization', () => {
 
     assert.equal(totals.completedMinutes, 120);
     assert.equal(totals.openShiftCount, 1);
+  });
+
+  it('merges overlapping production and non-production activity without double-counting', () => {
+    const result = calculateActivityComparison(
+      [interval('2026-09-25T08:00:00.000Z', '2026-09-25T12:00:00.000Z')],
+      [
+        interval('2026-09-25T08:00:00.000Z', '2026-09-25T10:00:00.000Z', 'production'),
+        interval('2026-09-25T09:30:00.000Z', '2026-09-25T11:00:00.000Z', 'production'),
+        interval('2026-09-25T11:00:00.000Z', '2026-09-25T12:00:00.000Z', 'nonProduction'),
+      ],
+      reportStart,
+      reportEnd,
+    );
+
+    assert.deepEqual(result.workers[0], {
+      workerId: 7,
+      attendanceMinutes: 240,
+      recordedActivityMinutes: 240,
+      productionMinutes: 180,
+      nonProductionMinutes: 60,
+      unallocatedMinutes: 0,
+      excessActivityMinutes: 0,
+      provisional: false,
+      warnings: [],
+    });
+  });
+
+
+  it('excludes and flags activities outside attendance', () => {
+    const result = calculateActivityComparison(
+      [interval('2026-09-25T09:00:00.000Z', '2026-09-25T10:00:00.000Z')],
+      [interval('2026-09-25T08:30:00.000Z', '2026-09-25T09:30:00.000Z', 'production')],
+      reportStart,
+      reportEnd,
+    );
+
+    assert.equal(result.workers[0].recordedActivityMinutes, 0);
+    assert.equal(result.workers[0].unallocatedMinutes, 60);
+    assert.equal(result.workers[0].warnings[0].code, 'outside_shift');
+  });
+
+  it('caps open shifts and activities at report time and flags both records', () => {
+    const now = new Date('2026-09-25T11:00:00.000Z');
+    const result = calculateActivityComparison(
+      [interval('2026-09-25T08:00:00.000Z', null)],
+      [interval('2026-09-25T09:00:00.000Z', null, 'production')],
+      reportStart,
+      reportEnd,
+      now,
+    );
+
+    assert.equal(result.workers[0].attendanceMinutes, 180);
+    assert.equal(result.workers[0].recordedActivityMinutes, 120);
+    assert.equal(result.workers[0].unallocatedMinutes, 60);
+    assert.equal(result.workers[0].provisional, true);
+    assert.deepEqual(result.workers[0].warnings.map(({code}) => code), ['open_shift', 'open_activity']);
+  });
+
+  it('accepts activities crossing either reporting boundary after full-interval validation', () => {
+    const result = calculateActivityComparison(
+      [interval('2026-09-24T23:00:00.000Z', '2026-09-26T01:00:00.000Z')],
+      [
+        interval('2026-09-24T23:30:00.000Z', '2026-09-25T00:30:00.000Z', 'production'),
+        interval('2026-09-25T23:30:00.000Z', '2026-09-26T00:30:00.000Z', 'production'),
+      ],
+      reportStart,
+      reportEnd,
+    );
+
+    assert.equal(result.workers[0].attendanceMinutes, 1440);
+    assert.equal(result.workers[0].recordedActivityMinutes, 60);
+    assert.equal(result.workers[0].warnings.length, 0);
+  });
+
+  it('keeps activities spanning adjacent shifts but excludes activities spanning a gap', () => {
+    const result = calculateActivityComparison(
+      [
+        interval('2026-09-25T08:00:00.000Z', '2026-09-25T10:00:00.000Z'),
+        interval('2026-09-25T10:00:00.000Z', '2026-09-25T12:00:00.000Z'),
+        interval('2026-09-25T14:00:00.000Z', '2026-09-25T15:00:00.000Z'),
+      ],
+      [
+        interval('2026-09-25T09:30:00.000Z', '2026-09-25T10:30:00.000Z', 'production'),
+        interval('2026-09-25T11:30:00.000Z', '2026-09-25T14:30:00.000Z', 'production'),
+      ],
+      reportStart,
+      reportEnd,
+    );
+
+    assert.equal(result.workers[0].recordedActivityMinutes, 60);
+    assert.equal(result.workers[0].warnings.filter(({code}) => code === 'outside_shift').length, 1);
+  });
+
+  it('flags invalid Date values and preserves workers with no records', () => {
+    const result = calculateActivityComparison(
+      [{workerId: 7, startedAt: new Date('invalid'), endedAt: new Date('2026-09-25T10:00:00.000Z'), id: 21}],
+      [],
+      reportStart,
+      reportEnd,
+      new Date('2026-09-25T12:00:00.000Z'),
+      [8],
+    );
+
+    assert.equal(result.workers.find((worker) => worker.workerId === 8)?.attendanceMinutes, 0);
+    assert.equal(result.warnings[0].code, 'invalid_shift');
+  });
+
+  it('counts participant activity for another worker without duplicating the primary worker', () => {
+    const result = calculateActivityComparison(
+      [
+        {...interval('2026-09-25T08:00:00.000Z', '2026-09-25T12:00:00.000Z'), workerId: 7},
+        {...interval('2026-09-25T08:00:00.000Z', '2026-09-25T12:00:00.000Z'), workerId: 8},
+      ],
+      [
+        {...interval('2026-09-25T09:00:00.000Z', '2026-09-25T10:00:00.000Z', 'production'), workerId: 7, id: 1, recordType: 'activity'},
+        {...interval('2026-09-25T09:00:00.000Z', '2026-09-25T10:00:00.000Z', 'production'), workerId: 8, id: 2, recordType: 'participant'},
+        {...interval('2026-09-25T10:00:00.000Z', '2026-09-25T11:00:00.000Z', 'production'), workerId: 7, id: 3, recordType: 'participant'},
+      ],
+      reportStart,
+      reportEnd,
+    );
+
+    assert.equal(result.workers.find((worker) => worker.workerId === 7)?.recordedActivityMinutes, 120);
+    assert.equal(result.workers.find((worker) => worker.workerId === 8)?.recordedActivityMinutes, 60);
+  });
+
+  it('clips an overnight shift to the selected date range', () => {
+    const result = calculateActivityComparison(
+      [interval('2026-09-24T23:00:00.000Z', '2026-09-25T02:00:00.000Z')],
+      [interval('2026-09-25T00:00:00.000Z', '2026-09-25T01:00:00.000Z', 'production')],
+      reportStart,
+      reportEnd,
+    );
+
+    assert.equal(result.workers[0].attendanceMinutes, 120);
+    assert.equal(result.workers[0].recordedActivityMinutes, 60);
+    assert.equal(result.workers[0].unallocatedMinutes, 60);
+  });
+
+  it('flags invalid and unassociated activities instead of silently dropping them', () => {
+    const result = calculateActivityComparison(
+      [interval('2026-09-25T08:00:00.000Z', '2026-09-25T10:00:00.000Z')],
+      [
+        interval('2026-09-25T09:00:00.000Z', '2026-09-25T08:30:00.000Z', 'production'),
+        {workerId: null, startedAt: new Date('2026-09-25T09:00:00.000Z'), endedAt: new Date('2026-09-25T09:30:00.000Z'), id: 99},
+      ],
+      reportStart,
+      reportEnd,
+    );
+
+    assert.deepEqual(result.warnings.map(({code}) => code), ['invalid_activity', 'unassociated_activity']);
   });
 });

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { CalendarClock, CheckCircle2, Clock3, LogIn, LogOut, RefreshCw } from "lucide-react";
 import Button from "@/components/Button";
 import Card from "@/components/Card";
@@ -352,6 +353,7 @@ const AttendancePage = () => {
             <h1>Asistencia</h1>
             {workerName && <p className={styles.workerName}>Trabajador: {workerName}</p>}
           </div>
+          <Link href="/attendance/comparison" className={styles.comparisonLink}>Comparar actividad</Link>
           <button
             type="button"
             className={styles.refreshButton}

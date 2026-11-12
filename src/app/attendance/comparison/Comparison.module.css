@@ -1,0 +1,22 @@
+.page { min-height: 100vh; padding-bottom: 2rem; }
+.content { width: min(100% - 3rem, 1280px); margin: 0 auto; padding-bottom: 3rem; }
+.heading { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin: 1rem 0 1.25rem; }
+.heading h1 { margin: 0; }
+.eyebrow { margin: 0 0 .25rem; color: var(--color-green-light); font-size: .85rem; font-weight: 700; text-transform: uppercase; }
+.backLink { color: var(--color-green-dark); font-weight: 700; }
+.filters { display: flex; gap: 1rem; margin-bottom: 1rem; }
+.filters label { display: grid; gap: .3rem; color: var(--color-gray-dark); font-weight: 700; }
+.filters input { min-height: 38px; padding: .45rem .6rem; border: 1px solid var(--color-gray-light); border-radius: 6px; font: inherit; }
+.filters select { min-height: 38px; padding: .45rem .6rem; border: 1px solid var(--color-gray-light); border-radius: 6px; font: inherit; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
+.workerCard h2 { margin-top: 0; color: var(--color-green-dark); }
+.workerCard dl { margin: 0; }
+.workerCard dl div { display: flex; justify-content: space-between; gap: 1rem; padding: .45rem 0; border-bottom: 1px solid var(--color-gray-light); }
+.workerCard dt, .workerCard dd { margin: 0; }
+.workerCard dd { font-weight: 700; }
+.unallocated { color: var(--color-green-dark); font-weight: 700; }
+.provisional { margin: .75rem 0 0; color: var(--color-gray-dark); font-size: .9rem; font-weight: 700; }
+.warning, .error { margin: 1rem 0; color: var(--color-negative); }
+.warning ul, .workerWarnings { margin: .5rem 0 0; padding-left: 1.25rem; }
+.workerWarnings { color: var(--color-negative); font-size: .9rem; }
+@media (max-width: 600px) { .heading, .filters { align-items: stretch; flex-direction: column; } }
