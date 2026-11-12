@@ -71,7 +71,25 @@ export default function CycleTimesPage() {
         <h1>Tiempos de Ciclo</h1>
         <p>Duración de producción completada agrupada por producto</p>
       </div>
-
+      {/* Legend */}
+        <div className={styles.legendBar}>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <span style={{ display: "inline-block", width: "14px", height: "10px", background: "#dcfce7", border: "1.5px solid #214e34", borderRadius: "2px" }} />
+            <span>Rango típico (50% central)</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <span style={{ display: "inline-block", width: "10px", height: "10px", background: "var(--color-green-dark)" }} />
+            <span>Mediana (típico)</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <span style={{ display: "inline-block", width: "10px", height: "10px", borderRadius: "50%", background: "#d97706" }} />
+            <span>Promedio</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <span style={{ display: "inline-block", width: "16px", height: "2px", background: "#6b7280" }} />
+            <span>Rango (Mín - Máx)</span>
+          </div>
+        </div>
       {/* Main visualization section */}
       <div className={styles.section}>
         {/* Controls: Mode toggle & Period buttons */}
@@ -155,36 +173,40 @@ export default function CycleTimesPage() {
               pointerEvents: chartLoading ? "none" : "auto",
             }}
           >
-            {taskCategories
-              .filter((category) => category.tasks.some((t) => (t.count ?? 0) > 0))
-              .map((category) => (
-              <div key={category.productId} style={{ width: "100%" }}>
-                <BoxWhiskerChart
-                  data={category.tasks}
-                  title={category.category}
-                  height={56}
-                  unit="minutos"
-                />
-              </div>
-            ))}
+            {taskCategories.map((category) => {
+              const activeTasks = category.tasks.filter((t) => (t.count ?? 0) > 0);
+              if (activeTasks.length === 0) return null;
+
+              return (
+                <div key={category.category} style={{ marginBottom: "1rem" }}>
+                  <h2 style={{
+                    fontSize: "0.85rem",
+                    color: "var(--color-green-dark)",
+                    margin: "0 0 0.5rem 0",
+                    borderBottom: "1px solid #e5e7eb",
+                    paddingBottom: "4px",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.5px",
+                    fontWeight: "700",
+                  }}>
+                    Categoría: {category.category}
+                  </h2>
+
+                  {category.tasks.map((task) => (
+                    <BoxWhiskerChart
+                      key={task.taskName}
+                      data={[task]}
+                      title={task.taskName}
+                      unit="minutos"
+                    />
+                  ))}
+                </div>
+              );
+            })}
           </div>
         )}
 
-        {/* Legend */}
-        <div className={styles.legendBar}>
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <span style={{ display: "inline-block", width: "10px", height: "10px", background: "var(--color-green-dark)" }} />
-            <span>Mediana (típico)</span>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <span style={{ display: "inline-block", width: "10px", height: "10px", borderRadius: "50%", background: "#d97706" }} />
-            <span>Promedio</span>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <span style={{ display: "inline-block", width: "16px", height: "2px", background: "#6b7280" }} />
-            <span>Rango (Mín - Máx)</span>
-          </div>
-        </div>
+        
       </div>
     </div>
   );
