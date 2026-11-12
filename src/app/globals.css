@@ -53,6 +53,9 @@ h1 {
   width: 100%;
   max-width: var(--max-width-h1);
   text-align: center;
+  /* Center the capped-width box itself; .page's justify-items doesn't apply to block layout in Firefox */
+  margin-left: auto;
+  margin-right: auto;
 
 }
 
