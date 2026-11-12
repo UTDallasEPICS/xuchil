@@ -14,6 +14,8 @@ import {
   ArrowDownAZ,
   ArrowDownWideNarrow,
   ArrowUpNarrowWide,
+  CheckCircle2,
+  Clock,
 } from "lucide-react";
 
 import type { FilterOption } from "@/types/FilterOption";
@@ -74,6 +76,12 @@ export const deliveryFilterOptions: FilterOption[] = [
   { label: "Entrega personal", img: "/Personal.svg", value: "personal" },
   { label: "Envío por correo", img: "/Mail.svg", value: "mail" },
   { label: "En consignación", img: "/Consignment.svg", value: "consignment" },
+];
+
+export const orderStatusFilterOptions: FilterOption[] = [
+  { label: "Todos", icon: ListFilter, value: "all" },
+  { label: "Pendientes", icon: Clock, value: "pending" },
+  { label: "Entregados", icon: CheckCircle2, value: "delivered" },
 ];
 
 export const inventorySortOptions: FilterOption[] = [

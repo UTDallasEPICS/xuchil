@@ -6,13 +6,14 @@ import OrderCard from "@/components/OrderCard";
 import FilterButton from "@/components/FilterButton";
 import HeaderNavigator from "@/components/HeaderNavigator";
 import { orderTabs } from "@/constants/navTabs";
-import { Plus } from "lucide-react";
+import { Plus, Search, X } from "lucide-react";
 import { Order } from "@/types/Order";
 import { fetchOrdersClient } from "@/lib/ordersClient";
 import {
   dateFilterOptions,
   sortFilterOptions,
   deliveryFilterOptions,
+  orderStatusFilterOptions,
 } from "@/constants/filterOptions";
 import { FilterOption } from "@/types/FilterOption";
 import styles from "./Deliveries.module.css";
@@ -39,6 +40,8 @@ const compareDates = (a: Order, b: Order, asc = true) => {
 };
 
 const Deliveries = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<FilterOption>(orderStatusFilterOptions[0]);
   const [dateFilter, setDateFilter] = useState<FilterOption>(dateFilterOptions[0]);
   const [sortFilter, setSortFilter] = useState<FilterOption>(sortFilterOptions[0]);
   const [deliveryFilter, setDeliveryFilter] = useState<FilterOption>(deliveryFilterOptions[0]);
@@ -66,6 +69,23 @@ const Deliveries = () => {
     const currentYear = today.getFullYear();
 
     let list = orders;
+
+    const q = searchQuery.trim().toLowerCase();
+    if (q) {
+      list = list.filter(
+        (o) =>
+          o.clientName?.toLowerCase().includes(q) ||
+          o.address?.toLowerCase().includes(q) ||
+          String(o.id).includes(q.replace(/^#/, ""))
+      );
+    }
+
+    if (statusFilter.value === "pending") {
+      list = list.filter((o) => !o.delivered);
+    } else if (statusFilter.value === "delivered") {
+      list = list.filter((o) => o.delivered);
+    }
+
     if (deliveryFilter.value !== "todos") {
       list = list.filter((o) => o.deliveryVariant === deliveryFilter.value);
     }
@@ -92,12 +112,15 @@ const Deliveries = () => {
             d.getMonth() === currentMonth && d.getFullYear() === currentYear
           );
         }
+        if (dateFilter.value === "year") {
+          return d.getFullYear() === currentYear;
+        }
         return true;
       });
     }
     const asc = sortFilter.value === "asc";
     return [...list].sort((a, b) => compareDates(a, b, asc));
-  }, [orders, deliveryFilter, dateFilter, sortFilter]);
+  }, [orders, searchQuery, statusFilter, deliveryFilter, dateFilter, sortFilter]);
 
   const handleNewOrder = () => {
     router.push("/orders/deliveries/new-order");
@@ -109,11 +132,53 @@ const Deliveries = () => {
 
       <HeaderNavigator tabs={orderTabs} variant="full" />
 
+      <div className={styles.searchBar}>
+        <Search size={18} strokeWidth={2.2} className={styles.searchIcon} />
+        <input
+          type="text"
+          className={styles.searchInput}
+          placeholder="Buscar por cliente, #pedido o dirección..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+        {searchQuery && (
+          <button
+            type="button"
+            className={styles.clearSearchBtn}
+            onClick={() => setSearchQuery("")}
+            aria-label="Limpiar búsqueda"
+          >
+            <X size={16} strokeWidth={2.2} />
+          </button>
+        )}
+      </div>
+
       <div className={styles.toolbar}>
         <div className={styles.filters}>
-          <FilterButton title="Filtrar por fecha" options={dateFilterOptions} onChange={setDateFilter} variant="outline"/>
-          <FilterButton title="Ordenar" options={sortFilterOptions} onChange={setSortFilter} variant="outline"/>
-          <FilterButton title="Tipo de entrega" options={deliveryFilterOptions} onChange={setDeliveryFilter} variant="outline"/>
+          <FilterButton
+            title="Estado"
+            options={orderStatusFilterOptions}
+            onChange={setStatusFilter}
+            variant="outline"
+          />
+          <FilterButton
+            title="Filtrar por fecha"
+            options={dateFilterOptions}
+            onChange={setDateFilter}
+            variant="outline"
+          />
+          <FilterButton
+            title="Ordenar"
+            options={sortFilterOptions}
+            onChange={setSortFilter}
+            variant="outline"
+          />
+          <FilterButton
+            title="Tipo de entrega"
+            options={deliveryFilterOptions}
+            onChange={setDeliveryFilter}
+            variant="outline"
+          />
         </div>
       </div>
 
