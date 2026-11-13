@@ -2,10 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import HeaderXuchil from "@/components/HeaderXuchil";
-import BottomButton from "@/components/BottomButton";
-import TextField from "@/components/TextField";
-import styles from "./NewBaseProduct.module.css";
+import { ChevronLeft, Info } from "lucide-react";
+import styles from "@/styles/InventoryForm.module.css";
 
 interface CategoryOption {
   id: number;
@@ -16,6 +14,14 @@ interface UnitOption {
   id: number;
   name: string;
 }
+
+const skuPrefixFrom = (categoryName: string) => {
+  const letters = categoryName
+    .normalize("NFD")
+    .replace(/[^a-zA-Z]/g, "")
+    .toUpperCase();
+  return (letters.slice(0, 3) || "PRD").padEnd(3, "X");
+};
 
 const NewBaseProductPage = () => {
   const [categories, setCategories] = useState<CategoryOption[]>([]);
@@ -34,6 +40,11 @@ const NewBaseProductPage = () => {
   const [creatingCategory, setCreatingCategory] = useState(false);
 
   const router = useRouter();
+
+  const selectedCategory = categories.find(
+    (category) => String(category.id) === categoryId
+  );
+  const skuPrefix = selectedCategory ? skuPrefixFrom(selectedCategory.name) : null;
 
   const handleCreateCategory = async () => {
     setError(null);
@@ -56,6 +67,8 @@ const NewBaseProductPage = () => {
       const category = await res.json();
       setCategories((prev) => [...prev, category]);
       setCategoryId(String(category.id));
+      setSku("");
+      setSkuHint(null);
       setShowCreateCategory(false);
       setNewCategoryName("");
     } catch (err) {
@@ -164,117 +177,192 @@ const NewBaseProductPage = () => {
 
   return (
     <div className={styles.wrapper}>
-      <HeaderXuchil />
+      <button
+        type="button"
+        className={styles.back}
+        onClick={() => router.push("/inventory/new-product")}
+      >
+        <ChevronLeft size={18} />
+        Nuevo producto
+      </button>
 
-      <h1 className={styles.title}>Nuevo Producto Base</h1>
+      <h1 className={styles.title}>Nuevo producto base</h1>
 
-      <h3 className={styles.fieldLabel}>Categoría:</h3>
-      <div className={`${styles.fieldContainer} ${styles.centeredControl}`}>
-        <select
-          className={styles.select}
-          value={categoryId}
-          onChange={(e) => {
-            setCategoryId(e.target.value);
-            setSku("");
-            setSkuHint(null);
-          }}
-        >
-          <option value="">Seleccionar...</option>
-          {categories.map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.name}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className={`${styles.fieldContainer} ${styles.centeredControl}`}>
-        {showCreateCategory ? (
+      <p className={styles.sectionLabel}>Clasificación</p>
+
+      <section className={styles.card}>
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="categoria">
+            Categoría
+          </label>
+          <select
+            id="categoria"
+            className={styles.select}
+            value={categoryId}
+            onChange={(e) => {
+              setCategoryId(e.target.value);
+              setSku("");
+              setSkuHint(null);
+            }}
+          >
+            <option value="">Seleccionar...</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
+
+          {showCreateCategory ? (
+            <div className={styles.codeRow}>
+              <input
+                type="text"
+                className={styles.input}
+                placeholder="Nueva categoría"
+                aria-label="Nombre de la nueva categoría"
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+              />
+              <button
+                type="button"
+                className={styles.inlineButton}
+                onClick={handleCreateCategory}
+                disabled={creatingCategory}
+              >
+                {creatingCategory ? "Creando..." : "Crear"}
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className={styles.linkButton}
+              onClick={() => setShowCreateCategory(true)}
+            >
+              + Crear categoría
+            </button>
+          )}
+        </div>
+      </section>
+
+      <p className={styles.sectionLabel}>Datos del producto</p>
+
+      <section className={styles.card}>
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="nombre">
+            Nombre
+          </label>
+          <input
+            id="nombre"
+            type="text"
+            className={styles.input}
+            placeholder="Ej. Harina de mezquite"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </div>
+
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="sku">
+            SKU
+          </label>
           <div className={styles.codeRow}>
-            <TextField
-              placeholder="Nueva categoría"
-              value={newCategoryName}
-              onChange={(e) => setNewCategoryName(e.target.value)}
+            <input
+              id="sku"
+              type="text"
+              className={styles.input}
+              placeholder="Se genera automáticamente"
+              value={sku}
+              readOnly
+              aria-readonly="true"
             />
             <button
               type="button"
-              className={styles.generateButton}
-              onClick={handleCreateCategory}
-              disabled={creatingCategory}
+              className={styles.inlineButton}
+              onClick={handleGenerateSku}
+              disabled={generatingSku || Boolean(sku)}
             >
-              {creatingCategory ? "Creando..." : "Crear"}
+              {generatingSku ? "Generando..." : sku ? "SKU asignado" : "Generar"}
             </button>
           </div>
-        ) : (
-          <button
-            type="button"
-            className={styles.generateButton}
-            onClick={() => setShowCreateCategory(true)}
-          >
-            + Crear categoría
-          </button>
-        )}
-      </div>
-
-      <h3 className={styles.fieldLabel}>Nombre:</h3>
-      <div className={styles.fieldContainer}>
-        <TextField
-          placeholder="Ej. Harina de mezquite"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-      </div>
-
-      <h3 className={styles.fieldLabel}>SKU:</h3>
-      <div className={styles.fieldContainer}>
-        <div className={styles.codeRow}>
-          <TextField
-            placeholder="Ej. HAR001"
-            value={sku}
-            readOnly
-            aria-readonly="true"
-          />
-          <button
-            type="button"
-            className={styles.generateButton}
-            onClick={handleGenerateSku}
-            disabled={generatingSku || Boolean(sku)}
-          >
-            {generatingSku ? "Generando..." : sku ? "SKU asignado" : "Generar"}
-          </button>
         </div>
-      </div>
-      {skuHint ? <p className={styles.hint}>{skuHint}</p> : null}
 
-      <h3 className={styles.fieldLabel}>Unidad por defecto (opcional):</h3>
-      <div className={`${styles.fieldContainer} ${styles.centeredControl}`}>
-        <select
-          className={styles.select}
-          value={defaultUnitId}
-          onChange={(e) => setDefaultUnitId(e.target.value)}
-        >
-          <option value="">Sin definir</option>
-          {units.map((unit) => (
-            <option key={unit.id} value={unit.id}>
-              {unit.name}
-            </option>
-          ))}
-        </select>
-      </div>
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="unidad">
+            Unidad por defecto <span className={styles.optional}>· opcional</span>
+          </label>
+          <select
+            id="unidad"
+            className={styles.select}
+            value={defaultUnitId}
+            onChange={(e) => setDefaultUnitId(e.target.value)}
+          >
+            <option value="">Sin definir</option>
+            {units.map((unit) => (
+              <option key={unit.id} value={unit.id}>
+                {unit.name}
+              </option>
+            ))}
+          </select>
+        </div>
 
-      <h3 className={styles.fieldLabel}>Imagen (URL):</h3>
-      <div className={styles.fieldContainer}>
-        <TextField
-          placeholder="https://ejemplo.com/imagen.jpg"
-          value={image}
-          onChange={(e) => setImage(e.target.value)}
-        />
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="imagen">
+            Imagen (URL) <span className={styles.optional}>· opcional</span>
+          </label>
+          <input
+            id="imagen"
+            type="url"
+            className={styles.input}
+            placeholder="https://ejemplo.com/imagen.jpg"
+            value={image}
+            onChange={(e) => setImage(e.target.value)}
+          />
+          {!!image.trim() && (
+            <div className={styles.preview}>
+              <img className={styles.previewImg} src={image.trim()} alt="" />
+              <p className={styles.previewText}>Vista previa</p>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <div className={styles.info} role="note">
+        <Info size={18} className={styles.infoIcon} />
+        <div className={styles.infoBody}>
+          <p className={styles.infoTitle}>¿Cómo se genera el SKU?</p>
+          <p className={styles.infoText}>
+            {skuHint ??
+              (skuPrefix
+                ? `3 letras de la categoría ("${skuPrefix}") seguidas de un consecutivo de 3 dígitos: ${skuPrefix}001, ${skuPrefix}002, ...`
+                : "3 letras de la categoría seguidas de un consecutivo de 3 dígitos. Por ejemplo, Harina genera HAR001, HAR002, ...")}
+          </p>
+          <p className={styles.infoText}>
+            Selecciona la categoría y pulsa <strong>Generar</strong> para
+            obtener el siguiente SKU disponible. El SKU no se escribe a mano:
+            si cambias la categoría, se borra y hay que generarlo de nuevo.
+          </p>
+        </div>
       </div>
 
       {error ? <p className={styles.error}>{error}</p> : null}
 
-      <BottomButton onClick={handleSubmit} disabled={loading}>
-        {loading ? "Guardando..." : "Registrar producto"}
-      </BottomButton>
+      <div className={styles.actions}>
+        <button
+          type="button"
+          className={styles.cancel}
+          onClick={() => router.push("/inventory/new-product")}
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          className={styles.submit}
+          onClick={handleSubmit}
+          disabled={loading}
+        >
+          {loading ? "Guardando..." : "Registrar producto base"}
+        </button>
+      </div>
     </div>
   );
 };

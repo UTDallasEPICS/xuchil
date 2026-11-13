@@ -60,9 +60,9 @@ describe('Módulo de Inventario', () => {
     await navigateTo('/inventory/new-raw-material');
     await browser.waitForElementVisible('h1');
 
-    await browser.typeText('textarea[placeholder="Ej. MP009"]', `MP-TEST-${Date.now()}`);
-    await browser.typeText('textarea[placeholder="Ej. Harina de trigo"]', 'Materia prima de prueba');
-    await browser.typeText('textarea[placeholder="Cantidad"]', '-1');
+    await browser.typeText('input[placeholder="Ej. MP009"]', `MP-TEST-${Date.now()}`);
+    await browser.typeText('input[placeholder="Ej. Harina de trigo"]', 'Materia prima de prueba');
+    await browser.typeText('#stock', '-1');
     await browser.click('//button[contains(., "Registrar materia prima")]');
 
     await browser.assertPageContains('El stock no puede ser negativo.');
@@ -76,11 +76,11 @@ describe('Módulo de Inventario', () => {
     this.timeout(15000);
 
     await navigateTo('/inventory/new-raw-material');
-    await browser.waitForElementVisible('textarea[placeholder="Ej. MP009"]');
+    await browser.waitForElementVisible('input[placeholder="Ej. MP009"]');
     await browser.click('//button[contains(., "Generar")]');
 
     const generatedCode = await browser.getAttribute(
-      'textarea[placeholder="Ej. MP009"]',
+      'input[placeholder="Ej. MP009"]',
       'value'
     );
 
