@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Button from "@/components/Button";
+import { ChevronLeft, X } from "lucide-react";
 import Modal from "@/components/Modal";
 import styles from "./NewProcess.module.css";
 
@@ -435,47 +435,63 @@ const NewProcessPage = () => {
   };
 
   return (
-    <div className={`page ${styles.pageWrapper}`}>
-      <div className={styles.headerContainer}>
-        <h1>Crear nuevo proceso</h1>
-        <p>Define la información base y los pasos del flujo. Las materias primas se asignan al paso que las consume.</p>
-      </div>
+    <div className="page">
+      <form onSubmit={handleSubmit} className={styles.wrapper}>
+        <button
+          type="button"
+          className={styles.back}
+          onClick={() => router.push("/process-control")}
+        >
+          <ChevronLeft size={18} />
+          Control de procesos
+        </button>
 
-      <div className={styles.container}>
-        <form onSubmit={handleSubmit} className={styles.form}>
-          {/* Información básica del proceso */}
-          <div className={styles.section}>
-            <h2>Información del Proceso</h2>
-            <div className={styles.inputGroup}>
-              <label className={styles.label}>Variante de producto</label>
-              <select
-                className={styles.input}
-                value={productVariantId}
-                onChange={(e) => setProductVariantId(e.target.value)}
-                required
-              >
-                <option value="">Seleccionar...</option>
-                {variants.map((variant) => (
-                  <option key={variant.id} value={variant.id}>
-                    {variant.product?.name ? `${variant.product.name} — ${variant.name}` : variant.name}
-                  </option>
-                ))}
-              </select>
-              <Button
-                type="button"
-                action="secondary"
-                onClick={() => setShowCreateProduct((prev) => !prev)}
-              >
-                {showCreateProduct ? "Cancelar producto nuevo" : "+ Crear producto nuevo"}
-              </Button>
-            </div>
+        <h1 className={styles.title}>Nuevo proceso</h1>
+        <p className={styles.intro}>
+          Define la información base y los pasos del flujo. Las materias primas
+          se asignan al paso que las consume.
+        </p>
+
+        <p className={styles.sectionLabel}>Información del proceso</p>
+
+        <section className={styles.card}>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="variante">
+              Variante de producto
+            </label>
+            <select
+              id="variante"
+              className={styles.select}
+              value={productVariantId}
+              onChange={(e) => setProductVariantId(e.target.value)}
+              required
+            >
+              <option value="">Seleccionar...</option>
+              {variants.map((variant) => (
+                <option key={variant.id} value={variant.id}>
+                  {variant.product?.name ? `${variant.product.name} — ${variant.name}` : variant.name}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              className={styles.linkButton}
+              onClick={() => setShowCreateProduct((prev) => !prev)}
+            >
+              {showCreateProduct ? "Cancelar producto nuevo" : "+ Crear producto nuevo"}
+            </button>
 
             {showCreateProduct && (
-              <div className={styles.materialRow}>
-                <div className={styles.inputGroup}>
-                  <label className={styles.label}>Categoría</label>
+              <div className={styles.subPanel}>
+                <p className={styles.subTitle}>Producto nuevo</p>
+
+                <div className={styles.subField}>
+                  <label className={styles.label} htmlFor="nueva-categoria">
+                    Categoría
+                  </label>
                   <select
-                    className={styles.input}
+                    id="nueva-categoria"
+                    className={styles.select}
                     value={newCategoryId}
                     onChange={(e) => {
                       setNewCategoryId(e.target.value);
@@ -491,27 +507,40 @@ const NewProcessPage = () => {
                     ))}
                   </select>
                   {showCreateCategory ? (
-                    <div className={styles.quantityGroup}>
+                    <div className={styles.codeRow}>
                       <input
                         type="text"
                         className={styles.input}
                         value={newCategoryName}
                         onChange={(e) => setNewCategoryName(e.target.value)}
                         placeholder="Nueva categoría"
+                        aria-label="Nombre de la nueva categoría"
                       />
-                      <Button type="button" action="secondary" size="small" onClick={handleCreateCategory}>
+                      <button
+                        type="button"
+                        className={styles.inlineButton}
+                        onClick={handleCreateCategory}
+                      >
                         {creatingCategory ? "Creando..." : "Crear"}
-                      </Button>
+                      </button>
                     </div>
                   ) : (
-                    <Button type="button" action="secondary" size="small" onClick={() => setShowCreateCategory(true)}>
+                    <button
+                      type="button"
+                      className={styles.linkButton}
+                      onClick={() => setShowCreateCategory(true)}
+                    >
                       + Crear categoría
-                    </Button>
+                    </button>
                   )}
                 </div>
-                <div className={styles.inputGroup}>
-                  <label className={styles.label}>Nombre del producto</label>
+
+                <div className={styles.subField}>
+                  <label className={styles.label} htmlFor="nuevo-producto">
+                    Nombre del producto
+                  </label>
                   <input
+                    id="nuevo-producto"
                     type="text"
                     className={styles.input}
                     value={newProductName}
@@ -519,10 +548,14 @@ const NewProcessPage = () => {
                     placeholder="Ej: Galletas de avena"
                   />
                 </div>
-                <div className={styles.inputGroup}>
-                  <label className={styles.label}>SKU</label>
-                  <div className={styles.quantityGroup}>
+
+                <div className={styles.subField}>
+                  <label className={styles.label} htmlFor="nuevo-sku">
+                    SKU
+                  </label>
+                  <div className={styles.codeRow}>
                     <input
+                      id="nuevo-sku"
                       type="text"
                       className={styles.input}
                       value={newProductSku}
@@ -530,15 +563,24 @@ const NewProcessPage = () => {
                       aria-readonly="true"
                       placeholder="Ej: GAL001"
                     />
-                    <Button type="button" action="secondary" onClick={handleGenerateSku} disabled={Boolean(newProductSku)}>
+                    <button
+                      type="button"
+                      className={styles.inlineButton}
+                      onClick={handleGenerateSku}
+                      disabled={Boolean(newProductSku)}
+                    >
                       {newProductSku ? "SKU asignado" : "Generar"}
-                    </Button>
+                    </button>
                   </div>
-                  {skuHint ? <p className={styles.label}>{skuHint}</p> : null}
+                  {skuHint ? <p className={styles.hint}>{skuHint}</p> : null}
                 </div>
-                <div className={styles.inputGroup}>
-                  <label className={styles.label}>Nombre de la variante</label>
+
+                <div className={styles.subField}>
+                  <label className={styles.label} htmlFor="nueva-variante">
+                    Nombre de la variante
+                  </label>
                   <input
+                    id="nueva-variante"
                     type="text"
                     className={styles.input}
                     value={newVariantName}
@@ -546,133 +588,167 @@ const NewProcessPage = () => {
                     placeholder="Ej: Bolsa de 500 g"
                   />
                 </div>
+
                 {createProductError ? (
-                  <p className={styles.label} style={{ color: "#b91c1c" }}>{createProductError}</p>
+                  <p className={styles.error}>{createProductError}</p>
                 ) : null}
-                <Button
+
+                <button
                   type="button"
-                  action="primary"
+                  className={styles.subSubmit}
                   onClick={handleCreateProductAndVariant}
                 >
                   {creatingProduct ? "Creando..." : "Crear y seleccionar"}
-                </Button>
+                </button>
               </div>
             )}
-            <div className={styles.inputGroup}>
-              <label className={styles.label}>Nombre del proceso</label>
+          </div>
+
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="nombre-proceso">
+              Nombre del proceso
+            </label>
+            <input
+              id="nombre-proceso"
+              type="text"
+              className={styles.input}
+              value={processName}
+              onChange={(e) => setProcessName(e.target.value)}
+              placeholder="Ej: Galletas de Zanahoria"
+              required
+            />
+          </div>
+
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="descripcion-proceso">
+              Descripción
+            </label>
+            <textarea
+              id="descripcion-proceso"
+              className={styles.textarea}
+              value={processDescription}
+              onChange={(e) => setProcessDescription(e.target.value)}
+              placeholder="Descripción del proceso..."
+              rows={3}
+            />
+          </div>
+        </section>
+
+        <div className={styles.sectionHead}>
+          <p className={styles.sectionLabel}>Pasos del proceso</p>
+          <button type="button" className={styles.inlineButton} onClick={addStep}>
+            + Agregar paso
+          </button>
+        </div>
+
+        {steps.map((step) => (
+          <section key={step.id} className={styles.card}>
+            <div className={styles.stepHead}>
+              <h2 className={styles.stepTitle}>Paso {step.id}</h2>
+              {steps.length > 1 && (
+                <button
+                  type="button"
+                  className={styles.removeButton}
+                  onClick={() => removeStep(step.id)}
+                  aria-label={`Eliminar paso ${step.id}`}
+                  title="Eliminar paso"
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor={`paso-${step.id}-titulo`}>
+                Título del paso
+              </label>
               <input
+                id={`paso-${step.id}-titulo`}
                 type="text"
                 className={styles.input}
-                value={processName}
-                onChange={(e) => setProcessName(e.target.value)}
-                placeholder="Ej: Galletas de Zanahoria"
+                value={step.title}
+                onChange={(e) => updateStep(step.id, "title", e.target.value)}
+                placeholder="Ej: Preparación de ingredientes"
                 required
               />
             </div>
-            <div className={styles.inputGroup}>
-              <label className={styles.label}>Descripción</label>
+
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor={`paso-${step.id}-descripcion`}>
+                Descripción
+              </label>
               <textarea
+                id={`paso-${step.id}-descripcion`}
                 className={styles.textarea}
-                value={processDescription}
-                onChange={(e) => setProcessDescription(e.target.value)}
-                placeholder="Descripción del proceso..."
-                rows={3}
+                value={step.description || ""}
+                onChange={(e) => updateStep(step.id, "description", e.target.value)}
+                placeholder="Descripción detallada del paso..."
+                rows={2}
               />
             </div>
-          </div>
 
-          {/* Pasos del proceso */}
-          <div className={styles.section}>
-            <div className={styles.sectionHeader}>
-              <h2>Pasos del Proceso</h2>
-              <Button type="button" onClick={addStep} action="secondary" size="small">
-                + Agregar Paso
-              </Button>
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor={`paso-${step.id}-tiempo`}>
+                Tiempo estimado (minutos)
+              </label>
+              <input
+                id={`paso-${step.id}-tiempo`}
+                type="number"
+                min="1"
+                step="1"
+                className={styles.input}
+                value={step.estimatedTime}
+                onChange={(e) =>
+                  updateStep(
+                    step.id,
+                    "estimatedTime",
+                    Math.max(1, parseInt(e.target.value) || 1)
+                  )
+                }
+                required
+              />
             </div>
-            {steps.map((step) => (
-              <div key={step.id} className={styles.stepCard}>
-                <div className={styles.stepHeader}>
-                  <h3>Paso {step.id}</h3>
-                  {steps.length > 1 && (
-                    <Button
-                      type="button"
-                      onClick={() => removeStep(step.id)}
-                      action="negative"
-                      className={styles.removeButton}
-                    >
-                      ✕
-                    </Button>
-                  )}
-                </div>
 
-                <div className={styles.inputGroup}>
-                  <label className={styles.label}>Título del paso</label>
-                  <input
-                    type="text"
-                    className={styles.input}
-                    value={step.title}
-                    onChange={(e) => updateStep(step.id, "title", e.target.value)}
-                    placeholder="Ej: Preparación de ingredientes"
-                    required
-                  />
-                </div>
+            <div className={styles.field}>
+              <label className={styles.checkbox}>
+                <input
+                  type="checkbox"
+                  checked={step.hasInput}
+                  onChange={(e) => updateStep(step.id, "hasInput", e.target.checked)}
+                />
+                Requiere entrada de datos
+              </label>
+            </div>
 
-                <div className={styles.inputGroup}>
-                  <label className={styles.label}>Descripción</label>
-                  <textarea
-                    className={styles.textarea}
-                    value={step.description || ""}
-                    onChange={(e) => updateStep(step.id, "description", e.target.value)}
-                    placeholder="Descripción detallada del paso..."
-                    rows={2}
-                  />
-                </div>
+            <div className={styles.field}>
+              <div className={styles.materialsHead}>
+                <span className={styles.label}>Materias primas de este paso</span>
+                <button
+                  type="button"
+                  className={styles.inlineButton}
+                  onClick={() => addMaterial(step.id)}
+                >
+                  + Agregar materia prima
+                </button>
+              </div>
 
-                <div className={styles.stepDetails}>
-                  <div className={styles.inputGroup}>
-                    <label className={styles.label}>Tiempo estimado (minutos)</label>
-                    <input
-                      type="number"
-                      min="1"
-                      step="1"
-                      className={styles.input}
-                      value={step.estimatedTime}
-                      onChange={(e) =>
-                        updateStep(
-                          step.id,
-                          "estimatedTime",
-                          Math.max(1, parseInt(e.target.value) || 1)
-                        )
-                      }
-                      required
-                    />
-                  </div>
+              {step.materials.length === 0 && (
+                <p className={styles.empty}>Sin materias primas asignadas.</p>
+              )}
 
-                  <div className={styles.checkboxGroup}>
-                    <label className={styles.checkboxLabel}>
-                      <input
-                        type="checkbox"
-                        checked={step.hasInput}
-                        onChange={(e) => updateStep(step.id, "hasInput", e.target.checked)}
-                      />
-                      Requiere entrada de datos
-                    </label>
-                  </div>
-                </div>
-
-                {/* Materias primas del paso */}
-                <div className={styles.sectionHeader}>
-                  <label className={styles.label}>Materias primas de este paso</label>
-                  <Button type="button" onClick={() => addMaterial(step.id)} action="secondary" size="small">
-                    + Agregar Materia Prima
-                  </Button>
-                </div>
-                {step.materials.map((material, index) => (
-                  <div key={index} className={styles.materialRow}>
-                    <div className={styles.inputGroup}>
-                      <label className={styles.label}>Materia prima</label>
+              {step.materials.map((material, index) => (
+                <div key={index} className={styles.materialRow}>
+                  <div className={styles.materialFields}>
+                    <div className={styles.subField}>
+                      <label
+                        className={styles.label}
+                        htmlFor={`paso-${step.id}-material-${index}`}
+                      >
+                        Materia prima
+                      </label>
                       <select
-                        className={styles.input}
+                        id={`paso-${step.id}-material-${index}`}
+                        className={styles.select}
                         value={material.rawMaterialId}
                         onChange={(e) => updateMaterial(step.id, index, "rawMaterialId", e.target.value)}
                         required
@@ -685,10 +761,17 @@ const NewProcessPage = () => {
                         ))}
                       </select>
                     </div>
-                    <div className={styles.quantityGroup}>
-                      <div className={styles.inputGroup}>
-                        <label className={styles.label}>Cantidad sugerida</label>
+
+                    <div className={styles.subField}>
+                      <label
+                        className={styles.label}
+                        htmlFor={`paso-${step.id}-cantidad-${index}`}
+                      >
+                        Cantidad sugerida
+                      </label>
+                      <div className={styles.pair}>
                         <input
+                          id={`paso-${step.id}-cantidad-${index}`}
                           type="number"
                           min="0.001"
                           step="0.001"
@@ -704,40 +787,50 @@ const NewProcessPage = () => {
                           }
                           required
                         />
+                        <select
+                          className={styles.select}
+                          value={material.unitId}
+                          onChange={(e) => updateMaterial(step.id, index, "unitId", parseInt(e.target.value, 10))}
+                          aria-label="Unidad"
+                        >
+                          {units.map((unit) => (
+                            <option key={unit.id} value={unit.id}>
+                              {unit.name}
+                            </option>
+                          ))}
+                        </select>
                       </div>
-                      <select
-                        value={material.unitId}
-                        onChange={(e) => updateMaterial(step.id, index, "unitId", parseInt(e.target.value, 10))}
-                        className={styles.unitSelect}
-                      >
-                        {units.map((unit) => (
-                          <option key={unit.id} value={unit.id}>
-                            {unit.name}
-                          </option>
-                        ))}
-                      </select>
                     </div>
-                    <Button
-                      type="button"
-                      onClick={() => removeMaterial(step.id, index)}
-                      action="negative"
-                      className={styles.removeButton}
-                    >
-                      ✕
-                    </Button>
                   </div>
-                ))}
-              </div>
-            ))}
-          </div>
 
-          <div className={styles.submitSection}>
-            <Button type="submit" action="primary">
-              Crear Proceso
-            </Button>
-          </div>
-        </form>
-      </div>
+                  <button
+                    type="button"
+                    className={styles.removeButton}
+                    onClick={() => removeMaterial(step.id, index)}
+                    aria-label="Eliminar materia prima"
+                    title="Eliminar materia prima"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </section>
+        ))}
+
+        <div className={styles.actions}>
+          <button
+            type="button"
+            className={styles.cancel}
+            onClick={() => router.push("/process-control")}
+          >
+            Cancelar
+          </button>
+          <button type="submit" className={styles.submit}>
+            Crear proceso
+          </button>
+        </div>
+      </form>
 
       <Modal
         open={modal.open}
