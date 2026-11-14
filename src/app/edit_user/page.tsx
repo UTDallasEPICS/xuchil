@@ -6,16 +6,31 @@ import Button from "@/components/Button";
 import Modal from "@/components/Modal";
 import styles from "./EditUser.module.css";
 
+// El avatar es válido si es una URL que no contiene "placeholder" y comienza con http(s), data:image/ o /
+const validAvatar = (value: unknown): string => {
+  if (typeof value !== "string") return "";
+  const url = value.trim();
+  if (!url || /(?:^|\/)\w*placeholder[^/]*\.(?:svg|png|jpe?g|webp)(?:[?#].*)?$/i.test(url)) {
+    return "";
+  }
+  return /^(https?:\/\/|data:image\/|\/(?!\/))/i.test(url) ? url : "";
+};
+
+const isPhoneValid = (phone: string) =>
+  !phone.trim() || phone.replace(/\D/g, "").length >= 10;
+
 const EditProfile = () => {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [userData, setUserData] = useState<any>(null);
   const [name, setName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [avatar, setAvatar] = useState("");
   const [avatarPreview, setAvatarPreview] = useState("");
+  const [feedback, setFeedback] = useState<{ type: "error" | "success"; message: string } | null>(
+    null
+  );
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   useEffect(() => {
@@ -34,22 +49,14 @@ const EditProfile = () => {
 
         const fullName = authUser.worker?.fullName ?? "";
         const nameParts = fullName.split(" ");
+        const safeAvatar = validAvatar(authUser.worker?.profilePhotoUrl);
 
-        const mapped = {
-          name: fullName,
-          email: authUser.email ?? "",
-          phone: authUser.worker?.phone ?? "",
-          avatar: authUser.worker?.profilePhotoUrl ?? "",
-          position: authUser.worker?.role?.name ?? "",
-          hours: "",
-        };
-
-        setUserData(mapped);
         setName(nameParts[0] || "");
         setLastName(nameParts.slice(1).join(" ") || "");
-        setEmail(mapped.email);
-        setPhone(mapped.phone);
-        setAvatarPreview(mapped.avatar || "");
+        setEmail(authUser.email ?? "");
+        setPhone(authUser.worker?.phone ?? "");
+        setAvatar(safeAvatar);
+        setAvatarPreview(safeAvatar);
       } catch {
         router.push("/login");
       }
@@ -72,12 +79,20 @@ const EditProfile = () => {
     const file = e.target.files?.[0];
     if (file) {
       if (!file.type.match("image.*")) {
-        alert("Por favor selecciona una imagen (JPEG, PNG, etc.)");
+        setFeedback({
+          type: "error",
+          message: "Selecciona una imagen válida (JPEG, PNG, etc.).",
+        });
+        e.target.value = "";
         return;
       }
 
       if (file.size > 2 * 1024 * 1024) {
-        alert("La imagen es demasiado grande (máximo 2MB)");
+        setFeedback({
+          type: "error",
+          message: "La imagen es demasiado grande (máximo 2 MB).",
+        });
+        e.target.value = "";
         return;
       }
 
@@ -86,32 +101,67 @@ const EditProfile = () => {
         const result = reader.result as string;
         setAvatarPreview(result);
         setAvatar(result);
+        setFeedback({
+          type: "success",
+          message: "Imagen cargada correctamente. Pulsa Guardar para aplicar los cambios.",
+        });
       };
       reader.readAsDataURL(file);
     }
   };
 
   const handleSave = async () => {
+    setFeedback(null);
+
+    if (!name.trim()) {
+      setFeedback({
+        type: "error",
+        message: "El nombre es obligatorio.",
+      });
+      return;
+    }
+
+    if (!isPhoneValid(phone)) {
+      setFeedback({
+        type: "error",
+        message: "El teléfono debe tener al menos 10 dígitos.",
+      });
+      return;
+    }
+
     try {
+      const safeAvatar = validAvatar(avatar || avatarPreview);
       const response = await fetch("/api/users/me", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
-          fullName: `${name} ${lastName}`.trim(),
-          phone,
-          profilePhotoUrl: avatar || avatarPreview,
+          fullName: `${name.trim()} ${lastName.trim()}`.trim(),
+          phone: phone.trim() || null,
+          profilePhotoUrl: safeAvatar || null,
         }),
       });
 
       if (!response.ok) {
+        setFeedback({
+          type: "error",
+          message: "No se pudieron guardar los cambios. Intenta nuevamente.",
+        });
         return;
       }
 
+      setFeedback({
+        type: "success",
+        message: "Tus cambios se guardaron correctamente.",
+      });
       setShowSuccessModal(true);
     } catch {
-      return;
+      setFeedback({
+        type: "error",
+        message: "Error de conexión al guardar el perfil.",
+      });
     }
   };
 
@@ -243,6 +293,20 @@ const EditProfile = () => {
           />
         </div>
       </section>
+
+      {feedback && (
+        <p
+          role={feedback.type === "error" ? "alert" : "status"}
+          style={{
+            color: feedback.type === "error" ? "#b42318" : "#176b42",
+            margin: "4px 0",
+            textAlign: "center",
+            fontWeight: 700,
+          }}
+        >
+          {feedback.message}
+        </p>
+      )}
 
       <div className={styles.actions}>
         <Button size="regular" action="outline" onClick={() => router.push("/user")}>
