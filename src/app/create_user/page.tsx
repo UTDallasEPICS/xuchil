@@ -56,6 +56,10 @@ const CreateUser = () => {
   const isPhoneValid = (phone: string) =>
     phone.replace(/\D/g, "").length >= 10;
 
+  const passwordTooShort = password.length > 0 && password.length < 8;
+  const passwordsDoNotMatch = confirmPassword.length > 0 && password !== confirmPassword;
+  const passwordsReady = password.length >= 8 && password === confirmPassword;
+
   const handleCreateUser = () => {
     if (
       !name ||
@@ -210,6 +214,11 @@ const CreateUser = () => {
               boxSizing: "border-box",
             }}
           />
+          {passwordTooShort && (
+            <p role="alert" style={{ color: "#b42318", fontSize: "0.85rem", margin: "4px 0" }}>
+              La contraseña debe tener al menos 8 caracteres.
+            </p>
+          )}
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
@@ -242,6 +251,11 @@ const CreateUser = () => {
               boxSizing: "border-box",
             }}
           />
+          {passwordsDoNotMatch && (
+            <p role="alert" style={{ color: "#b42318", fontSize: "0.85rem", margin: "4px 0" }}>
+              Las contraseñas no coinciden.
+            </p>
+          )}
           <button
             type="button"
             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
@@ -263,6 +277,7 @@ const CreateUser = () => {
           size="regular"
           action="primary"
           onClick={handleCreateUser}
+          disabled={!passwordsReady || !isPasswordValid(password)}
           style={{ width: "100%", marginBottom: "50px" }}
         >
           Crear usuario

@@ -3,7 +3,16 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import HeaderXuchil from "@/components/HeaderXuchil";
 import Button from "@/components/Button";
-import Modal from "@/components/Modal";
+
+const PLACEHOLDER_AVATAR = "/user-placeholder.svg";
+
+// el avatar es válido si es una URL que no contiene "placeholder" y termina con una extensión de imagen válida
+const validAvatar = (value: unknown): string => {
+  if (typeof value !== "string") return "";
+  const url = value.trim();
+  if (!url || /(?:^|\/)\w*placeholder[^/]*\.(?:svg|png|jpe?g|webp)(?:[?#].*)?$/i.test(url)) return "";
+  return /^(https?:\/\/|data:image\/|\/(?!\/))/i.test(url) ? url : "";
+};
 
 const EditProfile = () => {
   const router = useRouter();
@@ -15,8 +24,7 @@ const EditProfile = () => {
   const [phone, setPhone] = useState("");
   const [avatar, setAvatar] = useState("");
   const [avatarPreview, setAvatarPreview] = useState("");
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [currentUsername, setCurrentUsername] = useState("");
+  const [feedback, setFeedback] = useState<{ type: "error" | "success"; message: string } | null>(null);
 
   useEffect(() => {
     const storedUserData = localStorage.getItem("userData");
@@ -25,7 +33,6 @@ const EditProfile = () => {
     if (storedUserData && username) {
       const parsedData = JSON.parse(storedUserData);
       setUserData(parsedData);
-      setCurrentUsername(username);
       
       const nameParts = parsedData.name.split(" ");
       setName(nameParts[0] || "");
@@ -49,12 +56,14 @@ const EditProfile = () => {
     const file = e.target.files?.[0];
     if (file) {
       if (!file.type.match('image.*')) {
-        alert('Por favor selecciona una imagen (JPEG, PNG, etc.)');
+        setFeedback({ type: "error", message: "Selecciona una imagen válida (JPEG, PNG, etc.)." });
+        e.target.value = "";
         return;
       }
 
       if (file.size > 2 * 1024 * 1024) {
-        alert('La imagen es demasiado grande (máximo 2MB)');
+        setFeedback({ type: "error", message: "La imagen es demasiado grande (máximo 2 MB)." });
+        e.target.value = "";
         return;
       }
 
@@ -63,6 +72,7 @@ const EditProfile = () => {
         const result = reader.result as string;
         setAvatarPreview(result);
         setAvatar(result);
+        setFeedback({ type: "success", message: "Tus cambios se guardaron correctamente." });
       };
       reader.readAsDataURL(file);
     }
@@ -75,6 +85,12 @@ const EditProfile = () => {
       return;
     }
 
+    if (!name.trim() || !lastName.trim() || !email.trim()) {
+      setFeedback({ type: "error", message: "Completa nombre, apellido y correo antes de guardar." });
+      return;
+    }
+
+    const savedAvatar = validAvatar(avatar) || validAvatar(avatarPreview) || null;
     const updatedUserData = {
       ...userData,
       name: `${name} ${lastName}`.trim(),
@@ -94,12 +110,7 @@ const EditProfile = () => {
       hours: userData.hours
     }));
     
-    setShowSuccessModal(true);
-  };
-
-  const handleConfirm = () => {
-    setShowSuccessModal(false);
-    router.push("/user");
+    setFeedback({ type: "success", message: "Tus cambios se guardaron correctamente." });
   };
 
   return (
@@ -229,7 +240,13 @@ const EditProfile = () => {
             }}
           />
         </div>
-
+        
+        {feedback && (
+          <p role={feedback.type === "error" ? "alert" : "status"}
+            style={{ width: "100%", fontSize: "0.9rem", color: feedback.type === "error" ? "#b42318" : "#176b42", margin: "8px 0", textAlign: "center" }}>
+            {feedback.message}
+          </p>
+        )}
         <Button
           size="regular"
           action="primary"
@@ -240,14 +257,6 @@ const EditProfile = () => {
         </Button>
       </div>
 
-      <Modal
-        open={showSuccessModal}
-        title="¡Cambios guardados!"
-        message="Tu perfil ha sido actualizado exitosamente."
-        confirmText="Aceptar"
-        onlyConfirm
-        onConfirm={handleConfirm}
-      />
     </div>
   );
 };
