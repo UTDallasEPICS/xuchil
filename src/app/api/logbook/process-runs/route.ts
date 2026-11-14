@@ -27,7 +27,14 @@ export async function GET(request: NextRequest) {
   }
 
   if (workerId) {
-    where.createdByWorkerId = workerId;
+    const parsedWorkerId = parseInt(workerId);
+    if (!isNaN(parsedWorkerId)) {
+      where.OR = [
+        { createdByWorkerId: parsedWorkerId },
+        { stepExecutions: { some: { workerId: parsedWorkerId } } },
+        { stepExecutions: { some: { stepParticipants: { some: { workerId: parsedWorkerId } } } } },
+      ];
+    }
   }
 
   if (dateFrom || dateTo) {
@@ -57,7 +64,8 @@ export async function GET(request: NextRequest) {
       },
       include: {
         productVariant: {select: {name: true}},
-        outputUnit: {select: {name: true}}
+        outputUnit: {select: {name: true}},
+        creator: {select: {id: true, fullName: true}},
       }
     });
     return NextResponse.json(processRuns, {status: 200});

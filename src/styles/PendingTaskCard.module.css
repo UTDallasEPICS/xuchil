@@ -1,53 +1,111 @@
 .card {
-    border: 3px solid var(--color-green-dark);
-    border-radius: 20px;
-    padding: 0 16px;
-    padding-bottom: 25px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin: 10px;
-    width: 85vw;
-    min-height: 10vh;
-    box-sizing: border-box;
-    justify-self: center;
-    align-self: center;
-}
-  
-.leftColumn {
-    flex: 3;
-}
-  
-.rightColumn {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
-}
-  
-.circle {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    background-color: var(--color-green-dark);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    font-size: 24px;
-    font-weight: bold;
-    text-align: center;
-}
-  
-.header {
-    margin-bottom: -20;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 15px 18px;
+  background-color: var(--color-field);
+  border: 1px solid var(--color-gray-light);
+  border-radius: 14px;
+  text-align: left;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: border-color 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
-.subheader {
-    margin-bottom: -15;
+.card:hover {
+  border-color: var(--color-green-light);
 }
 
-.text {
-    margin-bottom: -10;
+.card:focus-visible {
+  outline: 2px solid var(--color-green-light);
+  outline-offset: 2px;
+}
+
+.body {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.name {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text-dark);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.step {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--color-green-light);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px 14px;
+  margin: 0;
+  font-size: 0.83rem;
+  color: var(--color-gray-dark);
+}
+
+.metaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.metaIcon {
+  flex: 0 0 auto;
+}
+
+.progress {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: baseline;
+}
+
+.progressValue {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color-green-dark);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.progressTotal {
+  font-weight: 400;
+  color: var(--color-gray-dark);
+}
+
+
+.chevron {
+  flex: 0 0 auto;
+  color: var(--color-gray-dark);
+}
+
+@media (max-width: 480px) {
+  .card {
+    padding: 14px;
+    gap: 10px;
+  }
+
+  .meta {
+    gap: 3px 10px;
+    font-size: 0.79rem;
+  }
 }

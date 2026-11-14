@@ -1,47 +1,58 @@
 .container {
     display: flex;
     align-items: stretch;
-    border: 2px solid #000;
+    border: 1px solid var(--color-gray-light);
     border-radius: 8px;
     overflow: hidden;
-    font-family: sans-serif;
+    font-family: "Lato", sans-serif;
     user-select: none;
     width: fit-content;
+    background-color: var(--color-field);
   }
-  
+
   .button {
-    flex: 0 0 36px;
-    height: 36px;
-    background-color: var(--color-green-light);
-    color: var(--color-text-light);
+    flex: 0 0 40px;
+    height: 40px;
+    background-color: transparent;
+    color: var(--color-green-dark);
     border: none;
+    border-radius: 0;
     display: flex;
     justify-content: center;
     align-items: center;
     cursor: pointer;
-    transition: filter 0.15s ease;
+    transition: background-color 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
-  
-  .squareLeft  { border-radius: 4px 0 0 4px; }
-  .squareRight { border-radius: 0 4px 4px 0; }
-  
-  .button:not(:disabled):hover  { filter: brightness(1.08); }
-  .button:not(:disabled):active { filter: brightness(0.9); }
-  
+
+  .squareLeft  { border-right: 1px solid var(--color-gray-light); }
+  .squareRight { border-left: 1px solid var(--color-gray-light); }
+
+  .button:not(:disabled):hover {
+    background-color: rgb(var(--rgb-green-light) / 0.14);
+    border-color: var(--color-gray-light);
+  }
+
+  .button:not(:disabled):active {
+    background-color: var(--color-gray-light);
+  }
+
   .button:disabled {
-    opacity: 0.4;
+    opacity: 0.35;
     cursor: not-allowed;
   }
-  
+
   .value {
     flex: 0 1 48px;
     min-width: 44px;
-    background-color: var(--color-text-light);
+    background-color: transparent;
     display: flex;
     justify-content: center;
     align-items: center;
     padding: 0 12px;
     font-weight: bold;
     font-size: 1rem;
+    color: var(--color-text-dark);
+    font-variant-numeric: tabular-nums;
   }
-  

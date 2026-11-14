@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { Wheat, ClipboardList, Package, Truck, User } from "lucide-react";
+import { Wheat, ClipboardList, Package, Truck } from "lucide-react";
 import styles from "@/styles/BottomTabBar.module.css";
 import { usePathname } from "next/navigation";
 
@@ -9,7 +9,6 @@ const tabs = [
   { name: "Bitácora", path: "/logbook", icon: <ClipboardList /> },
   { name: "Inventario", path: "/inventory", icon: <Package /> },
   { name: "Pedidos", path: "/orders", icon: <Truck /> },
-  { name: "Usuario", path: "/user", icon: <User /> },
 ];
 
 const BottomTabBar = ({ className }: { className?: string }) => {

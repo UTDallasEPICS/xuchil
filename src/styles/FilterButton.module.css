@@ -1,18 +1,31 @@
+.root {
+  position: relative;
+  flex-shrink: 0;
+}
+
 .filterButton {
-    color: var(--color-text-light);
-    border: none;
-    border-radius: 20px;
-    padding: 10px 15px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background 0.3s ease;
-    font-family: "Lato", sans-serif;
-    font-weight: 700;
-    white-space: nowrap;     
-    flex-shrink: 0;    
+  color: var(--color-text-light);
+  border: none;
+  border-radius: 20px;
+  padding: 10px 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  font-family: "Lato", sans-serif;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.triggerLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 42vw;
 }
 
 .light {
@@ -23,58 +36,171 @@
   background: var(--color-gray-dark);
 }
 
+.outline {
+  background: var(--color-field);
+  border: 1px solid var(--color-gray-light);
+  color: var(--color-green-dark);
+}
+
+.outline:hover {
+  background: rgb(var(--rgb-green-light) / 0.14);
+  border-color: var(--color-gray-light);
+  color: var(--color-green-dark);
+}
+
 .filterButton:hover {
-  background-color: var(--color-gray-dark);
+  background-color: rgb(var(--rgb-green-light) / 0.14);
+  color: var(--color-green-dark);
+  border-color: transparent;
 }
-  
-.overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(193, 188, 172, 0.94); 
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
+
+.filterButtonOpen {
+  background-color: rgb(var(--rgb-green-light) / 0.2);
+  color: var(--color-green-dark);
+}
+
+.chevron {
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.filterButtonOpen .chevron {
+  transform: rotate(180deg);
+}
+
+.menu {
+  position: fixed;
+  z-index: 1000;
+  background-color: var(--color-background);
+  border: 1px solid var(--color-gray-light);
+  border-radius: 14px;
+  box-shadow: 0 12px 28px rgb(var(--rgb-text-dark) / 0.18);
+  padding: 8px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  animation: dropIn 0.14s ease-out;
+}
+
+.menuTitle {
+  margin: 4px 10px 8px 10px;
+  font-family: "Lato", sans-serif;
+  font-weight: 700;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-gray-dark);
+}
+
+.menuList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 10px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--color-text-dark);
+  font-family: "Lato", sans-serif;
+  font-size: 0.95rem;
+  font-weight: 400;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.option:hover {
+  background-color: rgb(var(--rgb-green-light) / 0.14);
+  border-color: transparent;
+}
+
+.option:focus-visible {
+  outline: 2px solid var(--color-green-dark);
+  outline-offset: -2px;
+}
+
+.optionSelected {
+  background-color: rgb(var(--rgb-green-light) / 0.2);
+  font-weight: 700;
+  color: var(--color-green-dark);
+}
+
+.optionGraphic {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  color: var(--color-green-light);
+}
+
+.optionSelected .optionGraphic {
+  color: var(--color-green-dark);
+}
+
+.optionLabel {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.optionCheck {
+  flex: 0 0 auto;
+  color: var(--color-green-dark);
+}
+
+@keyframes dropIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
   }
-  
-.modal {
-    background: none;
-    padding: 20px;
-    text-align: center;
-    min-width: 90%;
-    height: 90%;
-    align-items: flex-start;
-    overflow-y: auto;
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
-  
-.modal h2 {
-    margin-bottom: 20px;
-    font-size: 1.8rem;
-    color: var(--color-text-light);
-    font-weight: bold;
+
+@media (prefers-reduced-motion: reduce) {
+  .menu {
+    animation: none;
+  }
+  .chevron {
+    transition: none;
+  }
 }
-  
-.modal ul {
-    list-style: none;
-    padding: 0;
+
+@media (max-width: 768px) {
+  .filterButton {
+    padding: 8px 12px;
+    font-size: 14px;
+    gap: 6px;
+  }
+
+  .option {
+    padding: 13px 10px;
+    font-size: 1rem;
+  }
+
+  .triggerLabel {
+    max-width: 38vw;
+  }
 }
-  
-.modal li {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 15px;
-    font-size: 1.2rem;
-    color: var(--color-text-light);
-    cursor: pointer;
-    transition: background 0.3s;
+
+@media (max-width: 480px) {
+  .filterButton {
+    padding: 7px 11px;
+    font-size: 13px;
+  }
 }
-  
-.modal li:hover {
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 10px;
-}
-  

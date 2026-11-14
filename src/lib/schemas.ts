@@ -79,7 +79,14 @@ export const templateStepSchema = z.strictObject({
     position: z.number(typeError("position", "number")).int(typeError("position", "int")).optional(),
     idealDurationMin: z.number().int(typeError("idealDurationMin", "int")).optional().nullable(),
     requiresInput: z.boolean(typeError("requiresInput", "boolean")).optional(),
-    instructions: z.string(typeError("instructions", "string")).optional().nullable()
+    instructions: z.string(typeError("instructions", "string")).optional().nullable(),
+    materials: z.array(
+        z.strictObject({
+            rawMaterialId: z.number(requiredError("rawMaterialId")).int(typeError("rawMaterialId", "int")),
+            qtyPerUnitOutput: z.number(requiredError("qtyPerUnitOutput")).positive("qtyPerUnitOutput must be positive."),
+            unitId: z.number(requiredError("unitId")).int(typeError("unitId", "int")),
+        })
+    ).optional()
 })
 
 export const createProcess = z.strictObject({
@@ -92,7 +99,14 @@ export const createProcess = z.strictObject({
             name: z.string(requiredError("name")).min(1, "name cannot be empty."),
             idealDurationMin: z.number(typeError("idealDurationMin", "int")).int(typeError("idealDurationMin", "int")).optional().nullable(),
             requiresInput: z.boolean(typeError("requiresInput", "boolean")).optional(),
-            instructions: z.string(typeError("instructions", "string")).optional().nullable()
+            instructions: z.string(typeError("instructions", "string")).optional().nullable(),
+            materials: z.array(
+                z.strictObject({
+                    rawMaterialId: z.number(requiredError("rawMaterialId")).int(typeError("rawMaterialId", "int")),
+                    qtyPerUnitOutput: z.number(requiredError("qtyPerUnitOutput")).positive("qtyPerUnitOutput must be positive."),
+                    unitId: z.number(requiredError("unitId")).int(typeError("unitId", "int")),
+                })
+            ).optional()
         })
     ).min(1, "must contain at least 1 step")
 })
@@ -127,6 +141,17 @@ export const processRunSchema = z.strictObject({
     notes: z.string(typeError("notes", "string")).optional().nullable()
 })
 
+export const reserveMaterialsSchema = z.strictObject({
+    items: z.array(
+        z.strictObject({
+            templateStepId: z.number(requiredError("templateStepId")).int(typeError("templateStepId", "int")),
+            rawMaterialId: z.number(requiredError("rawMaterialId")).int(typeError("rawMaterialId", "int")),
+            qty: z.number(requiredError("qty")).positive("qty must be positive."),
+            unitId: z.number(requiredError("unitId")).int(typeError("unitId", "int")),
+        })
+    ).min(1, "must contain at least 1 item")
+})
+
 export const inventoryMovementSchema = z.strictObject({
     inventoryLotId: z.number(requiredError("inventoryLotId")).int(typeError("inventoryLotId", "int")),
     direction: MovementDirectionEnum,
@@ -148,6 +173,21 @@ export const rawMaterialSchema = z.strictObject({
     isActive: z.boolean(typeError("isActive", "boolean")).optional()
 })
 
+export const productCategorySchema = z.strictObject({
+    name: z.string(requiredError("name")).min(1, "name cannot be empty."),
+    imageUrl: z.string(typeError("imageUrl", "string")).optional().nullable(),
+    isActive: z.boolean(typeError("isActive", "boolean")).optional()
+})
+
+export const productSchema = z.strictObject({
+    categoryId: z.number(requiredError("categoryId")).int(typeError("categoryId", "int")),
+    sku: z.string(requiredError("sku")).min(1, "sku cannot be empty."),
+    name: z.string(requiredError("name")).min(1, "name cannot be empty."),
+    defaultUnitId: z.number(typeError("defaultUnitId", "int")).int(typeError("defaultUnitId", "int")).optional().nullable(),
+    imageUrl: z.string(typeError("imageUrl", "string")).optional().nullable(),
+    isActive: z.boolean(typeError("isActive", "boolean")).optional()
+})
+
 export const productVariantSchema = z.strictObject({
     productId: z.number(requiredError("productId")).int(typeError("productId", "int")),
     name: z.string(requiredError("name")).min(1, "name cannot be empty."),
@@ -157,6 +197,12 @@ export const productVariantSchema = z.strictObject({
     defaultUnitId: z.number(typeError("defaultUnitId", "int")).int(typeError("defaultUnitId", "int")).optional().nullable(),
     imageUrl: z.string(typeError("imageUrl", "string")).optional().nullable(),
     isActive: z.boolean(typeError("isActive", "boolean")).optional()
+})
+
+export const productVariantWithStockSchema = productVariantSchema.extend({
+    initialStock: z.number().int().nonnegative().optional(),
+    lotCode: z.string().optional(),
+    receivedAt: z.string().optional(),
 })
 
 export const orderItemSchema = z.strictObject({

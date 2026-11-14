@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { orderSchema } from "@/lib/schemas";
-import { z } from "zod";
-import {idError, notFoundError, serverError, validationError} from "@/utils/responses";
-import {verifySession} from "@/lib/session";
+import { idError, notFoundError, serverError, validationError } from "@/utils/responses";
+import { verifySession } from "@/lib/session";
 
 export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   const orderId = parseInt((await context.params).id);
   if (isNaN(orderId)) {
-    return idError('order')
+    return idError('order');
   }
   try {
     const order = await prisma.order.findUnique({
@@ -20,32 +19,32 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
       },
     });
 
-    if (!order) {
-      return notFoundError('order')
+    if (!order || order.status === "CANCELLED") {
+      return notFoundError('order');
     }
 
     return NextResponse.json(order);
   } catch (error) {
-    return serverError('order', 'fetch', error)
+    return serverError('order', 'fetch', error);
   }
 }
 
 export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const orderId = parseInt((await context.params).id);
   if (isNaN(orderId)) {
-    return idError('order')
+    return idError('order');
   }
 
   const body = await request.json();
   const result = orderSchema.safeParse(body);
   if (!result.success) {
-    return validationError('order', result.error)
+    return validationError('order', result.error);
   }
 
   try {
     const existingOrder = await prisma.order.findUnique({ where: { id: orderId } });
-    if (!existingOrder) {
-        return notFoundError('order')
+    if (!existingOrder || existingOrder.status === "CANCELLED") {
+      return notFoundError('order');
     }
     const validBody = result.data;
     const transaction = await prisma.$transaction([
@@ -81,7 +80,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     ]);
     return NextResponse.json(transaction[1]);
   } catch (error) {
-    return serverError('order', 'update', error)
+    return serverError('order', 'update', error);
   }
 }
 
@@ -92,7 +91,7 @@ export async function DELETE(req: NextRequest, context: { params: Promise<{ id: 
   }
   const orderId = parseInt((await context.params).id);
   if (isNaN(orderId)) {
-    return idError('order')
+    return idError('order');
   }
   try {
     await prisma.order.update({
@@ -102,7 +101,6 @@ export async function DELETE(req: NextRequest, context: { params: Promise<{ id: 
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {
-    return serverError('order', 'delete', error)
+    return serverError('order', 'delete', error);
   }
 }
-

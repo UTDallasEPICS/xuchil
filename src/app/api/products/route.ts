@@ -1,6 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
-import { serverError } from "@/utils/responses";
+import { productSchema } from "@/lib/schemas";
+import { serverError, validationError } from "@/utils/responses";
+import { verifySession } from "@/lib/session";
+
+export async function POST(request: NextRequest) {
+  const payload = await verifySession();
+  if (!payload?.isAdmin) {
+    return new NextResponse(null, { status: 403 });
+  }
+
+  try {
+    const body = await request.json();
+    const result = productSchema.safeParse(body);
+    if (!result.success) {
+      return validationError("product", result.error);
+    }
+
+    const product = await prisma.product.create({
+      data: result.data,
+      include: { category: true, defaultUnit: true },
+    });
+
+    return NextResponse.json(product, { status: 201 });
+  } catch (error) {
+    return serverError("product", "create", error);
+  }
+}
 
 export async function GET(request: NextRequest) {
   try {

@@ -1,16 +1,27 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import HeaderXuchil from "@/components/HeaderXuchil";
-import BottomButton from "@/components/BottomButton";
-import DeliveryType from "@/components/DeliveryType";
+import { ArrowLeft, AlertCircle, AlertTriangle } from "lucide-react";
 import TextField from "@/components/TextField";
 import DatePicker from "@/components/DatePicker";
 import OrderedProducts from "@/components/OrderedProducts";
+import Button from "@/components/Button";
+import Modal from "@/components/Modal";
 import { Product } from "@/types/Product";
-import { deliveryVariants } from "@/constants/deliveryConfig";
+import { deliveryVariants, availableVariants } from "@/constants/deliveryConfig";
 import styles from "./NewOrder.module.css";
+
+interface ApiProductVariant {
+  id: number | string;
+  name?: string | null;
+  presentation?: string | null;
+  imageUrl?: string | null;
+  availableStock?: number | string | null;
+  product?: { name?: string | null; categoryId?: number | string | null } | null;
+  inventory?: Array<{ onHand?: number | string | null }>;
+  defaultUnit?: { name?: string | null } | null;
+}
 
 type OrderItemDraft = {
   productId: string;
@@ -28,6 +39,12 @@ function mapDeliveryVariantToApi(variant: keyof typeof deliveryVariants) {
   }
 }
 
+const shortDeliveryLabels: Record<keyof typeof deliveryVariants, string> = {
+  mail: "Correo",
+  personal: "Personal",
+  consignment: "Consignación",
+};
+
 const NewOrderPage = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [clientName, setClientName] = useState("");
@@ -37,6 +54,9 @@ const NewOrderPage = () => {
     keyof typeof deliveryVariants
   >("mail");
   const [orderItems, setOrderItems] = useState<OrderItemDraft[]>([]);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [serverErrorModal, setServerErrorModal] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const router = useRouter();
 
@@ -46,16 +66,16 @@ const NewOrderPage = () => {
     async function loadProducts() {
       const response = await fetch("/api/product-variants", { credentials: "include" });
       if (!response.ok) return;
-      const data = await response.json();
+      const data: ApiProductVariant[] = await response.json();
       if (!mounted) return;
 
       setProducts(
-        data.map((variant: any) => ({
+        data.map((variant) => ({
           id: String(variant.id),
           name: variant.product?.name ?? "Producto",
           presentation: variant.name ?? variant.presentation ?? "",
-          image: variant.imageUrl ?? "/globe.svg",
-          quantity: 0,
+          image: variant.imageUrl || "/globe.svg",
+          quantity: Number(variant.availableStock ?? variant.inventory?.[0]?.onHand ?? 0),
           units: variant.defaultUnit?.name ?? "",
           categoryId: String(variant.product?.categoryId ?? ""),
           variantId: String(variant.id),
@@ -70,19 +90,50 @@ const NewOrderPage = () => {
     };
   }, []);
 
+  const lowStockItems = useMemo(() => {
+    if (products.length === 0 || orderItems.length === 0) return [];
+    const requestedByProduct = new Map<string, number>();
+    for (const item of orderItems) {
+      if (!item.productId || item.quantity <= 0) continue;
+      requestedByProduct.set(
+        item.productId,
+        (requestedByProduct.get(item.productId) ?? 0) + item.quantity
+      );
+    }
+
+    const warnings: { label: string; requested: number; available: number }[] = [];
+    for (const [productId, requested] of requestedByProduct.entries()) {
+      const product = products.find((p) => p.id === productId);
+      if (!product) continue;
+      if (requested > product.quantity) {
+        const label = product.presentation
+          ? `${product.name} (${product.presentation})`
+          : product.name;
+        warnings.push({
+          label,
+          requested,
+          available: product.quantity,
+        });
+      }
+    }
+    return warnings;
+  }, [products, orderItems]);
+
   const handleSubmit = async () => {
+    setFormError(null);
+
     if (!clientName.trim()) {
-      alert("El nombre del cliente es obligatorio.");
+      setFormError("El nombre del cliente es obligatorio.");
       return;
     }
 
     if (!deliveryDate) {
-      alert("Selecciona una fecha de entrega.");
+      setFormError("Selecciona una fecha de entrega.");
       return;
     }
 
     if (!address.trim()) {
-      alert("La dirección de entrega es obligatoria.");
+      setFormError("La dirección de entrega es obligatoria.");
       return;
     }
 
@@ -93,7 +144,7 @@ const NewOrderPage = () => {
       }))
       .filter((item) => !Number.isNaN(item.productVariantId) && item.quantity > 0);
     if (validItems.length === 0) {
-      alert("Agrega al menos un producto al pedido.");
+      setFormError("Agrega al menos un producto con cantidad mayor a cero.");
       return;
     }
 
@@ -115,6 +166,7 @@ const NewOrderPage = () => {
     };
 
     try {
+      setSubmitting(true);
       const response = await fetch("/api/orders", {
         method: "POST",
         credentials: "include",
@@ -129,56 +181,141 @@ const NewOrderPage = () => {
 
       router.replace("/orders/deliveries");
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Error al crear el pedido.");
+      setServerErrorModal(
+        error instanceof Error ? error.message : "Error al crear el pedido."
+      );
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <div className={styles.wrapper}>
-      <HeaderXuchil />
+    <div className="page">
+      <Modal
+        open={Boolean(serverErrorModal)}
+        title="No se pudo crear el pedido"
+        message={serverErrorModal ?? ""}
+        onlyConfirm
+        danger
+        onConfirm={() => setServerErrorModal(null)}
+      />
 
-      <h1 className={styles.title}>Nuevo Pedido</h1>
+      <div className={styles.card}>
+        <div className={styles.head}>
+          <button
+            type="button"
+            className={styles.backBtn}
+            onClick={() => router.push("/orders/deliveries")}
+            aria-label="Volver a entregas"
+          >
+            <ArrowLeft size={20} strokeWidth={2.2} />
+          </button>
+          <h1 className={styles.title}>Nuevo pedido</h1>
+        </div>
 
-      <div className={styles.deliveryType}>
-        <DeliveryType
-          variant={deliveryVariant}
-          type="picker"
-          size="sm"
-          onVariantChange={setDeliveryVariant}
-        />
+        {formError && (
+          <div className={styles.errorBanner} role="alert">
+            <AlertCircle size={18} strokeWidth={2.2} />
+            <span>{formError}</span>
+          </div>
+        )}
+
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="cliente">
+            Cliente
+          </label>
+          <input
+            id="cliente"
+            type="text"
+            className={styles.input}
+            placeholder="Nombre del cliente"
+            value={clientName}
+            onChange={(e) => {
+              setClientName(e.target.value);
+              if (formError) setFormError(null);
+            }}
+          />
+        </div>
+
+        <div className={styles.field}>
+          <span className={styles.label}>Método de entrega</span>
+          <div className={styles.segment} role="radiogroup" aria-label="Método de entrega">
+            {availableVariants.map((variant) => (
+              <button
+                key={variant}
+                type="button"
+                role="radio"
+                aria-checked={deliveryVariant === variant}
+                className={`${styles.segmentOption} ${
+                  deliveryVariant === variant ? styles.segmentActive : ""
+                }`}
+                onClick={() => setDeliveryVariant(variant)}
+              >
+                {shortDeliveryLabels[variant]}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className={styles.field}>
+          <span className={styles.label}>Fecha de entrega</span>
+          <DatePicker
+            value={deliveryDate}
+            onChange={(date) => {
+              setDeliveryDate(date);
+              if (formError) setFormError(null);
+            }}
+          />
+        </div>
+
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="direccion">
+            Dirección de entrega
+          </label>
+          <TextField
+            id="direccion"
+            block
+            placeholder="Calle, número, colonia, ciudad"
+            value={address}
+            onChange={(e) => {
+              setAddress(e.target.value);
+              if (formError) setFormError(null);
+            }}
+          />
+        </div>
+
+        <div className={styles.field}>
+          <span className={styles.label}>Productos</span>
+          {products.length > 0 ? (
+            <OrderedProducts products={products} onChange={setOrderItems} />
+          ) : (
+            <p className={styles.loadingText}>Cargando productos...</p>
+          )}
+
+          {lowStockItems.length > 0 && (
+            <div className={styles.warningBanner} role="status">
+              <AlertTriangle size={18} strokeWidth={2.2} className={styles.warningIcon} />
+              <div className={styles.warningContent}>
+                <strong>Stock actual insuficiente (se guardará como pre-pedido):</strong>
+                <ul className={styles.warningList}>
+                  {lowStockItems.map((item) => (
+                    <li key={item.label}>
+                      {item.label}: solicitas <strong>{item.requested}</strong> y hay{" "}
+                      <strong>{item.available}</strong> disponibles.
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className={styles.submit}>
+          <Button onClick={handleSubmit} disabled={submitting}>
+            {submitting ? "Creando pedido..." : "Crear pedido"}
+          </Button>
+        </div>
       </div>
-
-      <h3>Cliente:</h3>
-      <div className={styles.fieldContainer}>
-        <TextField
-          placeholder="Nombre del cliente"
-          value={clientName}
-          onChange={(e) => setClientName(e.target.value)}
-        />
-      </div>
-
-      <h3>Fecha de entrega:</h3>
-      <div className={styles.fieldContainer}>
-        <DatePicker value={deliveryDate} onChange={setDeliveryDate} />
-      </div>
-
-      <h3>Dirección de entrega:</h3>
-      <div className={styles.fieldContainer}>
-        <TextField
-          placeholder="Dirección completa"
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
-        />
-      </div>
-
-      <h3>Productos:</h3>
-      {products.length > 0 ? (
-        <OrderedProducts products={products} onChange={setOrderItems} />
-      ) : (
-        <p>Cargando productos...</p>
-      )}
-
-      <BottomButton onClick={handleSubmit}>Finalizar registro</BottomButton>
     </div>
   );
 };

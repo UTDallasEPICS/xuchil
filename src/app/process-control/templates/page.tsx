@@ -2,9 +2,16 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import HeaderXuchil from "@/components/HeaderXuchil";
-import Button from "@/components/Button";
+import { ChevronDown, ChevronLeft, ChevronUp, X } from "lucide-react";
 import styles from "./Templates.module.css";
+
+interface StepRequiredMaterial {
+    rawMaterialId: number;
+    qtyPerUnitOutput: number;
+    unitId: number;
+    rawMaterial?: { name: string; code?: string };
+    unit?: { name: string };
+}
 
 interface TemplateStep {
     id: number;
@@ -13,6 +20,13 @@ interface TemplateStep {
     idealDurationMin: number | null;
     requiresInput: boolean;
     instructions: string | null;
+    stepRequiredMaterials?: StepRequiredMaterial[];
+}
+
+interface MaterialRow {
+    rawMaterialId: string;
+    quantity: number;
+    unitId: number;
 }
 
 interface Template {
@@ -45,17 +59,39 @@ const TemplatesPage = () => {
     const [newTplVariantId, setNewTplVariantId] = useState("");
     const [newTplName, setNewTplName] = useState("");
 
+    // Inline product + variant creation
+    const [categories, setCategories] = useState<Array<{ id: number; name: string }>>([]);
+    const [showCreateProduct, setShowCreateProduct] = useState(false);
+    const [newCategoryId, setNewCategoryId] = useState("");
+    const [newProductName, setNewProductName] = useState("");
+    const [newProductSku, setNewProductSku] = useState("");
+    const [newVariantName, setNewVariantName] = useState("");
+    const [skuHint, setSkuHint] = useState<string | null>(null);
+    const [creatingProduct, setCreatingProduct] = useState(false);
+    const [createProductError, setCreateProductError] = useState<string | null>(null);
+    const [showCreateCategory, setShowCreateCategory] = useState(false);
+    const [newCategoryName, setNewCategoryName] = useState("");
+    const [creatingCategory, setCreatingCategory] = useState(false);
+
+    // Raw materials + units for step material assignment
+    const [rawMaterials, setRawMaterials] = useState<Array<{ id: number; name: string; code: string; defaultUnitId: number | null }>>([]);
+    const [units, setUnits] = useState<Array<{ id: number; name: string }>>([]);
+
     // New step form
     const [newStepName, setNewStepName] = useState("");
     const [newStepDuration, setNewStepDuration] = useState("");
     const [newStepInstructions, setNewStepInstructions] = useState("");
     const [newStepRequiresInput, setNewStepRequiresInput] = useState(false);
+    const [newStepMaterials, setNewStepMaterials] = useState<MaterialRow[]>([]);
 
     // Edit step form
     const [editStepName, setEditStepName] = useState("");
     const [editStepDuration, setEditStepDuration] = useState("");
     const [editStepInstructions, setEditStepInstructions] = useState("");
     const [editStepRequiresInput, setEditStepRequiresInput] = useState(false);
+    const [editStepMaterials, setEditStepMaterials] = useState<MaterialRow[]>([]);
+
+    const defaultUnitId = () => units[0]?.id ?? 1;
 
     const loadTemplates = useCallback(async () => {
         const res = await fetch("/api/process-templates", { credentials: "include" });
@@ -84,10 +120,166 @@ const TemplatesPage = () => {
         }
     }, []);
 
+    const loadCategories = useCallback(async () => {
+        const res = await fetch("/api/product-categories", { credentials: "include" });
+        if (res.ok) {
+            setCategories(await res.json());
+        }
+    }, []);
+
+    const loadRefData = useCallback(async () => {
+        const [matsRes, unitsRes] = await Promise.all([
+            fetch("/api/raw-materials", { credentials: "include" }),
+            fetch("/api/units", { credentials: "include" }),
+        ]);
+        if (matsRes.ok) setRawMaterials(await matsRes.json());
+        if (unitsRes.ok) setUnits(await unitsRes.json());
+    }, []);
+
     useEffect(() => {
         loadTemplates();
         loadVariants();
-    }, [loadTemplates, loadVariants]);
+        loadCategories();
+        loadRefData();
+    }, [loadTemplates, loadVariants, loadCategories, loadRefData]);
+
+    // Helpers to edit a material-row list (used by both add and edit step forms).
+    const addMaterialRow = (setter: React.Dispatch<React.SetStateAction<MaterialRow[]>>) =>
+        setter((prev) => [...prev, { rawMaterialId: "", quantity: 1, unitId: defaultUnitId() }]);
+
+    const removeMaterialRow = (setter: React.Dispatch<React.SetStateAction<MaterialRow[]>>, index: number) =>
+        setter((prev) => prev.filter((_, i) => i !== index));
+
+    const updateMaterialRow = (
+        setter: React.Dispatch<React.SetStateAction<MaterialRow[]>>,
+        index: number,
+        field: keyof MaterialRow,
+        value: string | number
+    ) =>
+        setter((prev) =>
+            prev.map((row, i) => {
+                if (i !== index) return row;
+                const updated = { ...row, [field]: value } as MaterialRow;
+                if (field === "rawMaterialId") {
+                    const selected = rawMaterials.find((rm) => String(rm.id) === String(value));
+                    if (selected?.defaultUnitId) updated.unitId = selected.defaultUnitId;
+                }
+                return updated;
+            })
+        );
+
+    const materialsPayload = (rows: MaterialRow[]) =>
+        rows
+            .filter((row) => row.rawMaterialId && row.quantity > 0)
+            .map((row) => ({
+                rawMaterialId: parseInt(row.rawMaterialId, 10),
+                qtyPerUnitOutput: row.quantity,
+                unitId: row.unitId,
+            }));
+
+    const handleCreateCategory = async () => {
+        setCreateProductError(null);
+        if (!newCategoryName.trim()) {
+            setCreateProductError("El nombre de la categoría es obligatorio.");
+            return;
+        }
+        try {
+            setCreatingCategory(true);
+            const res = await fetch("/api/product-categories", {
+                method: "POST",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: newCategoryName.trim(), isActive: true }),
+            });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || "No se pudo crear la categoría.");
+            }
+            const category = await res.json();
+            setCategories((prev) => [...prev, category]);
+            setNewCategoryId(String(category.id));
+            setShowCreateCategory(false);
+            setNewCategoryName("");
+        } catch (err) {
+            setCreateProductError(err instanceof Error ? err.message : "No se pudo crear la categoría.");
+        } finally {
+            setCreatingCategory(false);
+        }
+    };
+
+    const handleGenerateSku = async () => {
+        setCreateProductError(null);
+        if (!newCategoryId) {
+            setCreateProductError("Selecciona primero una categoría para generar el SKU.");
+            return;
+        }
+        try {
+            const res = await fetch(`/api/products/next-sku?category_id=${newCategoryId}`, {
+                credentials: "include",
+                cache: "no-store",
+            });
+            if (!res.ok) throw new Error("No se pudo generar el SKU.");
+            const data = await res.json();
+            setNewProductSku(data.sku);
+            setSkuHint(data.convention);
+        } catch (err) {
+            setCreateProductError(err instanceof Error ? err.message : "No se pudo generar el SKU.");
+        }
+    };
+
+    const handleCreateProductAndVariant = async () => {
+        setCreateProductError(null);
+        if (!newCategoryId) return setCreateProductError("La categoría es obligatoria.");
+        if (!newProductName.trim()) return setCreateProductError("El nombre del producto es obligatorio.");
+        if (!newProductSku.trim()) return setCreateProductError("El SKU es obligatorio.");
+        if (!newVariantName.trim()) return setCreateProductError("El nombre de la variante es obligatorio.");
+
+        try {
+            setCreatingProduct(true);
+            const productRes = await fetch("/api/products", {
+                method: "POST",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    categoryId: parseInt(newCategoryId, 10),
+                    sku: newProductSku.trim(),
+                    name: newProductName.trim(),
+                    isActive: true,
+                }),
+            });
+            if (!productRes.ok) {
+                const err = await productRes.json().catch(() => ({}));
+                throw new Error(err.error || "No se pudo crear el producto.");
+            }
+            const product = await productRes.json();
+
+            const variantRes = await fetch("/api/product-variants", {
+                method: "POST",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ productId: product.id, name: newVariantName.trim(), isActive: true }),
+            });
+            if (!variantRes.ok) {
+                const err = await variantRes.json().catch(() => ({}));
+                throw new Error(err.error || "No se pudo crear la variante.");
+            }
+            const variant = await variantRes.json();
+
+            await loadVariants();
+            setNewTplVariantId(String(variant.id));
+
+            setShowCreateProduct(false);
+            setNewCategoryId("");
+            setNewProductName("");
+            setNewProductSku("");
+            setNewVariantName("");
+            setSkuHint(null);
+        } catch (err) {
+            setCreateProductError(err instanceof Error ? err.message : "No se pudo crear el producto.");
+        } finally {
+            setCreatingProduct(false);
+        }
+    };
 
     const handleCreateTemplate = async () => {
         if (!newTplVariantId || !newTplName.trim()) return;
@@ -143,6 +335,7 @@ const TemplatesPage = () => {
                 idealDurationMin: newStepDuration ? parseInt(newStepDuration) : null,
                 instructions: newStepInstructions.trim() || null,
                 requiresInput: newStepRequiresInput,
+                materials: materialsPayload(newStepMaterials),
             }),
         });
         if (res.ok) {
@@ -151,6 +344,7 @@ const TemplatesPage = () => {
             setNewStepDuration("");
             setNewStepInstructions("");
             setNewStepRequiresInput(false);
+            setNewStepMaterials([]);
             loadTemplates();
         } else {
             const err = await res.json().catch(() => ({}));
@@ -164,6 +358,13 @@ const TemplatesPage = () => {
         setEditStepDuration(step.idealDurationMin?.toString() || "");
         setEditStepInstructions(step.instructions || "");
         setEditStepRequiresInput(step.requiresInput);
+        setEditStepMaterials(
+            (step.stepRequiredMaterials || []).map((m) => ({
+                rawMaterialId: String(m.rawMaterialId),
+                quantity: Number(m.qtyPerUnitOutput),
+                unitId: m.unitId,
+            }))
+        );
     };
 
     const handleSaveStep = async (step: TemplateStep) => {
@@ -178,10 +379,12 @@ const TemplatesPage = () => {
                 idealDurationMin: editStepDuration ? parseInt(editStepDuration) : null,
                 instructions: editStepInstructions.trim() || null,
                 requiresInput: editStepRequiresInput,
+                materials: materialsPayload(editStepMaterials),
             }),
         });
         if (res.ok) {
             setEditingStepId(null);
+            setEditStepMaterials([]);
             loadTemplates();
         }
     };
@@ -201,104 +404,392 @@ const TemplatesPage = () => {
         return `Variante #${tpl.productVariantId}`;
     };
 
+    const renderMaterialsEditor = (
+        rows: MaterialRow[],
+        setter: React.Dispatch<React.SetStateAction<MaterialRow[]>>
+    ) => (
+        <div className={styles.subField}>
+            <div className={styles.materialsHead}>
+                <span className={styles.label}>Materias primas del paso</span>
+                <button type="button" className={styles.inlineButton} onClick={() => addMaterialRow(setter)}>
+                    + Agregar materia prima
+                </button>
+            </div>
+
+            {rows.length === 0 && (
+                <p className={styles.empty}>Sin materias primas asignadas.</p>
+            )}
+
+            {rows.map((row, index) => (
+                <div key={index} className={styles.materialRow}>
+                    <div className={styles.materialFields}>
+                        <select
+                            value={row.rawMaterialId}
+                            onChange={(e) => updateMaterialRow(setter, index, "rawMaterialId", e.target.value)}
+                            className={styles.select}
+                            aria-label="Materia prima"
+                        >
+                            <option value="">Materia prima...</option>
+                            {rawMaterials.map((rm) => (
+                                <option key={rm.id} value={rm.id}>{rm.code} — {rm.name}</option>
+                            ))}
+                        </select>
+                        <div className={styles.pair}>
+                            <input
+                                type="number"
+                                min="0.001"
+                                step="0.001"
+                                value={row.quantity}
+                                onChange={(e) => updateMaterialRow(setter, index, "quantity", Math.max(0.001, parseFloat(e.target.value) || 0.001))}
+                                className={styles.input}
+                                aria-label="Cantidad"
+                            />
+                            <select
+                                value={row.unitId}
+                                onChange={(e) => updateMaterialRow(setter, index, "unitId", parseInt(e.target.value, 10))}
+                                className={styles.select}
+                                aria-label="Unidad"
+                            >
+                                {units.map((u) => (
+                                    <option key={u.id} value={u.id}>{u.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                    <button
+                        type="button"
+                        className={styles.removeButton}
+                        onClick={() => removeMaterialRow(setter, index)}
+                        aria-label="Eliminar materia prima"
+                        title="Eliminar materia prima"
+                    >
+                        <X size={16} />
+                    </button>
+                </div>
+            ))}
+        </div>
+    );
+
     return (
         <div className="page">
-            <HeaderXuchil />
-            <div className={styles.container}>
-                <div className={styles.headerRow}>
-                    <h1>Plantillas de proceso</h1>
-                    <Button size="small" action="secondary" onClick={() => setShowNewTemplate(!showNewTemplate)}>
+            <div className={styles.wrapper}>
+                <button
+                    type="button"
+                    className={styles.back}
+                    onClick={() => router.push("/process-control")}
+                >
+                    <ChevronLeft size={18} />
+                    Control de procesos
+                </button>
+
+                <div className={styles.titleRow}>
+                    <h1 className={styles.title}>Plantillas de proceso</h1>
+                    <button
+                        type="button"
+                        className={styles.inlineButton}
+                        onClick={() => setShowNewTemplate(!showNewTemplate)}
+                    >
                         + Nueva plantilla
-                    </Button>
+                    </button>
                 </div>
 
                 {showNewTemplate && (
-                    <div className={styles.formCard}>
-                        <h3>Nueva plantilla</h3>
-                        <label>Variante de producto:</label>
-                        <select value={newTplVariantId} onChange={(e) => setNewTplVariantId(e.target.value)} className={styles.select}>
-                            <option value="">Seleccionar...</option>
-                            {variants.map((v) => (
-                                <option key={v.id} value={v.id}>
-                                    {v.product?.name} — {v.name}
-                                </option>
-                            ))}
-                        </select>
-                        <label>Nombre:</label>
-                        <input
-                            value={newTplName}
-                            onChange={(e) => setNewTplName(e.target.value)}
-                            placeholder="Ej: Proceso estándar v1"
-                            className={styles.input}
-                        />
-                        <div className={styles.formActions}>
-                            <Button size="small" action="primary" onClick={handleCreateTemplate}>Crear</Button>
-                            <Button size="small" action="secondary" onClick={() => setShowNewTemplate(false)}>Cancelar</Button>
-                        </div>
-                    </div>
+                    <>
+                        <p className={styles.sectionLabel}>Nueva plantilla</p>
+
+                        <section className={styles.card}>
+                            <div className={styles.field}>
+                                <label className={styles.label} htmlFor="plantilla-variante">
+                                    Variante de producto
+                                </label>
+                                <select
+                                    id="plantilla-variante"
+                                    value={newTplVariantId}
+                                    onChange={(e) => setNewTplVariantId(e.target.value)}
+                                    className={styles.select}
+                                >
+                                    <option value="">Seleccionar...</option>
+                                    {variants.map((v) => (
+                                        <option key={v.id} value={v.id}>
+                                            {v.product?.name} — {v.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                <button
+                                    type="button"
+                                    className={styles.linkButton}
+                                    onClick={() => setShowCreateProduct((prev) => !prev)}
+                                >
+                                    {showCreateProduct ? "Cancelar producto nuevo" : "+ Crear producto nuevo"}
+                                </button>
+
+                                {showCreateProduct && (
+                                    <div className={styles.subPanel}>
+                                        <p className={styles.subTitle}>Producto nuevo</p>
+
+                                        <div className={styles.subField}>
+                                            <label className={styles.label} htmlFor="nueva-categoria">
+                                                Categoría
+                                            </label>
+                                            <select
+                                                id="nueva-categoria"
+                                                value={newCategoryId}
+                                                onChange={(e) => {
+                                                    setNewCategoryId(e.target.value);
+                                                    setNewProductSku("");
+                                                    setSkuHint(null);
+                                                }}
+                                                className={styles.select}
+                                            >
+                                                <option value="">Seleccionar...</option>
+                                                {categories.map((c) => (
+                                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                                ))}
+                                            </select>
+                                            {showCreateCategory ? (
+                                                <div className={styles.codeRow}>
+                                                    <input
+                                                        value={newCategoryName}
+                                                        onChange={(e) => setNewCategoryName(e.target.value)}
+                                                        placeholder="Nueva categoría"
+                                                        aria-label="Nombre de la nueva categoría"
+                                                        className={styles.input}
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        className={styles.inlineButton}
+                                                        onClick={handleCreateCategory}
+                                                    >
+                                                        {creatingCategory ? "Creando..." : "Crear"}
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    className={styles.linkButton}
+                                                    onClick={() => setShowCreateCategory(true)}
+                                                >
+                                                    + Crear categoría
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        <div className={styles.subField}>
+                                            <label className={styles.label} htmlFor="nuevo-producto">
+                                                Nombre del producto
+                                            </label>
+                                            <input
+                                                id="nuevo-producto"
+                                                value={newProductName}
+                                                onChange={(e) => setNewProductName(e.target.value)}
+                                                placeholder="Ej: Galletas de avena"
+                                                className={styles.input}
+                                            />
+                                        </div>
+
+                                        <div className={styles.subField}>
+                                            <label className={styles.label} htmlFor="nuevo-sku">
+                                                SKU
+                                            </label>
+                                            <div className={styles.codeRow}>
+                                                <input
+                                                    id="nuevo-sku"
+                                                    value={newProductSku}
+                                                    readOnly
+                                                    aria-readonly="true"
+                                                    placeholder="Ej: GAL001"
+                                                    className={styles.input}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    className={styles.inlineButton}
+                                                    onClick={handleGenerateSku}
+                                                    disabled={Boolean(newProductSku)}
+                                                >
+                                                    Generar
+                                                </button>
+                                            </div>
+                                            {skuHint ? <p className={styles.hint}>{skuHint}</p> : null}
+                                        </div>
+
+                                        <div className={styles.subField}>
+                                            <label className={styles.label} htmlFor="nueva-variante">
+                                                Nombre de la variante
+                                            </label>
+                                            <input
+                                                id="nueva-variante"
+                                                value={newVariantName}
+                                                onChange={(e) => setNewVariantName(e.target.value)}
+                                                placeholder="Ej: Bolsa de 500 g"
+                                                className={styles.input}
+                                            />
+                                        </div>
+
+                                        {createProductError ? (
+                                            <p className={styles.error}>{createProductError}</p>
+                                        ) : null}
+
+                                        <button
+                                            type="button"
+                                            className={styles.primaryButton}
+                                            onClick={handleCreateProductAndVariant}
+                                        >
+                                            {creatingProduct ? "Creando..." : "Crear y seleccionar"}
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className={styles.field}>
+                                <label className={styles.label} htmlFor="plantilla-nombre">
+                                    Nombre
+                                </label>
+                                <input
+                                    id="plantilla-nombre"
+                                    value={newTplName}
+                                    onChange={(e) => setNewTplName(e.target.value)}
+                                    placeholder="Ej: Proceso estándar v1"
+                                    className={styles.input}
+                                />
+                            </div>
+
+                            <div className={`${styles.field} ${styles.formActions}`}>
+                                <button
+                                    type="button"
+                                    className={styles.inlineButton}
+                                    onClick={() => setShowNewTemplate(false)}
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="button"
+                                    className={styles.primaryButton}
+                                    onClick={handleCreateTemplate}
+                                >
+                                    Crear
+                                </button>
+                            </div>
+                        </section>
+                    </>
                 )}
 
                 {templates.length === 0 && !showNewTemplate && (
-                    <p className={styles.emptyText}>No hay plantillas configuradas. Crea una para empezar.</p>
+                    <p className={styles.empty}>No hay plantillas configuradas. Crea una para empezar.</p>
+                )}
+
+                {templates.length > 0 && (
+                    <p className={styles.sectionLabel}>Plantillas registradas</p>
                 )}
 
                 {templates.map((tpl) => (
-                    <div key={tpl.id} className={`${styles.templateCard} ${!tpl.isActive ? styles.inactive : ""}`}>
-                        <div className={styles.templateHeader} onClick={() => setExpandedId(expandedId === tpl.id ? null : tpl.id)}>
-                            <div className={styles.templateInfo}>
+                    <section key={tpl.id} className={`${styles.card} ${!tpl.isActive ? styles.inactive : ""}`}>
+                        <button
+                            type="button"
+                            className={styles.templateHead}
+                            onClick={() => setExpandedId(expandedId === tpl.id ? null : tpl.id)}
+                            aria-expanded={expandedId === tpl.id}
+                        >
+                            <span className={styles.templateInfo}>
                                 <span className={styles.templateName}>{tpl.name}</span>
                                 <span className={styles.variantLabel}>{getVariantLabel(tpl)}</span>
-                            </div>
-                            <div className={styles.templateActions}>
+                            </span>
+                            <span className={styles.templateMeta}>
                                 <span className={`${styles.badge} ${tpl.isActive ? styles.activeBadge : styles.inactiveBadge}`}>
                                     {tpl.isActive ? "Activa" : "Inactiva"}
                                 </span>
                                 <span className={styles.stepCount}>{tpl.templateSteps?.length || 0} pasos</span>
-                                <span className={styles.chevron}>{expandedId === tpl.id ? "▲" : "▼"}</span>
-                            </div>
-                        </div>
+                                {expandedId === tpl.id ? (
+                                    <ChevronUp size={18} className={styles.chevron} />
+                                ) : (
+                                    <ChevronDown size={18} className={styles.chevron} />
+                                )}
+                            </span>
+                        </button>
 
                         {expandedId === tpl.id && (
                             <div className={styles.templateBody}>
-                                <div className={styles.toggleRow}>
-                                    <button className={styles.linkBtn} onClick={() => handleToggleActive(tpl)}>
+                                <div className={styles.materialsHead}>
+                                    <span className={styles.label}>Pasos</span>
+                                    <button type="button" className={styles.linkButton} onClick={() => handleToggleActive(tpl)}>
                                         {tpl.isActive ? "Desactivar" : "Activar"}
                                     </button>
                                 </div>
 
-                                <h4>Pasos:</h4>
                                 {tpl.templateSteps?.length === 0 && (
-                                    <p className={styles.noSteps}>Sin pasos definidos.</p>
+                                    <p className={styles.empty}>Sin pasos definidos.</p>
                                 )}
+
                                 <ol className={styles.stepList}>
                                     {(tpl.templateSteps || [])
                                         .sort((a, b) => a.position - b.position)
-                                        .map((step) => (
+                                        .map((step, index) => (
                                             <li key={step.id} className={styles.stepItem}>
                                                 {editingStepId === step.id ? (
-                                                    <div className={styles.stepEditForm}>
-                                                        <input value={editStepName} onChange={(e) => setEditStepName(e.target.value)} className={styles.input} placeholder="Nombre del paso" />
-                                                        <input value={editStepDuration} onChange={(e) => setEditStepDuration(e.target.value)} type="number" className={styles.input} placeholder="Duración (min)" />
-                                                        <input value={editStepInstructions} onChange={(e) => setEditStepInstructions(e.target.value)} className={styles.input} placeholder="Instrucciones" />
-                                                        <label className={styles.checkLabel}>
+                                                    <div className={styles.stepForm}>
+                                                        <p className={styles.subTitle}>Editar paso</p>
+                                                        <div className={styles.subField}>
+                                                            <label className={styles.label} htmlFor={`editar-${step.id}-nombre`}>
+                                                                Nombre del paso
+                                                            </label>
+                                                            <input
+                                                                id={`editar-${step.id}-nombre`}
+                                                                value={editStepName}
+                                                                onChange={(e) => setEditStepName(e.target.value)}
+                                                                className={styles.input}
+                                                                placeholder="Nombre del paso"
+                                                            />
+                                                        </div>
+                                                        <div className={styles.subField}>
+                                                            <label className={styles.label} htmlFor={`editar-${step.id}-duracion`}>
+                                                                Duración (min)
+                                                            </label>
+                                                            <input
+                                                                id={`editar-${step.id}-duracion`}
+                                                                value={editStepDuration}
+                                                                onChange={(e) => setEditStepDuration(e.target.value)}
+                                                                type="number"
+                                                                className={styles.input}
+                                                                placeholder="Duración (min)"
+                                                            />
+                                                        </div>
+                                                        <div className={styles.subField}>
+                                                            <label className={styles.label} htmlFor={`editar-${step.id}-instrucciones`}>
+                                                                Instrucciones
+                                                            </label>
+                                                            <input
+                                                                id={`editar-${step.id}-instrucciones`}
+                                                                value={editStepInstructions}
+                                                                onChange={(e) => setEditStepInstructions(e.target.value)}
+                                                                className={styles.input}
+                                                                placeholder="Instrucciones"
+                                                            />
+                                                        </div>
+                                                        <label className={styles.checkbox}>
                                                             <input type="checkbox" checked={editStepRequiresInput} onChange={(e) => setEditStepRequiresInput(e.target.checked)} />
                                                             Requiere cantidad
                                                         </label>
+                                                        {renderMaterialsEditor(editStepMaterials, setEditStepMaterials)}
                                                         <div className={styles.formActions}>
-                                                            <button className={styles.saveBtn} onClick={() => handleSaveStep(step)}>Guardar</button>
-                                                            <button className={styles.linkBtn} onClick={() => setEditingStepId(null)}>Cancelar</button>
+                                                            <button type="button" className={styles.inlineButton} onClick={() => setEditingStepId(null)}>Cancelar</button>
+                                                            <button type="button" className={styles.primaryButton} onClick={() => handleSaveStep(step)}>Guardar</button>
                                                         </div>
                                                     </div>
                                                 ) : (
                                                     <div className={styles.stepRow}>
+                                                        <span className={styles.stepNumber}>{index + 1}</span>
                                                         <div className={styles.stepInfo}>
-                                                            <strong>{step.name}</strong>
+                                                            <strong className={styles.stepName}>{step.name}</strong>
                                                             {step.idealDurationMin && <span className={styles.stepDuration}>{step.idealDurationMin} min</span>}
                                                             {step.instructions && <span className={styles.stepInstr}>{step.instructions}</span>}
+                                                            {step.stepRequiredMaterials && step.stepRequiredMaterials.length > 0 && (
+                                                                <span className={styles.stepInstr}>
+                                                                    Materias: {step.stepRequiredMaterials.map((m) => `${m.rawMaterial?.name ?? `#${m.rawMaterialId}`} (${m.qtyPerUnitOutput} ${m.unit?.name ?? ""})`).join(", ")}
+                                                                </span>
+                                                            )}
                                                         </div>
                                                         <div className={styles.stepActions}>
-                                                            <button className={styles.linkBtn} onClick={() => handleStartEditStep(step)}>Editar</button>
-                                                            <button className={styles.linkBtn} onClick={() => handleDeleteStep(step.id)}>Eliminar</button>
+                                                            <button type="button" className={styles.linkButton} onClick={() => handleStartEditStep(step)}>Editar</button>
+                                                            <button type="button" className={styles.dangerLink} onClick={() => handleDeleteStep(step.id)}>Eliminar</button>
                                                         </div>
                                                     </div>
                                                 )}
@@ -307,31 +798,64 @@ const TemplatesPage = () => {
                                 </ol>
 
                                 {showNewStep === tpl.id ? (
-                                    <div className={styles.stepEditForm}>
-                                        <h4>Agregar paso</h4>
-                                        <input value={newStepName} onChange={(e) => setNewStepName(e.target.value)} className={styles.input} placeholder="Nombre del paso" />
-                                        <input value={newStepDuration} onChange={(e) => setNewStepDuration(e.target.value)} type="number" className={styles.input} placeholder="Duración ideal (min)" />
-                                        <input value={newStepInstructions} onChange={(e) => setNewStepInstructions(e.target.value)} className={styles.input} placeholder="Instrucciones (opcional)" />
-                                        <label className={styles.checkLabel}>
+                                    <div className={styles.stepForm}>
+                                        <p className={styles.subTitle}>Agregar paso</p>
+                                        <div className={styles.subField}>
+                                            <label className={styles.label} htmlFor={`nuevo-${tpl.id}-nombre`}>
+                                                Nombre del paso
+                                            </label>
+                                            <input
+                                                id={`nuevo-${tpl.id}-nombre`}
+                                                value={newStepName}
+                                                onChange={(e) => setNewStepName(e.target.value)}
+                                                className={styles.input}
+                                                placeholder="Nombre del paso"
+                                            />
+                                        </div>
+                                        <div className={styles.subField}>
+                                            <label className={styles.label} htmlFor={`nuevo-${tpl.id}-duracion`}>
+                                                Duración ideal (min)
+                                            </label>
+                                            <input
+                                                id={`nuevo-${tpl.id}-duracion`}
+                                                value={newStepDuration}
+                                                onChange={(e) => setNewStepDuration(e.target.value)}
+                                                type="number"
+                                                className={styles.input}
+                                                placeholder="Duración ideal (min)"
+                                            />
+                                        </div>
+                                        <div className={styles.subField}>
+                                            <label className={styles.label} htmlFor={`nuevo-${tpl.id}-instrucciones`}>
+                                                Instrucciones <span className={styles.optional}>· opcional</span>
+                                            </label>
+                                            <input
+                                                id={`nuevo-${tpl.id}-instrucciones`}
+                                                value={newStepInstructions}
+                                                onChange={(e) => setNewStepInstructions(e.target.value)}
+                                                className={styles.input}
+                                                placeholder="Instrucciones (opcional)"
+                                            />
+                                        </div>
+                                        <label className={styles.checkbox}>
                                             <input type="checkbox" checked={newStepRequiresInput} onChange={(e) => setNewStepRequiresInput(e.target.checked)} />
                                             Requiere ingresar cantidad
                                         </label>
+                                        {renderMaterialsEditor(newStepMaterials, setNewStepMaterials)}
                                         <div className={styles.formActions}>
-                                            <Button size="small" action="primary" onClick={() => handleAddStep(tpl.id)}>Agregar</Button>
-                                            <Button size="small" action="secondary" onClick={() => setShowNewStep(null)}>Cancelar</Button>
+                                            <button type="button" className={styles.inlineButton} onClick={() => setShowNewStep(null)}>Cancelar</button>
+                                            <button type="button" className={styles.primaryButton} onClick={() => handleAddStep(tpl.id)}>Agregar</button>
                                         </div>
                                     </div>
                                 ) : (
-                                    <button className={styles.addStepBtn} onClick={() => setShowNewStep(tpl.id)}>+ Agregar paso</button>
+                                    <button type="button" className={styles.addStepButton} onClick={() => setShowNewStep(tpl.id)}>
+                                        + Agregar paso
+                                    </button>
                                 )}
                             </div>
                         )}
-                    </div>
+                    </section>
                 ))}
-
-                <button className={styles.backBtn} onClick={() => router.push("/process-control")}>
-                    ← Volver
-                </button>
             </div>
         </div>
     );

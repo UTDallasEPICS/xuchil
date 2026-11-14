@@ -11,7 +11,7 @@ pnpm install
 ### Paso 2: Inicializar la base de datos
 ```bash
 # Resetear base de datos y poblarla con datos de prueba
-pnpm system:reset:full
+pnpm demo:reset
 ```
 
 ### Paso 3: Iniciar la aplicación
@@ -40,6 +40,12 @@ pnpm test:selenium
 ```bash
 pnpm test:selenium:headless
 ```
+
+Edge es el navegador predeterminado. Para usar Chromium:
+```bash
+BROWSER=chrome pnpm test:selenium:headless
+```
+El navegador y su driver deben estar instalados en el entorno de pruebas.
 
 ### Opción D: Modo watch (ejecuta automáticamente al guardar archivos)
 ```bash
@@ -189,7 +195,7 @@ await browser.executeScript('return document.title');
 
 ### Base de datos vacía
 ```bash
-pnpm system:reset:full
+pnpm demo:reset
 ```
 
 ## 7. 📊 Próximos Pasos

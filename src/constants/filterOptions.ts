@@ -11,6 +11,11 @@ import {
   CalendarArrowUp,
   CalendarArrowDown,
   ListFilter,
+  ArrowDownAZ,
+  ArrowDownWideNarrow,
+  ArrowUpNarrowWide,
+  CheckCircle2,
+  Clock,
 } from "lucide-react";
 
 import type { FilterOption } from "@/types/FilterOption";
@@ -62,8 +67,8 @@ export const dateFilterOptions: FilterOption[] = [
 ];
 
 export const sortFilterOptions: FilterOption[] = [
-  { label: "Más próximos", icon: CalendarArrowUp, value: "asc" },
-  { label: "Más lejanos", icon: CalendarArrowDown, value: "desc" },
+  { label: "Próximos", icon: CalendarArrowUp, value: "asc" },
+  { label: "Lejanos", icon: CalendarArrowDown, value: "desc" },
 ];
 
 export const deliveryFilterOptions: FilterOption[] = [
@@ -71,4 +76,16 @@ export const deliveryFilterOptions: FilterOption[] = [
   { label: "Entrega personal", img: "/Personal.svg", value: "personal" },
   { label: "Envío por correo", img: "/Mail.svg", value: "mail" },
   { label: "En consignación", img: "/Consignment.svg", value: "consignment" },
+];
+
+export const orderStatusFilterOptions: FilterOption[] = [
+  { label: "Todos", icon: ListFilter, value: "all" },
+  { label: "Pendientes", icon: Clock, value: "pending" },
+  { label: "Entregados", icon: CheckCircle2, value: "delivered" },
+];
+
+export const inventorySortOptions: FilterOption[] = [
+  { label: "Nombre A-Z", icon: ArrowDownAZ, value: "name" },
+  { label: "Más existencias", icon: ArrowDownWideNarrow, value: "qty-desc" },
+  { label: "Menos existencias", icon: ArrowUpNarrowWide, value: "qty-asc" },
 ];

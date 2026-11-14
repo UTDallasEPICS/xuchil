@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { orderSchema } from "@/lib/schemas";
-import { z } from "zod";
-import {serverError, validationError} from "@/utils/responses";
-
+import { serverError, validationError } from "@/utils/responses";
 
 export async function GET() {
   try {
+    // DELETE /api/orders/[id] soft-deletes by flipping status to "CANCELLED",
+    // so exclude cancelled rows here so deleted orders disappear from the UI.
     const orders = await prisma.order.findMany({
+      where: { status: { not: "CANCELLED" } },
       include: {
         orderItems: {
           include: { productVariant: true, unit: true },
@@ -22,15 +23,14 @@ export async function GET() {
   }
 }
 
-
 export async function POST(request: NextRequest) {
   const body = await request.json();
   const result = orderSchema.safeParse(body);
   if (!result.success) {
-    return validationError('order', result.error)
+    return validationError('order', result.error);
   }
   try {
-    const validBody = result.data
+    const validBody = result.data;
     const newOrder = await prisma.order.create({
       data: {
         clientName: validBody.clientName,
@@ -58,9 +58,8 @@ export async function POST(request: NextRequest) {
       },
     });
 
-
     return NextResponse.json(newOrder, { status: 201 });
   } catch (error) {
-    return serverError('order', 'create', error)
+    return serverError('order', 'create', error);
   }
 }

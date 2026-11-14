@@ -1,22 +1,33 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
-
-import HeaderXuchil from "@/components/HeaderXuchil";
-import BottomButton from "@/components/BottomButton";
+import { ArrowLeft, Trash2, AlertCircle, AlertTriangle } from "lucide-react";
 import Button from "@/components/Button";
-import DeliveryType from "@/components/DeliveryType";
 import TextField from "@/components/TextField";
 import DatePicker from "@/components/DatePicker";
 import OrderedProducts from "@/components/OrderedProducts";
 import DeleteModal from "@/components/DeleteModal";
+import Modal from "@/components/Modal";
 
 import { fetchOrderByIdClient } from "@/lib/ordersClient";
-import { deliveryVariants } from "@/constants/deliveryConfig";
+import { deliveryVariants, availableVariants } from "@/constants/deliveryConfig";
 import { Product } from "@/types/Product";
 
 import styles from "./EditOrder.module.css";
+
+type OrderDetails = Awaited<ReturnType<typeof fetchOrderByIdClient>>;
+
+interface ApiProductVariant {
+  id: number | string;
+  name?: string | null;
+  presentation?: string | null;
+  imageUrl?: string | null;
+  availableStock?: number | string | null;
+  product?: { name?: string | null; categoryId?: number | string | null } | null;
+  inventory?: Array<{ onHand?: number | string | null }>;
+  defaultUnit?: { name?: string | null } | null;
+}
 
 type OrderItemDraft = {
   productId: string;
@@ -34,6 +45,12 @@ function mapDeliveryVariantToApi(variant: keyof typeof deliveryVariants) {
   }
 }
 
+const shortDeliveryLabels: Record<keyof typeof deliveryVariants, string> = {
+  mail: "Correo",
+  personal: "Personal",
+  consignment: "Consignación",
+};
+
 function parseDateMx(date: string): Date | null {
   const [dd, mm, yyyy] = date.split("/").map(Number);
   if (!dd || !mm || !yyyy) return null;
@@ -44,7 +61,7 @@ const EditOrderPage = () => {
   const { orderId } = useParams<{ orderId: string }>();
   const router = useRouter();
 
-  const [order, setOrder] = useState<any | null>(null);
+  const [order, setOrder] = useState<OrderDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<Product[]>([]);
   const [clientName, setClientName] = useState("");
@@ -53,11 +70,16 @@ const EditOrderPage = () => {
   const [deliveryVariant, setDeliveryVariant] = useState<keyof typeof deliveryVariants>("mail");
   const [initialOrderItems, setInitialOrderItems] = useState<OrderItemDraft[]>([]);
   const [orderItems, setOrderItems] = useState<OrderItemDraft[]>([]);
+  const [showDelete, setShowDelete] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [serverErrorModal, setServerErrorModal] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     let mounted = true;
     const idNum = Number(orderId);
     if (Number.isNaN(idNum)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setOrder(null);
       setLoading(false);
       return;
@@ -77,22 +99,17 @@ const EditOrderPage = () => {
   useEffect(() => {
     if (!order) return;
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setClientName(order.clientName ?? "");
     setAddress(order.address ?? "");
     setDeliveryVariant(order.deliveryVariant ?? "mail");
     setDeliveryDate(order.deliveryDate ? parseDateMx(order.deliveryDate) : null);
-    setOrderItems(
-      (order.products || []).map((product: any) => ({
-        productId: String(product.id),
-        quantity: Number(product.quantity || 0),
-      }))
-    );
-    setInitialOrderItems(
-      (order.products || []).map((product: any) => ({
-        productId: String(product.id),
-        quantity: Number(product.quantity || 0),
-      }))
-    );
+    const mappedItems = (order.products || []).map((product) => ({
+      productId: String(product.id),
+      quantity: Number(product.quantity || 0),
+    }));
+    setOrderItems(mappedItems);
+    setInitialOrderItems(mappedItems);
   }, [order]);
 
   useEffect(() => {
@@ -101,16 +118,16 @@ const EditOrderPage = () => {
     async function loadProducts() {
       const response = await fetch("/api/product-variants", { credentials: "include" });
       if (!response.ok) return;
-      const data = await response.json();
+      const data: ApiProductVariant[] = await response.json();
       if (!mounted) return;
 
       setProducts(
-        data.map((variant: any) => ({
+        data.map((variant) => ({
           id: String(variant.id),
           name: variant.product?.name ?? "Producto",
           presentation: variant.name ?? variant.presentation ?? "",
-          image: variant.imageUrl ?? "/globe.svg",
-          quantity: 0,
+          image: variant.imageUrl || "/globe.svg",
+          quantity: Number(variant.availableStock ?? variant.inventory?.[0]?.onHand ?? 0),
           units: variant.defaultUnit?.name ?? "",
           categoryId: String(variant.product?.categoryId ?? ""),
           variantId: String(variant.id),
@@ -125,25 +142,53 @@ const EditOrderPage = () => {
     };
   }, []);
 
-  const [showDelete, setShowDelete] = useState(false);
+  const lowStockItems = useMemo(() => {
+    if (products.length === 0 || orderItems.length === 0 || order?.delivered) return [];
+    const requestedByProduct = new Map<string, number>();
+    for (const item of orderItems) {
+      if (!item.productId || item.quantity <= 0) continue;
+      requestedByProduct.set(
+        item.productId,
+        (requestedByProduct.get(item.productId) ?? 0) + item.quantity
+      );
+    }
+
+    const warnings: { label: string; requested: number; available: number }[] = [];
+    for (const [productId, requested] of requestedByProduct.entries()) {
+      const product = products.find((p) => p.id === productId);
+      if (!product) continue;
+      if (requested > product.quantity) {
+        const label = product.presentation
+          ? `${product.name} (${product.presentation})`
+          : product.name;
+        warnings.push({
+          label,
+          requested,
+          available: product.quantity,
+        });
+      }
+    }
+    return warnings;
+  }, [products, orderItems, order?.delivered]);
 
   const handleCancel = () => router.back();
 
   const handleSave = async () => {
     if (!order?.id) return;
+    setFormError(null);
 
     if (!clientName.trim()) {
-      alert("El nombre del cliente es obligatorio.");
+      setFormError("El nombre del cliente es obligatorio.");
       return;
     }
 
     if (!deliveryDate) {
-      alert("Selecciona una fecha de entrega.");
+      setFormError("Selecciona una fecha de entrega.");
       return;
     }
 
     if (!address.trim()) {
-      alert("La dirección de entrega es obligatoria.");
+      setFormError("La dirección de entrega es obligatoria.");
       return;
     }
 
@@ -154,7 +199,7 @@ const EditOrderPage = () => {
       }))
       .filter((item) => !Number.isNaN(item.productVariantId) && item.quantity > 0);
     if (validItems.length === 0) {
-      alert("Agrega al menos un producto al pedido.");
+      setFormError("Agrega al menos un producto con cantidad mayor a cero.");
       return;
     }
 
@@ -176,6 +221,7 @@ const EditOrderPage = () => {
     };
 
     try {
+      setSaving(true);
       const response = await fetch(`/api/orders/${order.id}`, {
         method: "PUT",
         credentials: "include",
@@ -190,14 +236,17 @@ const EditOrderPage = () => {
 
       router.replace("/orders/deliveries");
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Error al actualizar el pedido.");
+      setServerErrorModal(
+        error instanceof Error ? error.message : "Error al actualizar el pedido."
+      );
+    } finally {
+      setSaving(false);
     }
   };
 
-  const handleDelete = () => setShowDelete(true);
-
   const confirmDelete = async () => {
     if (!order?.id) return;
+    setShowDelete(false);
 
     try {
       const response = await fetch(`/api/orders/${order.id}`, {
@@ -205,21 +254,57 @@ const EditOrderPage = () => {
         credentials: "include",
       });
 
+      if (response.status === 403) {
+        setServerErrorModal("Solo un administrador puede eliminar pedidos.");
+        return;
+      }
+
       if (!response.ok) {
         throw new Error("No se pudo eliminar el pedido.");
       }
 
       router.replace("/orders/deliveries");
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Error al eliminar el pedido.");
+      setServerErrorModal(
+        error instanceof Error ? error.message : "Error al eliminar el pedido."
+      );
     }
   };
 
-  if (loading) return <p>Cargando pedido...</p>;
-  if (!order) return <p>Pedido no encontrado</p>;
+  if (loading) {
+    return (
+      <div className="page">
+        <div className={styles.card}>
+          <p className={styles.loadingText}>Cargando pedido...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!order) {
+    return (
+      <div className="page">
+        <div className={styles.card}>
+          <p className={styles.loadingText}>Pedido no encontrado.</p>
+          <Button action="secondary" onClick={() => router.push("/orders/deliveries")}>
+            Volver a entregas
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <>
+    <div className="page">
+      <Modal
+        open={Boolean(serverErrorModal)}
+        title="Atención"
+        message={serverErrorModal ?? ""}
+        onlyConfirm
+        danger
+        onConfirm={() => setServerErrorModal(null)}
+      />
+
       {showDelete && (
         <DeleteModal
           message={`¿Eliminar definitivamente el pedido #${order.id}?`}
@@ -228,64 +313,138 @@ const EditOrderPage = () => {
         />
       )}
 
-      <div className={styles.wrapper}>
-        <div className={styles.cancelWrapper}>
-          <Button size="small" action="secondary" onClick={handleCancel}>
-            Cancelar
-          </Button>
-        </div>
-        <div className={styles.deleteWrapper}>
-          <Button size="small" action="negative" onClick={handleDelete}>
-            Eliminar
-          </Button>
-        </div>
+      <div className={styles.card}>
+        <div className={styles.head}>
+          <button
+            type="button"
+            className={styles.backBtn}
+            onClick={handleCancel}
+            aria-label="Cancelar edición"
+          >
+            <ArrowLeft size={20} strokeWidth={2.2} />
+          </button>
 
-        <HeaderXuchil />
+          <h1 className={styles.title}>Pedido #{order.id}</h1>
 
-        <h1 className={styles.title}>Pedido #{order.id}</h1>
-
-        <div className={styles.deliveryType}>
-          <DeliveryType
-            variant={deliveryVariant}
-            type="picker"
-            size="sm"
-            onVariantChange={setDeliveryVariant}
-          />
-        </div>
-
-        <h3>Cliente:</h3>
-        <div className={styles.fieldContainer}>
-          <TextField
-            placeholder="Nombre del cliente"
-            value={clientName}
-            onChange={(e) => setClientName(e.target.value)}
-          />
+          <button
+            type="button"
+            className={styles.deleteBtn}
+            onClick={() => setShowDelete(true)}
+            aria-label="Eliminar pedido"
+          >
+            <Trash2 size={17} strokeWidth={2.2} />
+            <span>Eliminar</span>
+          </button>
         </div>
 
-        <h3>Fecha de entrega:</h3>
-        <div className={styles.fieldContainer}>
-          <DatePicker value={deliveryDate} onChange={setDeliveryDate} />
-        </div>
-
-        <h3>Dirección de entrega:</h3>
-        <div className={styles.fieldContainer}>
-          <TextField
-            placeholder="Dirección completa"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-          />
-        </div>
-
-        <h3>Productos:</h3>
-        {products.length > 0 ? (
-          <OrderedProducts products={products} value={initialOrderItems} onChange={setOrderItems} />
-        ) : (
-          <p>Cargando productos...</p>
+        {formError && (
+          <div className={styles.errorBanner} role="alert">
+            <AlertCircle size={18} strokeWidth={2.2} />
+            <span>{formError}</span>
+          </div>
         )}
 
-        <BottomButton onClick={handleSave}>Finalizar edición</BottomButton>
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="cliente">
+            Cliente
+          </label>
+          <input
+            id="cliente"
+            type="text"
+            className={styles.input}
+            placeholder="Nombre del cliente"
+            value={clientName}
+            onChange={(e) => {
+              setClientName(e.target.value);
+              if (formError) setFormError(null);
+            }}
+          />
+        </div>
+
+        <div className={styles.field}>
+          <span className={styles.label}>Método de entrega</span>
+          <div className={styles.segment} role="radiogroup" aria-label="Método de entrega">
+            {availableVariants.map((variant) => (
+              <button
+                key={variant}
+                type="button"
+                role="radio"
+                aria-checked={deliveryVariant === variant}
+                className={`${styles.segmentOption} ${
+                  deliveryVariant === variant ? styles.segmentActive : ""
+                }`}
+                onClick={() => setDeliveryVariant(variant)}
+              >
+                {shortDeliveryLabels[variant]}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className={styles.field}>
+          <span className={styles.label}>Fecha de entrega</span>
+          <DatePicker
+            value={deliveryDate}
+            onChange={(date) => {
+              setDeliveryDate(date);
+              if (formError) setFormError(null);
+            }}
+          />
+        </div>
+
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="direccion">
+            Dirección de entrega
+          </label>
+          <TextField
+            id="direccion"
+            block
+            placeholder="Dirección completa"
+            value={address}
+            onChange={(e) => {
+              setAddress(e.target.value);
+              if (formError) setFormError(null);
+            }}
+          />
+        </div>
+
+        <div className={styles.field}>
+          <span className={styles.label}>Productos</span>
+          {products.length > 0 ? (
+            <OrderedProducts
+              products={products}
+              value={initialOrderItems}
+              onChange={setOrderItems}
+            />
+          ) : (
+            <p className={styles.loadingText}>Cargando productos...</p>
+          )}
+
+          {lowStockItems.length > 0 && (
+            <div className={styles.warningBanner} role="status">
+              <AlertTriangle size={18} strokeWidth={2.2} className={styles.warningIcon} />
+              <div className={styles.warningContent}>
+                <strong>Stock actual insuficiente (se actualizará como pre-pedido):</strong>
+                <ul className={styles.warningList}>
+                  {lowStockItems.map((item) => (
+                    <li key={item.label}>
+                      {item.label}: solicitas <strong>{item.requested}</strong> y hay{" "}
+                      <strong>{item.available}</strong> disponibles.
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className={styles.submit}>
+          <Button onClick={handleSave} disabled={saving}>
+            {saving ? "Guardando cambios..." : "Finalizar edición"}
+          </Button>
+        </div>
       </div>
-    </>
+    </div>
   );
 };
 

@@ -1,0 +1,79 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 20px;
+    align-items: center;
+    width: 100%;
+    max-width: 640px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.card {
+    width: 100%;
+    border: 1px solid #d1d5db;
+    border-radius: 12px;
+    padding: 16px 20px;
+    background: #ffffff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.card:hover {
+    border-color: #16a34a;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.cardDisabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.cardDisabled:hover {
+    border-color: #d1d5db;
+    box-shadow: none;
+}
+
+.info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    text-align: left;
+}
+
+.name {
+    font-weight: 600;
+    font-size: 1.05rem;
+}
+
+.meta {
+    font-size: 0.85rem;
+    color: #6b7280;
+}
+
+.badge {
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.activeBadge {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.inactiveBadge {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+.emptyText {
+    color: #6b7280;
+    text-align: center;
+}

@@ -18,7 +18,9 @@ export interface DatePickerProps {
   disabled?: boolean;
 }
 
-const todayPlaceholder = format(new Date(), "dd/MM/yyyy");
+const DISPLAY_FORMAT = "d MMM yyyy";
+
+const todayPlaceholder = format(new Date(), DISPLAY_FORMAT, { locale: es });
 
 interface CustomInputProps {
   value?: string;
@@ -36,9 +38,13 @@ const CustomInput = forwardRef<HTMLButtonElement, CustomInputProps>(
       onClick={onClick}
       disabled={disabled}
     >
-      <span className={styles.display}>{value || placeholder}</span>
-      <span className={styles.button}>
-        <CalendarIcon size={18} strokeWidth={2} />
+      <span
+        className={`${styles.display} ${!value ? styles.placeholder : ""}`}
+      >
+        {value || placeholder}
+      </span>
+      <span className={styles.icon}>
+        <CalendarIcon size={20} strokeWidth={2} />
       </span>
     </button>
   )
@@ -61,10 +67,11 @@ const DatePicker: React.FC<DatePickerProps> = ({
     customInput={
       <CustomInput placeholder={todayPlaceholder} disabled={disabled} />
     }
-    dateFormat="dd/MM/yyyy"
+    dateFormat={DISPLAY_FORMAT}
     locale="es"
     disabled={disabled}
     popperClassName={styles.popper}
+    wrapperClassName={styles.wrapper}
   />
 );
 

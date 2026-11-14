@@ -3,8 +3,8 @@
  * Funciones helper adicionales para escenarios complejos
  */
 
-import BrowserHelper from './browser';
-import { Selectors } from './selectors';
+import BrowserHelper from './browser.ts';
+import { Selectors } from './selectors.ts';
 
 export class TestUtils {
   constructor(private browser: BrowserHelper) {}

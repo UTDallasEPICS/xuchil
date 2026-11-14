@@ -3,7 +3,9 @@ import prisma from "@/lib/db";
 import { StepStatus, ProcessStatus } from "@prisma/client";
 import { idError, notFoundError, serverError } from "@/utils/responses";
 import { processPauseSchema } from "@/lib/schemas";
+import { consumeForStep, InsufficientStockError } from "@/lib/consumption";
 import { z } from "zod";
+import { verifySession } from "@/lib/session";
 
 export async function POST(
   _req: Request,
@@ -21,10 +23,19 @@ export async function POST(
 
   try {
     const now = new Date();
+    const payload = await verifySession();
+    const workerId = payload?.workerId ?? null;
 
     const currentStep = await prisma.stepExecution.findUnique({
       where: { id: stepId },
-      select: { status: true, startedAt: true, processRunId: true, processRun: { select: { status: true } } },
+      select: {
+        status: true,
+        startedAt: true,
+        processRunId: true,
+        templateStepId: true,
+        workerId: true,
+        processRun: { select: { status: true, createdByWorkerId: true } },
+      },
     });
 
     if (!currentStep) {
@@ -38,41 +49,92 @@ export async function POST(
 
 
     switch (action) {
-      case "start":
+      case "start": {
         if (currentStep.status !== StepStatus.PENDING) {
           return NextResponse.json({ error: "Step must be PENDING to start" }, { status: 400 });
         }
-        newStatus = StepStatus.IN_PROGRESS;
-        if (currentStep.startedAt === null) {
-          updateData.startedAt = now;
-        }
-        // Start or resume the process run as needed
-        if (runStatus === ProcessStatus.PLANNED || runStatus === ProcessStatus.PAUSED) {
-          const runData: { status: typeof ProcessStatus.IN_PROGRESS; startedAt?: Date } = {
-            status: ProcessStatus.IN_PROGRESS,
-          };
-          if (runStatus === ProcessStatus.PLANNED) {
-            runData.startedAt = now;
-          }
-          await prisma.processRun.update({
-            where: { id: processRunId },
-            data: runData,
-          });
-          // Close any open pause record
-          if (runStatus === ProcessStatus.PAUSED) {
-            const openPause = await prisma.processPause.findFirst({
-              where: { processRunId, endedAt: null },
-              orderBy: { startedAt: "desc" },
-            });
-            if (openPause) {
-              await prisma.processPause.update({
-                where: { id: openPause.id },
-                data: { endedAt: now },
-              });
+
+        // Optional per-step quantity adjustments for material consumption.
+        let actualByMaterial: Map<number, { qty: number; unitId: number }> | undefined;
+        try {
+          const startBody = await _req.json();
+          if (startBody && Array.isArray(startBody.materials)) {
+            actualByMaterial = new Map();
+            for (const m of startBody.materials) {
+              if (
+                typeof m?.rawMaterialId === "number" &&
+                typeof m?.qty === "number" &&
+                typeof m?.unitId === "number"
+              ) {
+                actualByMaterial.set(m.rawMaterialId, { qty: m.qty, unitId: m.unitId });
+              }
             }
           }
+        } catch {
+          // body is optional
         }
-        break;
+
+        try {
+          const updatedStep = await prisma.$transaction(async (tx) => {
+            // Start or resume the process run as needed.
+            if (runStatus === ProcessStatus.PLANNED || runStatus === ProcessStatus.PAUSED) {
+              const runData: { status: typeof ProcessStatus.IN_PROGRESS; startedAt?: Date } = {
+                status: ProcessStatus.IN_PROGRESS,
+              };
+              if (runStatus === ProcessStatus.PLANNED) {
+                runData.startedAt = now;
+              }
+              const processRunUpdate = currentStep.processRun.createdByWorkerId == null && workerId
+                ? { ...runData, createdByWorkerId: workerId }
+                : runData;
+              await tx.processRun.update({ where: { id: processRunId }, data: processRunUpdate });
+              if (runStatus === ProcessStatus.PAUSED) {
+                const openPause = await tx.processPause.findFirst({
+                  where: { processRunId, endedAt: null },
+                  orderBy: { startedAt: "desc" },
+                });
+                if (openPause) {
+                  await tx.processPause.update({ where: { id: openPause.id }, data: { endedAt: now } });
+                }
+              }
+            }
+
+            // Consume reserved materials for this step (no-op if none reserved).
+            await consumeForStep(tx, {
+              stepExecutionId: stepId,
+              processRunId,
+              templateStepId: currentStep.templateStepId,
+              now,
+              actualByMaterial,
+            });
+
+            // Flip the step to IN_PROGRESS.
+            return tx.stepExecution.update({
+              where: { id: stepId },
+              data: {
+                status: StepStatus.IN_PROGRESS,
+                ...(workerId ? { workerId } : {}),
+                ...(currentStep.startedAt === null ? { startedAt: now } : {}),
+              },
+            });
+          });
+
+          return NextResponse.json(updatedStep);
+        } catch (err) {
+          if (err instanceof InsufficientStockError) {
+            return NextResponse.json(
+              {
+                error: "No hay suficiente materia prima para iniciar el paso.",
+                rawMaterialId: err.rawMaterialId,
+                neededBase: err.neededBase,
+                availableBase: err.availableBase,
+              },
+              { status: 409 }
+            );
+          }
+          throw err;
+        }
+      }
       case "resume":
         if (runStatus !== ProcessStatus.PAUSED) {
           return NextResponse.json({ error: `Cannot resume process run in ${runStatus} status` }, { status: 400 });

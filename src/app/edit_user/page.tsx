@@ -1,20 +1,36 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import HeaderXuchil from "@/components/HeaderXuchil";
+import { ArrowLeft } from "lucide-react";
 import Button from "@/components/Button";
 import Modal from "@/components/Modal";
+import styles from "./EditUser.module.css";
+
+// El avatar es válido si es una URL que no contiene "placeholder" y comienza con http(s), data:image/ o /
+const validAvatar = (value: unknown): string => {
+  if (typeof value !== "string") return "";
+  const url = value.trim();
+  if (!url || /(?:^|\/)\w*placeholder[^/]*\.(?:svg|png|jpe?g|webp)(?:[?#].*)?$/i.test(url)) {
+    return "";
+  }
+  return /^(https?:\/\/|data:image\/|\/(?!\/))/i.test(url) ? url : "";
+};
+
+const isPhoneValid = (phone: string) =>
+  !phone.trim() || phone.replace(/\D/g, "").length >= 10;
 
 const EditProfile = () => {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [userData, setUserData] = useState<any>(null);
   const [name, setName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [avatar, setAvatar] = useState("");
   const [avatarPreview, setAvatarPreview] = useState("");
+  const [feedback, setFeedback] = useState<{ type: "error" | "success"; message: string } | null>(
+    null
+  );
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   useEffect(() => {
@@ -33,22 +49,14 @@ const EditProfile = () => {
 
         const fullName = authUser.worker?.fullName ?? "";
         const nameParts = fullName.split(" ");
+        const safeAvatar = validAvatar(authUser.worker?.profilePhotoUrl);
 
-        const mapped = {
-          name: fullName,
-          email: authUser.email ?? "",
-          phone: authUser.worker?.phone ?? "",
-          avatar: authUser.worker?.profilePhotoUrl ?? "",
-          position: authUser.worker?.role?.name ?? "",
-          hours: "",
-        };
-
-        setUserData(mapped);
         setName(nameParts[0] || "");
         setLastName(nameParts.slice(1).join(" ") || "");
-        setEmail(mapped.email);
-        setPhone(mapped.phone);
-        setAvatarPreview(mapped.avatar || "/user-placeholder.svg");
+        setEmail(authUser.email ?? "");
+        setPhone(authUser.worker?.phone ?? "");
+        setAvatar(safeAvatar);
+        setAvatarPreview(safeAvatar);
       } catch {
         router.push("/login");
       }
@@ -59,7 +67,7 @@ const EditProfile = () => {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [router]);
 
   const handleImageUploadClick = () => {
     if (fileInputRef.current) {
@@ -70,13 +78,21 @@ const EditProfile = () => {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (!file.type.match('image.*')) {
-        alert('Por favor selecciona una imagen (JPEG, PNG, etc.)');
+      if (!file.type.match("image.*")) {
+        setFeedback({
+          type: "error",
+          message: "Selecciona una imagen válida (JPEG, PNG, etc.).",
+        });
+        e.target.value = "";
         return;
       }
 
       if (file.size > 2 * 1024 * 1024) {
-        alert('La imagen es demasiado grande (máximo 2MB)');
+        setFeedback({
+          type: "error",
+          message: "La imagen es demasiado grande (máximo 2 MB).",
+        });
+        e.target.value = "";
         return;
       }
 
@@ -85,32 +101,67 @@ const EditProfile = () => {
         const result = reader.result as string;
         setAvatarPreview(result);
         setAvatar(result);
+        setFeedback({
+          type: "success",
+          message: "Imagen cargada correctamente. Pulsa Guardar para aplicar los cambios.",
+        });
       };
       reader.readAsDataURL(file);
     }
   };
 
   const handleSave = async () => {
+    setFeedback(null);
+
+    if (!name.trim()) {
+      setFeedback({
+        type: "error",
+        message: "El nombre es obligatorio.",
+      });
+      return;
+    }
+
+    if (!isPhoneValid(phone)) {
+      setFeedback({
+        type: "error",
+        message: "El teléfono debe tener al menos 10 dígitos.",
+      });
+      return;
+    }
+
     try {
+      const safeAvatar = validAvatar(avatar || avatarPreview);
       const response = await fetch("/api/users/me", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
-          fullName: `${name} ${lastName}`.trim(),
-          phone,
-          profilePhotoUrl: avatar || avatarPreview,
+          fullName: `${name.trim()} ${lastName.trim()}`.trim(),
+          phone: phone.trim() || null,
+          profilePhotoUrl: safeAvatar || null,
         }),
       });
 
       if (!response.ok) {
+        setFeedback({
+          type: "error",
+          message: "No se pudieron guardar los cambios. Intenta nuevamente.",
+        });
         return;
       }
 
+      setFeedback({
+        type: "success",
+        message: "Tus cambios se guardaron correctamente.",
+      });
       setShowSuccessModal(true);
     } catch {
-      return;
+      setFeedback({
+        type: "error",
+        message: "Error de conexión al guardar el perfil.",
+      });
     }
   };
 
@@ -119,141 +170,150 @@ const EditProfile = () => {
     router.push("/user");
   };
 
+  const iniciales =
+    `${name} ${lastName}`
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((p) => p.charAt(0).toUpperCase())
+      .join("") || "?";
+
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        backgroundColor: "var(--color-background)",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        paddingTop: "1rem",
-      }}
-    >
-      <HeaderXuchil />
-
-      <div
-        style={{
-          width: "90%",
-          maxWidth: "360px",
-          backgroundColor: "var(--color-background)",
-          padding: "24px",
-          borderRadius: "20px",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          boxSizing: "border-box",
-        }}
-      >
-        <img
-          src={avatarPreview}
-          alt="Foto de perfil"
-          style={{
-            width: "140px",
-            height: "140px",
-            borderRadius: "50%",
-            backgroundColor: "#ccc",
-            marginBottom: "12px",
-            textAlign: "center",
-            objectFit: "cover",
-          }}
-        />
-
-        <input
-          type="file"
-          id="avatar-upload"
-          ref={fileInputRef}
-          accept="image/*"
-          onChange={handleImageChange}
-          style={{ display: "none" }}
-        />
-        
-        <Button
-          size="small"
-          action="secondary"
-          onClick={handleImageUploadClick}
-          style={{ marginBottom: "20px" }}
+    <div className={styles.wrapper}>
+      <header className={styles.head}>
+        <button
+          type="button"
+          className={styles.back}
+          onClick={() => router.push("/user")}
+          aria-label="Volver al perfil"
         >
-          Subir Foto
-        </Button>
+          <ArrowLeft size={20} />
+        </button>
 
-        <div
-          style={{
-            width: "100%",
-            marginTop: "20px",
-            paddingLeft: "8px",
-            paddingRight: "8px",
-            boxSizing: "border-box",
-          }}
-        >
-          <label>Nombre:</label>
+        <h1 className={styles.title}>Editar perfil</h1>
+      </header>
+
+      <section className={styles.card}>
+        <div className={styles.identity}>
+          {avatarPreview ? (
+            <img
+              className={styles.avatar}
+              src={avatarPreview}
+              alt="Foto de perfil"
+            />
+          ) : (
+            <span className={styles.avatarFallback} aria-hidden="true">
+              {iniciales}
+            </span>
+          )}
+
+          <div className={styles.identityText}>
+            <p className={styles.identityName}>
+              {`${name} ${lastName}`.trim() || "Sin nombre"}
+            </p>
+
+            <input
+              type="file"
+              id="avatar-upload"
+              ref={fileInputRef}
+              accept="image/*"
+              onChange={handleImageChange}
+              className={styles.hidden}
+            />
+
+            <div className={styles.photoBtn}>
+              <Button
+                size="small"
+                action="outline"
+                onClick={handleImageUploadClick}
+              >
+                Cambiar foto
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className={styles.card}>
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="nombre">
+            Nombre
+          </label>
           <input
+            id="nombre"
             type="text"
+            className={styles.input}
+            placeholder="Nombre"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "10px",
-              borderRadius: "10px",
-              border: "1px solid #333",
-              marginBottom: "12px",
-              boxSizing: "border-box",
-            }}
-          />
-
-          <label>Apellido:</label>
-          <input
-            type="text"
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "10px",
-              borderRadius: "10px",
-              border: "1px solid #333",
-              marginBottom: "12px",
-              boxSizing: "border-box",
-            }}
-          />
-
-          <label>Correo Electrónico:</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "10px",
-              borderRadius: "10px",
-              border: "1px solid #333",
-              marginBottom: "12px",
-              boxSizing: "border-box",
-            }}
-          />
-
-          <label>Teléfono:</label>
-          <input
-            type="text"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "10px",
-              borderRadius: "10px",
-              border: "1px solid #333",
-              marginBottom: "20px",
-              boxSizing: "border-box",
-            }}
           />
         </div>
 
-        <Button
-          size="regular"
-          action="primary"
-          onClick={handleSave}
-          style={{ marginTop: "10px", marginBottom: "50px", width: "100%" }}
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="apellido">
+            Apellido
+          </label>
+          <input
+            id="apellido"
+            type="text"
+            className={styles.input}
+            placeholder="Apellido"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+          />
+        </div>
+
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="correo">
+            Correo electrónico
+          </label>
+          <input
+            id="correo"
+            type="email"
+            className={styles.input}
+            placeholder="correo@ejemplo.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </div>
+
+        <div className={styles.field}>
+          <label className={styles.label} htmlFor="telefono">
+            Teléfono
+          </label>
+          <input
+            id="telefono"
+            type="tel"
+            inputMode="tel"
+            className={styles.input}
+            placeholder="+52 951 000 00 00"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+          />
+        </div>
+      </section>
+
+      {feedback && (
+        <p
+          role={feedback.type === "error" ? "alert" : "status"}
+          style={{
+            color: feedback.type === "error" ? "#b42318" : "#176b42",
+            margin: "4px 0",
+            textAlign: "center",
+            fontWeight: 700,
+          }}
         >
-          Listo
+          {feedback.message}
+        </p>
+      )}
+
+      <div className={styles.actions}>
+        <Button size="regular" action="outline" onClick={() => router.push("/user")}>
+          Cancelar
+        </Button>
+        <Button size="regular" action="primary" onClick={handleSave}>
+          Guardar
         </Button>
       </div>
 

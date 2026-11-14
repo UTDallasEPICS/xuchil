@@ -1,26 +1,239 @@
 .wrapper {
+    width: 100%;
+    max-width: 686px;
+    margin: 0 auto;
+    padding: 20px 14px 40px 14px;
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    height: 100%;
+    gap: 16px;
 }
-  
+
+.title {
+    text-align: left;
+    width: 100%;
+    margin: 0;
+    font-size: var(--font-size-h2);
+}
+
+.searchBar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-gray-light);
+    border-radius: 12px;
+}
+
+.searchBar:focus-within {
+    border-color: var(--color-green-light);
+    box-shadow: 0 0 0 3px rgb(var(--rgb-green-light) / 0.14);
+}
+
+.searchIcon {
+    color: var(--color-gray-dark);
+    flex-shrink: 0;
+}
+
+.searchInput {
+    flex: 1 1 auto;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: "Lato", sans-serif;
+    font-size: 0.95rem;
+    color: var(--color-text-dark);
+}
+
+.searchInput::placeholder {
+    color: var(--color-gray-dark);
+}
+
+.clearSearchBtn {
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background-color: var(--color-field);
+    color: var(--color-gray-dark);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.clearSearchBtn:hover {
+    color: var(--color-text-dark);
+}
+
+.toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
 .filters {
     display: flex;
-    gap: 6px;
-    padding: 12px 8px 12px;
-    background: var(--color-gray-light, #eee);
-    flex-shrink: 0;
+    gap: 8px;
+    flex: 1 1 auto;
+    min-width: 0;
     overflow-x: auto;
     white-space: nowrap;
-    scrollbar-width: thin;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
 }
-    
-.scrollArea {
-    flex: 1;
-    overflow-y: auto;
-    padding-bottom: 12vh;
+
+.filters::-webkit-scrollbar {
+    display: none;
+}
+
+.list {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    width: 100%;
+}
+
+.empty {
+    margin: 24px 0;
+    color: var(--color-gray-dark);
+    text-align: center;
+}
+
+.emptyState {
+    width: 100%;
+    min-height: 46vh;
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
+    gap: 26px;
+    padding: 40px 24px;
+    box-sizing: border-box;
+    background: transparent;
+    border: none;
+    border-radius: 16px;
+    color: var(--color-gray-dark);
+    cursor: pointer;
+    transition: color 0.2s ease, background-color 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
-  
+
+.emptyState:hover,
+.emptyState:focus-visible {
+    color: var(--color-green-light);
+    background-color: rgb(var(--rgb-green-light) / 0.06);
+    border-color: transparent;
+}
+
+.emptyState:focus-visible {
+    outline: 2px solid var(--color-green-light);
+    outline-offset: -6px;
+}
+
+.emptyState:active {
+    background-color: rgb(var(--rgb-green-light) / 0.1);
+}
+
+.emptyIcon {
+    width: 148px;
+    height: 148px;
+    border-radius: 50%;
+    border: 3px dashed currentColor;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.7;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.emptyState:hover .emptyIcon,
+.emptyState:focus-visible .emptyIcon {
+    opacity: 1;
+    transform: scale(1.04);
+}
+
+.emptyText {
+    max-width: 20ch;
+    font-family: "Lato", sans-serif;
+    font-size: 1.45rem;
+    font-weight: 700;
+    line-height: 1.45;
+    text-align: center;
+}
+
+.addBtn {
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 16px 12px;
+    background: transparent;
+    border: 1.5px dashed var(--color-green-light);
+    border-radius: 12px;
+    color: var(--color-green-dark);
+    font-family: "Lato", sans-serif;
+    font-weight: 700;
+    font-size: 0.98rem;
+    cursor: pointer;
+    transition: background-color 0.18s ease, border-color 0.18s ease;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.addBtn:hover {
+    background-color: rgb(var(--rgb-green-light) / 0.07);
+    border-color: var(--color-green-dark);
+}
+
+@media (max-width: 640px) {
+    .toolbar {
+        flex-wrap: wrap;
+    }
+
+    .toolbar > nav {
+        order: -1;
+        flex: 1 1 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .emptyIcon {
+        width: 124px;
+        height: 124px;
+    }
+
+    .emptyText {
+        font-size: 1.25rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .emptyState {
+        gap: 22px;
+    }
+
+    .emptyIcon {
+        width: 108px;
+        height: 108px;
+        border-width: 2px;
+    }
+
+    .emptyText {
+        font-size: 1.1rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .emptyIcon {
+        transition: none;
+    }
+}

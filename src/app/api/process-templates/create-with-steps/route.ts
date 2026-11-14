@@ -51,12 +51,24 @@ export async function POST(req: Request) {
               idealDurationMin: step.idealDurationMin,
               requiresInput: step.requiresInput ?? false,
               instructions: step.instructions,
+              stepRequiredMaterials: {
+                create: (step.materials ?? []).map((material) => ({
+                  rawMaterialId: material.rawMaterialId,
+                  qtyPerUnitOutput: material.qtyPerUnitOutput,
+                  unitId: material.unitId,
+                })),
+              },
             })),
           },
         },
         include: {
           templateSteps: {
             orderBy: { position: "asc" },
+            include: {
+              stepRequiredMaterials: {
+                include: { rawMaterial: true, unit: true },
+              },
+            },
           },
         },
       });

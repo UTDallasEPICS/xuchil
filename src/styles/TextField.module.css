@@ -4,17 +4,41 @@
     min-height: 10vh;
     padding: 10px;
     font-size: 1rem;
-    border: 2px solid black;
+    border: 2px solid var(--color-text-dark);
     border-radius: 10px;
     outline: none;
-    resize: none; 
-    overflow-wrap: break-word; 
-    white-space: pre-wrap; 
-    vertical-align: top; 
+    resize: none;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+    vertical-align: top;
+    box-sizing: border-box;
   }
-  
+
   .textField:focus {
-    border-color: #000;
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+    border-color: var(--color-text-dark);
+    box-shadow: 0 0 5px rgb(var(--rgb-text-dark) / 0.3);
   }
-  
+
+  .block {
+    width: 100%;
+    max-width: none;
+    min-height: 120px;
+    padding: 13px 14px;
+    border: 1px solid var(--color-gray-light);
+    background-color: var(--color-field);
+  }
+
+  .block:focus {
+    border-color: var(--color-green-light);
+    box-shadow: 0 0 0 3px rgb(var(--rgb-green-light) / 0.15);
+  }
+
+  .block::placeholder {
+    color: var(--color-gray-dark);
+  }
+
+  .autoGrow {
+    min-height: 0;
+    overflow: hidden;
+    resize: none;
+  }

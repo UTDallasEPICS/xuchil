@@ -4,13 +4,16 @@ import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import OrderCard from "@/components/OrderCard";
 import FilterButton from "@/components/FilterButton";
-import BottomButton from "@/components/BottomButton";
+import HeaderNavigator from "@/components/HeaderNavigator";
+import { orderTabs } from "@/constants/navTabs";
+import { Plus, Search, X } from "lucide-react";
 import { Order } from "@/types/Order";
 import { fetchOrdersClient } from "@/lib/ordersClient";
 import {
   dateFilterOptions,
   sortFilterOptions,
   deliveryFilterOptions,
+  orderStatusFilterOptions,
 } from "@/constants/filterOptions";
 import { FilterOption } from "@/types/FilterOption";
 import styles from "./Deliveries.module.css";
@@ -37,6 +40,8 @@ const compareDates = (a: Order, b: Order, asc = true) => {
 };
 
 const Deliveries = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<FilterOption>(orderStatusFilterOptions[0]);
   const [dateFilter, setDateFilter] = useState<FilterOption>(dateFilterOptions[0]);
   const [sortFilter, setSortFilter] = useState<FilterOption>(sortFilterOptions[0]);
   const [deliveryFilter, setDeliveryFilter] = useState<FilterOption>(deliveryFilterOptions[0]);
@@ -64,6 +69,23 @@ const Deliveries = () => {
     const currentYear = today.getFullYear();
 
     let list = orders;
+
+    const q = searchQuery.trim().toLowerCase();
+    if (q) {
+      list = list.filter(
+        (o) =>
+          o.clientName?.toLowerCase().includes(q) ||
+          o.address?.toLowerCase().includes(q) ||
+          String(o.id).includes(q.replace(/^#/, ""))
+      );
+    }
+
+    if (statusFilter.value === "pending") {
+      list = list.filter((o) => !o.delivered);
+    } else if (statusFilter.value === "delivered") {
+      list = list.filter((o) => o.delivered);
+    }
+
     if (deliveryFilter.value !== "todos") {
       list = list.filter((o) => o.deliveryVariant === deliveryFilter.value);
     }
@@ -90,36 +112,109 @@ const Deliveries = () => {
             d.getMonth() === currentMonth && d.getFullYear() === currentYear
           );
         }
+        if (dateFilter.value === "year") {
+          return d.getFullYear() === currentYear;
+        }
         return true;
       });
     }
     const asc = sortFilter.value === "asc";
     return [...list].sort((a, b) => compareDates(a, b, asc));
-  }, [orders, deliveryFilter, dateFilter, sortFilter]);
+  }, [orders, searchQuery, statusFilter, deliveryFilter, dateFilter, sortFilter]);
 
   const handleNewOrder = () => {
     router.push("/orders/deliveries/new-order");
   };
 
   return (
-    <div className={`${styles.wrapper} page`}>
-      <div className={styles.filters}>
-        <FilterButton title="Filtrar por fecha" options={dateFilterOptions} onChange={setDateFilter} variant="dark"/>
-        <FilterButton title="Ordenar" options={sortFilterOptions} onChange={setSortFilter} variant="dark"/>
-        <FilterButton title="Tipo de entrega" options={deliveryFilterOptions} onChange={setDeliveryFilter} variant="dark"/>
+    <div className={styles.wrapper}>
+      <h1 className={styles.title}>Pedidos</h1>
+
+      <HeaderNavigator tabs={orderTabs} variant="full" />
+
+      <div className={styles.searchBar}>
+        <Search size={18} strokeWidth={2.2} className={styles.searchIcon} />
+        <input
+          type="text"
+          className={styles.searchInput}
+          placeholder="Buscar por cliente, #pedido o dirección..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+        {searchQuery && (
+          <button
+            type="button"
+            className={styles.clearSearchBtn}
+            onClick={() => setSearchQuery("")}
+            aria-label="Limpiar búsqueda"
+          >
+            <X size={16} strokeWidth={2.2} />
+          </button>
+        )}
       </div>
-      <div className={styles.scrollArea}>
+
+      <div className={styles.toolbar}>
+        <div className={styles.filters}>
+          <FilterButton
+            title="Estado"
+            options={orderStatusFilterOptions}
+            onChange={setStatusFilter}
+            variant="outline"
+          />
+          <FilterButton
+            title="Filtrar por fecha"
+            options={dateFilterOptions}
+            onChange={setDateFilter}
+            variant="outline"
+          />
+          <FilterButton
+            title="Ordenar"
+            options={sortFilterOptions}
+            onChange={setSortFilter}
+            variant="outline"
+          />
+          <FilterButton
+            title="Tipo de entrega"
+            options={deliveryFilterOptions}
+            onChange={setDeliveryFilter}
+            variant="outline"
+          />
+        </div>
+      </div>
+
+      <div className={styles.list}>
         {loading ? (
           <p className={styles.empty}>Cargando pedidos...</p>
         ) : visibleOrders.length === 0 ? (
-          <p className={styles.empty}>Sin pedidos encontrados</p>
+          <button
+            type="button"
+            className={styles.emptyState}
+            onClick={handleNewOrder}
+          >
+            <span className={styles.emptyIcon}>
+              <Plus size={64} strokeWidth={1.5} />
+            </span>
+            <span className={styles.emptyText}>
+              Sin pedidos encontrados, haz click para agregar uno
+            </span>
+          </button>
         ) : (
-          visibleOrders.map((order) => (
-            <OrderCard key={order.id} {...order} />
-          ))
+          <>
+            {visibleOrders.map((order) => (
+              <OrderCard key={order.id} {...order} />
+            ))}
+
+            <button
+              type="button"
+              className={styles.addBtn}
+              onClick={handleNewOrder}
+            >
+              <Plus size={20} strokeWidth={2.5} />
+              <span>Nuevo pedido</span>
+            </button>
+          </>
         )}
       </div>
-      <BottomButton onClick={handleNewOrder}>Nuevo Pedido</BottomButton>
     </div>
   );
 };
