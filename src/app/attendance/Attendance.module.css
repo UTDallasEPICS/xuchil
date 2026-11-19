@@ -9,7 +9,9 @@
   padding: 0 0 3rem;
 }
 
-.attendanceCard {
+/* Scoped under .content so it outranks Card.module.css's .card (min-width: 75vw,
+   margin: 10px) no matter which stylesheet Next.js happens to load last. */
+.content .attendanceCard {
   width: 100%;
   min-width: 0;
   margin: 0;
@@ -58,6 +60,11 @@
   border-radius: 8px;
   color: var(--color-green-dark);
   background: var(--color-text-light);
+}
+
+.comparisonLink {
+  color: var(--color-green-dark);
+  font-weight: 700;
 }
 
 .refreshButton:disabled {

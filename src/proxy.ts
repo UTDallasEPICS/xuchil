@@ -62,7 +62,10 @@ export default async function proxy(req: NextRequest) {
   return NextResponse.next();
 }
 
-// Routes proxy should not run on
+
+// Routes proxy should not run on. Static files in public/ (logo, product images) must be
+// excluded, or logged-out requests for them get redirected to /login and images like the
+// login page logo render as their alt text.
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico$).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico$|Xuchil\\.svg$).*)'],
 }
