@@ -161,10 +161,14 @@ export default function Analytics() {
         </div>
       </div>
 
-      <h2 className={styles.sectionTitle}>Pedidos por {filter === "today" ? "hora" : "día"}</h2>
+      {/* key = new <h2> per filter. Browser auto-translate (e.g. Chrome to English) swaps out the text
+          React would update, leaving a stale "per hour"; a fresh element gets translated again. */}
+      <h2 key={`orders-title-${filter}`} className={styles.sectionTitle}>
+        {filter === "today" ? "Pedidos por hora" : "Pedidos por día"}
+      </h2>
       {didFail("orders") ? (
         <p className={styles.error}>No se pudieron cargar los pedidos</p>
-      ) : chartPoints.length === 0 ? (
+      ) : chartPoints.every((p) => p.orderCount === 0) ? (
         <p className={styles.empty}>Sin pedidos entregados en este periodo</p>
       ) : (
         // ponytail: plain CSS bar chart; recharts is not installed on this branch.
@@ -179,18 +183,23 @@ export default function Analytics() {
         </div>
       )}
 
-      <h2 className={styles.sectionTitle}>Productos más vendidos</h2>
+      {/* key per filter, like the chart title above, so browser auto-translate can't leave stale text. */}
+      <h2 key={`trending-title-${filter}`} className={styles.sectionTitle}>
+        {filter === "today"
+          ? "Productos más vendidos (hoy)"
+          : `Productos más vendidos (últimos ${filter === "weekly" ? 7 : 30} días)`}
+      </h2>
       {didFail("orders") ? (
         <p className={styles.error}>No se pudieron cargar los pedidos</p>
       ) : trending.length === 0 ? (
         <p className={styles.empty}>Sin productos en este periodo</p>
       ) : (
-        <ul className={styles.trendingList}>
+        <ul key={`trending-list-${filter}`} className={styles.trendingList}>
           {trending.map((item) => (
             <li key={item.id} className={styles.trendingItem}>
               <img src={item.image} alt={item.name} className={styles.trendingImage} />
               <span className={styles.trendingName}>{item.name}</span>
-              <span>{item.units} u.</span>
+              <span>{`${item.units} ${item.units === 1 ? "unidad" : "unidades"}`}</span>
             </li>
           ))}
         </ul>
