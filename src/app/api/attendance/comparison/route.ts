@@ -158,13 +158,7 @@ export async function GET(request: NextRequest) {
         nonProductionAvailable: false,
         workerName: names.get(worker.workerId) ?? `Worker ${worker.workerId}`,
       })),
-      warnings: [
-        ...comparison.warnings,
-        {
-          code: 'non_production_unavailable',
-          message: 'No non-production activity records exist in the current data model; non-production total is zero.',
-        },
-      ],
+      warnings: comparison.warnings,
     });
   } catch (error) {
     return serverError('attendance comparison', 'calculate', error);

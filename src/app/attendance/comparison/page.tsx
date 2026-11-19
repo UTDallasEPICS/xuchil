@@ -17,7 +17,7 @@ type WorkerComparison = {
   unallocatedMinutes: number;
   excessActivityMinutes: number;
   provisional: boolean;
-  warnings: Array<{code: string; message: string; id?: number}>;
+  warnings: Array<{code: string; message: string; id?: number; workerId?: number}>;
 };
 
 type UserWithWorker = {worker?: {id: number; fullName: string} | null};
@@ -38,7 +38,7 @@ export default function AttendanceComparisonPage() {
   const [workerOptions, setWorkerOptions] = useState<Array<{id: number; fullName: string}>>([]);
   const [workerOptionsError, setWorkerOptionsError] = useState<string | null>(null);
   const [workers, setWorkers] = useState<WorkerComparison[]>([]);
-  const [warnings, setWarnings] = useState<Array<{code: string; message: string}>>([]);
+  const [warnings, setWarnings] = useState<Array<{code: string; message: string; workerId?: number}>>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -124,15 +124,17 @@ export default function AttendanceComparisonPage() {
 
         {error && <div className={styles.error} role="alert">{error}</div>}
         {workerOptionsError && <div className={styles.error} role="alert">{workerOptionsError}</div>}
-        {warnings.length > 0 && (
+        {warnings.some((warning) => warning.workerId == null) && (
           <Card className={styles.warning}>
             <strong>Advertencias de registros</strong>
-            <ul>{warnings.map((warning, index) => <li key={`${warning.code}-${index}`}>{warning.message}</li>)}</ul>
+            <ul>{warnings.filter((warning) => warning.workerId == null).map((warning, index) => <li key={`${warning.code}-${index}`}>{warning.message}</li>)}</ul>
           </Card>
         )}
         {loading ? <p>Cargando comparación...</p> : workers.length === 0 ? <p>No hay registros para el periodo seleccionado.</p> : (
           <section className={styles.grid}>
-            {workers.map((worker) => (
+            {workers.map((worker) => {
+              const workerWarnings = worker.warnings.filter((warning) => warning.code !== "activity_exceeds_attendance");
+              return (
               <Card key={worker.workerId} className={styles.workerCard}>
                 <h2>{worker.workerName}</h2>
                 <dl>
@@ -144,9 +146,10 @@ export default function AttendanceComparisonPage() {
                 </dl>
                 {worker.provisional && <p className={styles.provisional}>Provisional: incluye intervalos abiertos limitados al momento del reporte.</p>}
                 {worker.excessActivityMinutes > 0 && <p className={styles.error}>La actividad registrada excede la asistencia por {formatMinutes(worker.excessActivityMinutes)}.</p>}
-                {worker.warnings.length > 0 && <ul className={styles.workerWarnings}>{worker.warnings.map((warning, index) => <li key={`${warning.code}-${index}`}>{warning.message}</li>)}</ul>}
+                {workerWarnings.length > 0 && <ul className={styles.workerWarnings}>{workerWarnings.map((warning, index) => <li key={`${warning.code}-${index}`}>{warning.message}</li>)}</ul>}
               </Card>
-            ))}
+              );
+            })}
           </section>
         )}
       </main>
