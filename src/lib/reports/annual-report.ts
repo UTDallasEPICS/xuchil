@@ -106,20 +106,20 @@ function calculateDeliverySummary(
 ): DeliverySummary[] {
 
     const deliveryMap =
-        new Map<string, DeliverySummary>();
+        new Map<number, DeliverySummary>();
 
     for (const order of orders) {
         for (const item of order.orderItems) {
 
-            const productName =
-                item.productVariant.name;
+            const variantId =
+                item.productVariant.id;
 
             let summary =
-                deliveryMap.get(productName);
+                deliveryMap.get(variantId);
 
             if (!summary) {
                 summary = {
-                    product: productName,
+                    product: `${item.productVariant.product.name} - ${item.productVariant.name}`,
                     mail: 0,
                     personal: 0,
                     consignment: 0,
@@ -128,7 +128,7 @@ function calculateDeliverySummary(
                 };
 
                 deliveryMap.set(
-                    productName,
+                    variantId,
                     summary
                 );
             }
@@ -163,7 +163,11 @@ function calculateDeliverySummary(
         }
     }
 
-    return Array.from(deliveryMap.values());
+    return Array.from(deliveryMap.values()).filter(
+    (summary) =>
+        summary.totalDeliveries > 0 ||
+        summary.cancelled > 0
+    );
 }
 
 
@@ -171,6 +175,7 @@ function calculateDeliverySummary(
     This section will caluclate the monthy summaries, including the top 4 products for each month, and their rank, name, and units sold
     this will be used for the monthly summaries table in the report(pg. 2-5)
 */
+
 
 function calculateMonthlySummaries(
     orders: Awaited<ReturnType<typeof getOrdersForYear>>
@@ -180,8 +185,10 @@ function calculateMonthlySummaries(
 
     for (let month = 0; month < 12; month++) {
 
-        const productMap =
-            new Map<string, number>();
+        const productMap = new Map<
+            number,
+            { product: string; unitsSold: number }
+        >();
 
         const monthlyOrders = orders.filter(
             (order) =>
@@ -196,33 +203,42 @@ function calculateMonthlySummaries(
 
             for (const item of order.orderItems) {
 
+                const variantId = item.productVariant.id;
+
                 const productName =
+                    item.productVariant.product.name;
+
+                const variantName =
                     item.productVariant.name;
 
-                const quantity =
-                    Number(item.quantity);
+                const presentation =
+                    item.productVariant.presentation ?? "N/A";
 
-                const currentQuantity =
-                    productMap.get(productName) ?? 0;
+                const quantity = Number(item.quantity);
 
-                productMap.set(
-                    productName,
-                    currentQuantity + quantity
-                );
+                let summary = productMap.get(variantId);
+
+                if (!summary) {
+                    summary = {
+                        product: `${productName} - ${variantName} (${presentation})`,
+                        unitsSold: 0,
+                    };
+
+                    productMap.set(variantId, summary);
+                }
+
+                summary.unitsSold += quantity;
             }
         }
 
-        const products =
-            Array.from(productMap.entries())
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 4)
-                .map(
-                    ([product, unitsSold], index) => ({
-                        rank: index + 1,
-                        product,
-                        unitsSold,
-                    })
-                );
+        const products = Array.from(productMap.values())
+            .sort((a, b) => b.unitsSold - a.unitsSold)
+            .slice(0, 4)
+            .map((summary, index) => ({
+                rank: index + 1,
+                product: summary.product,
+                unitsSold: summary.unitsSold,
+            }));
 
         monthlySummaries.push({
             month: month + 1,
@@ -234,17 +250,21 @@ function calculateMonthlySummaries(
 }
 
 
+
 /* 
     This section will calculate the most popular products for the year, including their rank, name, and units sold
     this will be used for the popular products table in the report(pg. 2)
 */
 
+
 function calculatePopularProducts(
     orders: Awaited<ReturnType<typeof getOrdersForYear>>
 ): PopularProduct[] {
 
-    const annualProductMap =
-        new Map<string, number>();
+    const annualProductMap = new Map<
+        number,
+        { product: string; unitsSold: number }
+    >();
 
     for (const order of orders) {
 
@@ -254,31 +274,44 @@ function calculatePopularProducts(
 
         for (const item of order.orderItems) {
 
+            const variantId = item.productVariant.id;
+
             const productName =
+                item.productVariant.product.name;
+
+            const variantName =
                 item.productVariant.name;
 
-            const quantity =
-                Number(item.quantity);
+            const presentation =
+                item.productVariant.presentation ?? "N/A";
 
-            const currentQuantity =
-                annualProductMap.get(productName) ?? 0;
+            const quantity = Number(item.quantity);
 
-            annualProductMap.set(
-                productName,
-                currentQuantity + quantity
-            );
+            let summary = annualProductMap.get(variantId);
+
+            if (!summary) {
+                summary = {
+                    product: `${productName} - ${variantName} (${presentation})`,
+                    unitsSold: 0,
+                };
+
+                annualProductMap.set(variantId, summary);
+            }
+
+            summary.unitsSold += quantity;
         }
     }
 
-    return Array.from(annualProductMap.entries())
-        .sort((a, b) => b[1] - a[1])
+    return Array.from(annualProductMap.values())
+        .sort((a, b) => b.unitsSold - a.unitsSold)
         .slice(0, 14)
-        .map(([product, unitsSold], index) => ({
+        .map((summary, index) => ({
             rank: index + 1,
-            product,
-            unitsSold,
+            product: summary.product,
+            unitsSold: summary.unitsSold,
         }));
 }
+
 
 
 /* 
@@ -286,33 +319,51 @@ function calculatePopularProducts(
     this will be used for the product summaries table in the report(pg. 6-10)
 */
 
+
 function calculateProductSummaries(
     orders: Awaited<ReturnType<typeof getOrdersForYear>>
 ): ProductAnnualSummary[] {
 
+    // Group by product ID instead of variant name
     const productSummaryMap =
-        new Map<string, ProductAnnualSummary>();
+        new Map<number, ProductAnnualSummary>();
 
-    // Build product/presentation totals.
+    // Track variant IDs separately for each product
+    const variantMaps = new Map<
+        number,
+        Map<number, ProductAnnualSummary["variants"][number]>
+    >();
+
+    // Track monthly totals for each product
+    const productMonthTotals = new Map<
+        number,
+        Map<number, number>
+    >();
+
     for (const order of orders) {
 
+        // Only include delivered orders
         if (order.status !== "DELIVERED") {
             continue;
         }
 
+        const month = order.deliveryDate.getUTCMonth() + 1;
+
         for (const item of order.orderItems) {
 
-            const productName =
-                item.productVariant.name;
+            const productId = item.productVariant.product.id;
+            const productName = item.productVariant.product.name;
+
+            const variantId = item.productVariant.id;
+            const variantName = item.productVariant.name;
 
             const presentation =
                 item.productVariant.presentation ?? "N/A";
 
-            const quantity =
-                Number(item.quantity);
+            const quantity = Number(item.quantity);
 
-            let productSummary =
-                productSummaryMap.get(productName);
+            // Find or create the product summary
+            let productSummary = productSummaryMap.get(productId);
 
             if (!productSummary) {
                 productSummary = {
@@ -322,71 +373,45 @@ function calculateProductSummaries(
                     popularMonths: [],
                 };
 
-                productSummaryMap.set(
-                    productName,
-                    productSummary
-                );
+                productSummaryMap.set(productId, productSummary);
+                variantMaps.set(productId, new Map());
+                productMonthTotals.set(productId, new Map());
             }
 
-            let variantSummary =
-                productSummary.variants.find(
-                    (variant) =>
-                        variant.presentation === presentation
-                );
+            // Find or create the variant summary
+            const variantMap = variantMaps.get(productId)!;
+
+            let variantSummary = variantMap.get(variantId);
 
             if (!variantSummary) {
                 variantSummary = {
+                    name: variantName,
                     presentation,
                     unitsSold: 0,
                 };
 
-                productSummary.variants.push(
-                    variantSummary
-                );
+                variantMap.set(variantId, variantSummary);
+                productSummary.variants.push(variantSummary);
             }
 
+            // Add units sold to the variant and product
             variantSummary.unitsSold += quantity;
             productSummary.totalUnitsSold += quantity;
+
+            // Add units sold to this product's monthly totals
+            const monthTotals = productMonthTotals.get(productId)!;
+
+            monthTotals.set(
+                month,
+                (monthTotals.get(month) ?? 0) + quantity
+            );
         }
     }
 
-    // Find the four most popular months for each product.
-    for (const productSummary of productSummaryMap.values()) {
+    // Find the four most popular months for each product
+    for (const [productId, productSummary] of productSummaryMap) {
 
-        const monthTotals =
-            new Map<number, number>();
-
-        for (const order of orders) {
-
-        if (order.status !== "DELIVERED") {
-            continue;
-        }
-
-
-            for (const item of order.orderItems) {
-
-                if (
-                    item.productVariant.name !==
-                    productSummary.product
-                ) {
-                    continue;
-                }
-
-                const month =
-                    order.deliveryDate.getUTCMonth() + 1;
-
-                const quantity =
-                    Number(item.quantity);
-
-                const currentTotal =
-                    monthTotals.get(month) ?? 0;
-
-                monthTotals.set(
-                    month,
-                    currentTotal + quantity
-                );
-            }
-        }
+        const monthTotals = productMonthTotals.get(productId)!;
 
         productSummary.popularMonths =
             Array.from(monthTotals.entries())
@@ -395,8 +420,14 @@ function calculateProductSummaries(
                 .map(([month]) => month);
     }
 
-    return Array.from(productSummaryMap.values());
+    return Array.from(productSummaryMap.values())
+        .sort((a, b) =>
+            a.product.localeCompare(b.product, "es", {
+                numeric: true,
+            })
+    );
 }
+
 
 
 /* 

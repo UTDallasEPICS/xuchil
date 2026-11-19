@@ -27,13 +27,7 @@ async function main() {
     });
 
     const variantIds = products.flatMap((product) =>
-        product.variants
-            .filter(
-                (variant) =>
-                    variant.name === product.name &&
-                    variant.presentation === "1 unidad"
-            )
-            .map((variant) => variant.id)
+        product.variants.map((variant) => variant.id)
     );
 
     const orders = await prisma.order.findMany({
@@ -231,23 +225,38 @@ async function main() {
             )
         );
 
-        const templateSteps =
-            await tx.templateStep.findMany({
-                where: {
-                    processTemplateId: {
-                        in: templateIds,
-                    },
-                },
-                select: {
-                    id: true,
-                },
-            });
+        // Find templates still used by remaining process runs
+        const referencedTemplates = await tx.processRun.findMany({
+            where: {
+                processTemplateId: { in: templateIds },
+            },
+            select: {
+                processTemplateId: true,
+            },
+        });
+
+        const protectedTemplateIds = new Set(
+            referencedTemplates.map(run => run.processTemplateId)
+        );
+
+        // Get template steps with their parent template IDs
+        const templateSteps = await tx.templateStep.findMany({
+            where: {
+                processTemplateId: { in: templateIds },
+            },
+            select: {
+                id: true,
+                processTemplateId: true,
+            },
+        });
 
         const safeStepIds = templateSteps
             .filter(
-                (step) => !usedStepIds.has(step.id)
+                step =>
+                    !usedStepIds.has(step.id) &&
+                    !protectedTemplateIds.has(step.processTemplateId)
             )
-            .map((step) => step.id);
+            .map(step => step.id);
 
         await tx.templateStep.deleteMany({
             where: {
@@ -309,36 +318,65 @@ async function main() {
         });
 
         //Check for templates that still referencing candidate variants
-        const variantsWithTemplates =
+
+        // Check for any remaining references before deleting variants
+        const remainingItems = await tx.orderItem.findMany({
+            where: {
+                productVariantId: { in: safeVariantIds },
+            },
+            select: {
+                productVariantId: true,
+            },
+        });
+
+        const remainingRuns = await tx.processRun.findMany({
+            where: {
+                productVariantId: { in: safeVariantIds },
+            },
+            select: {
+                productVariantId: true,
+            },
+        });
+
+        const remainingVariantTemplates =
             await tx.processTemplate.findMany({
                 where: {
-                    productVariantId: {
-                        in: safeVariantIds,
-                    },
+                    productVariantId: { in: safeVariantIds },
                 },
                 select: {
                     productVariantId: true,
                 },
             });
 
-        const stillReferencedIds = new Set(
-            variantsWithTemplates.map(
-                (template) => template.productVariantId
-            )
+        // Protect variants still referenced by any records
+        const referencedVariantIds = new Set([
+            ...remainingItems.map(item => item.productVariantId),
+            ...remainingRuns.map(run => run.productVariantId),
+            ...remainingVariantTemplates.map(
+                template => template.productVariantId
+            ),
+        ]);
+
+        const deletableVariantIds = safeVariantIds.filter(
+            id => !referencedVariantIds.has(id)
         );
 
-        //compile the variants that have no variants
-        const deletableVariantIds =
-            safeVariantIds.filter(
-                (id) => !stillReferencedIds.has(id)
-            );
+        console.log(
+            "Variants that cannot be deleted:",
+            [...referencedVariantIds]
+        );
 
-        //Delete only variants that are unreferenced
+        console.log(
+            "Variants safe to delete:",
+            deletableVariantIds
+        );
+
         await tx.productVariant.deleteMany({
             where: {
                 id: { in: deletableVariantIds },
             },
         });
+
 
         // Delete products that have no remaining variants
         const productsWithVariants =
@@ -382,10 +420,7 @@ async function main() {
             },
         });
 
-        if (
-            category &&
-            category.products.length === 0
-        ) {
+        if (category && category.products.length === 0) {
             await tx.productCategory.delete({
                 where: {
                     id: category.id,

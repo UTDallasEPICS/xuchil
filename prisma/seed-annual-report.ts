@@ -23,41 +23,61 @@ async function main(){
     });
 
 
-    const variants: ProductVariant[] = await Promise.all(
-        Array.from({ length: 35 }, async (_, index) => {
-            const i = index + 1;
-            const sku = `${PREFIX}-${i}`;
-            const name = `Producto de prueba ${i}`;
+    
+    const variants: ProductVariant[] = [];
 
-            const product = await prisma.product.upsert({
-                where: { sku },
-                update: {},
-                create: {
-                    sku,
-                    name,
-                    categoryId: category.id,
-                },
-            });
+    for (let i = 1; i <= 35; i++) {
+        const sku = `${PREFIX}-${i}`;
+        const name = `Producto de prueba ${i}`;
 
+        const product = await prisma.product.upsert({
+            where: { sku },
+            update: {},
+            create: {
+                sku,
+                name,
+                categoryId: category.id,
+            },
+        });
+
+        // Each product gets 2 or 3 variants
+        const variantCount = i % 2 === 0 ? 2 : 3;
+
+        const variantNames = [
+            "Mezquite",
+            "Amaranto",
+            "Maiz",
+        ];
+
+        const presentations = [
+            "250g",
+            "500g",
+            "1kg",
+        ];
+
+        for (let j = 0; j < variantCount; j++) {
             const variant = await prisma.productVariant.upsert({
                 where: {
                     productId_name: {
                         productId: product.id,
-                        name,
+                        name: variantNames[j],
                     },
                 },
-                update: {},
+                update: {
+                    presentation: presentations[j],
+                },
                 create: {
                     productId: product.id,
-                    name,
-                    presentation: "1 unidad",
+                    name: variantNames[j],
+                    presentation: presentations[j],
                     defaultUnitId: unit.id,
                 },
             });
 
-            return variant;
-        })
-    );
+            variants.push(variant);
+        }
+    }
+
 
     // Create test orders of different status, delivery variant, etc.
     async function createTestOrder(
@@ -129,7 +149,31 @@ async function main(){
         8
     );
 
-    // create 35 delivered orders to test if the PDF page breaks are correct
+    await createTestOrder(
+        "multi-variant-A",
+        "2026-08-10T12:00:00.000Z",
+        "DELIVERED",
+        variants[0].id,
+        10
+    );
+
+    await createTestOrder(
+        "multi-variant-B",
+        "2026-08-10T12:00:00.000Z",
+        "DELIVERED",
+        variants[1].id,
+        15
+    );
+
+    await createTestOrder(
+        "multi-variant-C",
+        "2026-09-10T12:00:00.000Z",
+        "DELIVERED",
+        variants[2].id,
+        20
+    );
+
+    // create one delivered order per variant to test if the PDF page breaks are correct
     await Promise.all(
         variants.map((variant, i) =>
             createTestOrder(
