@@ -182,7 +182,7 @@ export async function GET(request: Request) {
         hasSufficientData,
         statusMessage: hasSufficientData
           ? undefined
-          : `Muestra limitada (N = ${count}, mínimo recomendado: 3)`,
+          : `Muestra limitada (N = ${count}, mínimo recomendado: 4)`,
         };
     });
     return {

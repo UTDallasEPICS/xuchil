@@ -78,7 +78,7 @@ export default function CycleTimesPage() {
             <span>Rango típico (50% central)</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <span style={{ display: "inline-block", width: "10px", height: "10px", background: "var(--color-green-dark)" }} />
+            <span style={{ display: "inline-block", width: "3px", height: "13px", background: "var(--color-green-dark)", borderRadius: "1px"}} />
             <span>Mediana (típico)</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
