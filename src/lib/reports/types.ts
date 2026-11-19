@@ -40,7 +40,11 @@ export type ProductVariantSummary = {
 
 export type ProductAnnualSummary = {
     product: string;
-    variants: ProductVariantSummary[];
+    variants: {
+        name: string;
+        presentation: string;
+        unitsSold: number;
+    }[];
     totalUnitsSold: number;
     popularMonths: number[];
 };

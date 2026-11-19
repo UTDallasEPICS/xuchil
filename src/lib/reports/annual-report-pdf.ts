@@ -358,10 +358,32 @@ function drawReportTitle(
     y: number
 ): number {
 
-    page.drawText(`Reporte final anual ${year}`, {
-        x: PAGE_WIDTH/4,
-        y: PAGE_HEIGHT/2,
-        size: 22,
+    const title = "Reporte final anual";
+    const yearText = year.toString();
+    const fontSize = 22;
+
+    // Calculate the width of each line
+    const titleWidth = boldFont.widthOfTextAtSize(title, fontSize);
+    const yearWidth = boldFont.widthOfTextAtSize(yearText, fontSize);
+
+    // Center horizontally
+    const titleX = (PAGE_WIDTH - titleWidth) / 2;
+    const yearX = (PAGE_WIDTH - yearWidth) / 2;
+
+    // Center vertically
+    const centerY = PAGE_HEIGHT / 2;
+
+    page.drawText(title, {
+        x: titleX,
+        y: centerY + 15,
+        size: fontSize,
+        font: boldFont,
+    });
+
+    page.drawText(yearText, {
+        x: yearX,
+        y: centerY - 15,
+        size: fontSize,
         font: boldFont,
     });
 
@@ -546,17 +568,22 @@ function drawProductSummaries(
 
         const columns: TableColumn[] = [
             {
+                title: "Variante",
+                width: 180,
+            },
+            {
                 title: "Presentacion",
-                width: 250,
+                width: 160,
             },
             {
                 title: "Unidades vendidas",
-                width: 250,
+                width: 160,
             },
         ];
 
         const rows = product.variants.map(
             (variant) => [
+                variant.name,
                 variant.presentation,
                 variant.unitsSold.toString(),
             ]
