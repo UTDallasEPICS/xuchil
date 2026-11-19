@@ -151,7 +151,7 @@ const CreateUserPage = () => {
 
 const handleUpdateUser = async () => {
     if (!selectedUser) return;
-    if (editPassword && editPassword.length < 8) {
+    if (editPassword && editPassword.trim().length < 8) {
       setNotificationModal({ open: true, title: "Error", message: "La nueva contraseña debe tener al menos 8 caracteres.", error: true });
       return;
     }

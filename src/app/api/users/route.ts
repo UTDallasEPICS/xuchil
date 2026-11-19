@@ -102,7 +102,7 @@ export async function PUT(req: NextRequest) {
     }
 
     // Optional admin password reset. Empty/absent = keep current password.
-    if (newPassword !== undefined && (typeof newPassword !== "string" || newPassword.length < 8)) {
+    if (newPassword !== undefined && (typeof newPassword !== "string" || newPassword.trim().length < 8)) {
       return NextResponse.json({ error: "newPassword must be at least 8 characters" }, { status: 400 });
     }
 
