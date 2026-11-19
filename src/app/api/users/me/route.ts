@@ -5,7 +5,7 @@ import { verifySession } from "@/lib/session";
 import { workerSchema } from "@/lib/schemas";
 import {notFoundError, serverError, validationError} from "@/utils/responses";
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const payload = await verifySession();
     if (!payload) {
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json(authUser, { status: 200 });
-  } catch (err) {
+  } catch {
     return serverError('user', 'fetch', null)
   }
 }
@@ -45,7 +45,7 @@ export async function PUT(request: NextRequest) {
     });
 
     return NextResponse.json(updatedWorker);
-  } catch (error) {
+  } catch {
     return serverError('user', 'update', null)
   }
 }

@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import styles from "@/styles/OrderPicker.module.css";
-import { Trash } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import ProductPicker from "@/components/ProductPicker";
 import QuantityPicker from "@/components/QuantityPicker";
 import DeleteModal from "@/components/DeleteModal";
@@ -22,56 +22,49 @@ interface OrderPickerProps {
 }
 
 const OrderPicker: React.FC<OrderPickerProps> = ({
-  index,
   products,
   onDelete,
   value,
   onChange,
 }) => {
   const fallbackProductId = products[0]?.id ?? "";
-  const [selectedProductId, setSelectedProductId] = useState(value?.productId ?? fallbackProductId);
-  const [units, setUnits] = useState(value?.quantity ?? 1);
+  const selectedProductId = value?.productId || fallbackProductId;
+  const units = value?.quantity ?? 1;
   const [showModal, setShowModal] = useState(false);
 
-  React.useEffect(() => {
-    if (value) {
-      setSelectedProductId(value.productId);
-      setUnits(value.quantity);
-      return;
-    }
+  const handleProductChange = (product: Product) => {
+    onChange?.({ productId: product.id, quantity: units });
+  };
 
-    if (!selectedProductId && fallbackProductId) {
-      setSelectedProductId(fallbackProductId);
-    }
-  }, [value, selectedProductId, fallbackProductId]);
-
-  React.useEffect(() => {
-    onChange?.({ productId: selectedProductId, quantity: units });
-  }, [selectedProductId, units, onChange]);
+  const handleUnitsChange = (nextUnits: number) => {
+    onChange?.({ productId: selectedProductId, quantity: nextUnits });
+  };
 
   return (
     <>
       <div className={styles.card}>
         <div className={styles.header}>
-          <h2>{`Producto ${index}`}</h2>
+          <ProductPicker
+            products={products}
+            valueId={selectedProductId}
+            onChange={handleProductChange}
+          />
+
           <button
             type="button"
             className={styles.removeBtn}
             onClick={() => setShowModal(true)}
-            aria-label="Eliminar producto"
+            aria-label="Quitar producto del pedido"
+            title="Quitar producto"
           >
-            <Trash size={20} strokeWidth={3} />
+            <Trash2 size={20} strokeWidth={2} />
           </button>
         </div>
 
-        <ProductPicker
-          products={products}
-          valueId={selectedProductId}
-          onChange={(product) => setSelectedProductId(product.id)}
-        />
-
-        <h3 className={styles.unitsLabel}>Unidades:</h3>
-        <QuantityPicker value={units} onChange={setUnits} min={1} />
+        <div className={styles.unitsRow}>
+          <span className={styles.unitsLabel}>Unidades</span>
+          <QuantityPicker value={units} onChange={handleUnitsChange} min={1} />
+        </div>
       </div>
 
       {showModal && (

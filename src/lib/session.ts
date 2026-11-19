@@ -31,7 +31,7 @@ export async function decrypt(session: string | undefined = '') {
       algorithms: ['HS256'],
     });
     return payload as unknown as SessionPayload;
-  } catch (error) {
+  } catch {
     console.log('Failed to verify session');
     return null;
   }
@@ -81,6 +81,39 @@ export const verifySession = cache(async (): Promise<SessionPayload | null> => {
   const session = cookieStore.get('session')?.value;
   // decrypt payload
   const payload = await decrypt(session);
+  if (!payload) {
+    return null;
+  }
+
+  try {
+    const authUser = await prisma.authUser.findUnique({
+      where: {
+        id: payload.authUserId,
+      },
+      select: {
+        isActive: true,
+        worker: {
+          select: {
+            isActive: true,
+            expiresAt: true,
+          },
+        },
+      },
+    });
+
+    const worker = authUser?.worker as { isActive: boolean; expiresAt?: Date | null } | null | undefined;
+    const workerExpired = worker?.expiresAt
+      ? worker.expiresAt < new Date()
+      : false;
+
+    if (!authUser || !authUser.isActive || worker?.isActive === false || workerExpired) {
+      return null;
+    }
+  } catch {
+    console.log('Failed to validate session');
+    return null;
+  }
+
   return payload;
 })
 
@@ -103,7 +136,7 @@ export const getUser = cache(async () => {
     });
 
     return authUser;
-  } catch (error) {
+  } catch {
     console.log('Failed to fetch user');
     return null;
   }

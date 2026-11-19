@@ -1,5 +1,6 @@
 "use client";
 import { usePathname } from "next/navigation";
+import AppBar from "@/components/AppBar";
 import BottomTabBar from "@/components/BottomTabBar";
 
 export default function ClientLayout({
@@ -12,7 +13,8 @@ export default function ClientLayout({
 
   return (
     <>
-      <div className={`main-content ${isLoginPage ? 'login-page' : ''}`}>
+      {!isLoginPage && <AppBar />}
+      <div className={`main-content${isLoginPage ? '' : ' has-bottom-bar'}`}>
         {children}
       </div>
       {!isLoginPage && <BottomTabBar className="bottom-tab-bar" />}

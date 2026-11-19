@@ -102,9 +102,9 @@ const Chronometer: React.FC<ChronometerProps> = ({ estimatedTime, onStart, onPau
       {hasStarted && (
         <button className={styles.pausePlayButton} onClick={handlePauseResume}>
           {isRunning ? (
-            <FaPause size={32} color="white" />
+            <FaPause size={32} color="#f3f3f3" />
           ) : (
-            <FaPlay size={32} color="white" />
+            <FaPlay size={32} color="#f3f3f3" />
           )}
         </button>
       )}

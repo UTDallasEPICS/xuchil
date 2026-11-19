@@ -21,60 +21,59 @@ export async function PUT(
   if (!result.success) {
     return validationError('template step', result.error);
   }
-  const validBody = result.data;
-  const newPosition = validBody.position;
+  // materials are handled separately; the rest are scalar columns to update.
+  const { materials, ...stepData } = result.data;
+  const newPosition = stepData.position;
 
   try {
+    // Guard against position collisions before writing.
     if (newPosition !== undefined) {
-
       const currentStep = await prisma.templateStep.findUnique({
         where: {id: stepId},
         select: {position: true, processTemplateId: true}
       });
-
       if (!currentStep) {
         return NextResponse.json({error: 'Template step not found.'}, {status: 404});
       }
-
-      const templateId = currentStep.processTemplateId;
-
       if (newPosition !== currentStep.position) {
-
-        const updated = await prisma.$transaction(async (tx) => {
-
-          // --- STAGE 1: CHECK FOR CONFLICT ---
-          const conflictingStep = await tx.templateStep.findFirst({
-            where: {
-              processTemplateId: templateId,
-              position: newPosition,
-              // Exclude the current step being updated, in case newPosition == oldPosition
-              // However, the outer check (newPosition !== currentStep.position) should cover this.
-              id: {not: stepId}
-            }
-          });
-
-          if (conflictingStep) {
-            // If another step already occupies this position, throw an error.
-            // This rolls back the transaction.
-            throw new Error(`Position ${newPosition} is already occupied.`);
+        const conflictingStep = await prisma.templateStep.findFirst({
+          where: {
+            processTemplateId: currentStep.processTemplateId,
+            position: newPosition,
+            id: {not: stepId}
           }
-
-          // --- STAGE 2: SET THE NEW POSITION ---
-          return tx.templateStep.update({
-            where: {id: stepId},
-            data: {...validBody, position: newPosition}
-          });
         });
-
-        return NextResponse.json(updated);
+        if (conflictingStep) {
+          return NextResponse.json({error: `Position ${newPosition} is already occupied.`}, {status: 409});
+        }
       }
     }
 
-    // Standard update for non-position changes, or if position was provided but unchanged
-    const updatedBody = {...validBody};
-    const updated = await prisma.templateStep.update({
+    await prisma.$transaction(async (tx) => {
+      await tx.templateStep.update({
+        where: {id: stepId},
+        data: stepData,
+      });
+
+      // Replace the step's required materials when provided.
+      if (materials !== undefined) {
+        await tx.stepRequiredMaterial.deleteMany({ where: { templateStepId: stepId } });
+        if (materials.length > 0) {
+          await tx.stepRequiredMaterial.createMany({
+            data: materials.map((m) => ({
+              templateStepId: stepId,
+              rawMaterialId: m.rawMaterialId,
+              qtyPerUnitOutput: m.qtyPerUnitOutput,
+              unitId: m.unitId,
+            })),
+          });
+        }
+      }
+    });
+
+    const updated = await prisma.templateStep.findUnique({
       where: {id: stepId},
-      data: updatedBody
+      include: { stepRequiredMaterials: { include: { rawMaterial: true, unit: true } } },
     });
     return NextResponse.json(updated);
   } catch (e) {

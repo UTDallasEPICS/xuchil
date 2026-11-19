@@ -1,5 +1,5 @@
 import { WebDriver, By, WebElement, until } from 'selenium-webdriver';
-import { getDriver } from '../config';
+import { getDriver } from '../config.ts';
 
 export class BrowserHelper {
   private driver: WebDriver;

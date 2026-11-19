@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import styles from "@/styles/OrderedProducts.module.css";
 import { Plus } from "lucide-react";
 import OrderPicker, { OrderPickerValue } from "@/components/OrderPicker";
@@ -40,13 +40,18 @@ const OrderedProducts: React.FC<OrderedProductsProps> = ({ products, value, onCh
     setOrders(initialOrders);
   }, [initialOrders]);
 
+  // Keep onChange in a ref so parent components that pass an inline callback
+  // don't re-trigger the sync effect on every render.
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+
   useEffect(() => {
-    onChange?.(
+    onChangeRef.current?.(
       orders
         .map((order) => order.value)
         .filter((item) => item.productId && item.quantity > 0)
     );
-  }, [orders, onChange]);
+  }, [orders]);
 
   const addOrder = () =>
     setOrders((prev) => {
@@ -80,13 +85,9 @@ const OrderedProducts: React.FC<OrderedProductsProps> = ({ products, value, onCh
         />
       ))}
 
-      <button
-        type="button"
-        className={styles.addBtn}
-        onClick={addOrder}
-        aria-label="Añadir producto"
-      >
-        <Plus size={32} strokeWidth={2.5} />
+      <button type="button" className={styles.addBtn} onClick={addOrder}>
+        <Plus size={18} strokeWidth={2.5} />
+        <span>Agregar producto</span>
       </button>
     </div>
   );

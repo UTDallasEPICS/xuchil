@@ -6,30 +6,39 @@ import styles from '@/styles/HeaderNavigator.module.css';
 
 export interface Tab {
   label: string;
-  href: string;        
+  href: string;
 }
 
 interface HeaderNavigatorProps {
   tabs: Tab[];
+  variant?: 'block' | 'inline' | 'full';
 }
 
-export default function HeaderNavigator({ tabs }: HeaderNavigatorProps) {
+export default function HeaderNavigator({
+  tabs,
+  variant = 'block',
+}: HeaderNavigatorProps) {
   const pathname = usePathname();
 
   return (
-    <nav className={styles.nav}>
-      {tabs.map(({ label, href }) => {
-        const isActive = pathname.startsWith(href);
-        return (
-          <Link
-            key={href}
-            href={href}
-            className={`${styles.tab} ${isActive ? styles.active : ''}`}
-          >
-            {label}
-          </Link>
-        );
-      })}
+    <nav
+      className={`${styles.nav} ${styles[variant]}`}
+    >
+      <div className={styles.segment}>
+        {tabs.map(({ label, href }) => {
+          const isActive = pathname.startsWith(href);
+          return (
+            <Link
+              key={href}
+              href={href}
+              aria-current={isActive ? 'page' : undefined}
+              className={`${styles.tab} ${isActive ? styles.active : ''}`}
+            >
+              {label}
+            </Link>
+          );
+        })}
+      </div>
     </nav>
   );
 }

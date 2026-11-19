@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 import { templateStepSchema } from '@/lib/schemas';
-import { z } from "zod";
 import {idError, serverError, validationError} from "@/utils/responses";
 import {verifySession} from "@/lib/session";
 
@@ -44,10 +43,20 @@ export async function POST(
         idealDurationMin: validBody.idealDurationMin,
         requiresInput: validBody.requiresInput,
         instructions: validBody.instructions,
+        stepRequiredMaterials: {
+          create: (validBody.materials ?? []).map((material) => ({
+            rawMaterialId: material.rawMaterialId,
+            qtyPerUnitOutput: material.qtyPerUnitOutput,
+            unitId: material.unitId,
+          })),
+        },
+      },
+      include: {
+        stepRequiredMaterials: { include: { rawMaterial: true, unit: true } },
       },
     });
     return NextResponse.json(created, { status: 201 });
-  } catch (e) {
-    return serverError("template step", "create", e)
+  } catch (error) {
+    return serverError("template step", "create", error)
   }
 }

@@ -19,7 +19,16 @@ export async function GET(
     }
     const tpl = await prisma.processTemplate.findUnique({
       where: {id: processTemplateId},
-      include: {templateSteps: {orderBy: {position: "asc"}}},
+      include: {
+        templateSteps: {
+          orderBy: {position: "asc"},
+          include: {
+            stepRequiredMaterials: {
+              include: { rawMaterial: true, unit: true },
+            },
+          },
+        },
+      },
     });
 
     if (!tpl) {

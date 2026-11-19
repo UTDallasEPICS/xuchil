@@ -4,7 +4,7 @@ import styles from "@/styles/Button.module.css";
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
   size?: "regular" | "small" | "mini";
-  action?: "primary" | "secondary" | "negative" | "inverted";
+  action?: "primary" | "secondary" | "negative" | "inverted" | "outline";
 }
 
 const Button: FC<ButtonProps> = ({ children, size = "regular", action = "primary", ...props }) => {

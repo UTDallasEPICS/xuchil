@@ -85,6 +85,11 @@ Required variables:
 - `SESSION_SECRET`: long random secret shared by every running instance.
 - `DATABASE_URL`: defaults to `file:./dev.db` for SQLite. On ephemeral hosts, point this to a persistent path or mounted volume.
 
+Los SKU de productos y códigos de materias primas se reservan en la base de
+datos mediante contadores persistentes. Por eso no se reinician al levantar
+de nuevo el servidor; en despliegues con SQLite es necesario usar una ruta o
+volumen persistente para `DATABASE_URL`.
+
 Optional variables:
 
 - `CORS_ALLOWED_ORIGINS`: comma-separated allowlist for cross-origin browser clients. Leave unset when the UI and `/api` are served from the same origin.
@@ -95,14 +100,14 @@ Recommended startup on a fresh host:
 pnpm install
 pnpm prisma generate
 pnpm prisma db push
-pnpm prisma:seed:users-clean
-pnpm prisma:seed:minimal
-pnpm prisma:seed:processes
+pnpm prisma:seed:clean
 pnpm build
 pnpm start
 ```
 
-Or use `pnpm system:init:prod:start` / `pnpm system:init:prod:offline:start`.
+Or use `pnpm clean:init:prod:start` / `pnpm clean:init:prod:offline:start`.
+
+For demo/test data (development), replace `pnpm prisma:seed:clean` with `pnpm prisma:seed:demo`, or use `pnpm demo:init:prod:start` / `pnpm demo:init:prod:offline:start`.
 
 Serve the app over HTTPS in production. Session cookies are marked `Secure` when `NODE_ENV=production`.
 

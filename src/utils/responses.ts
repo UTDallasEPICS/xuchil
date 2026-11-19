@@ -14,5 +14,9 @@ export function notFoundError(name: string): NextResponse {
 }
 
 export function serverError(name: string, verb: string, error: unknown) {
-  return NextResponse.json({error: `Failed to ${verb} ${name}`, details: error}, {status: 500});
+  const details = error instanceof Error
+    ? { name: error.name, message: error.message }
+    : error;
+
+  return NextResponse.json({error: `Failed to ${verb} ${name}`, details}, {status: 500});
 }

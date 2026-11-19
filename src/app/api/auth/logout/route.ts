@@ -6,7 +6,7 @@ export async function POST() {
   try {
     await deleteSession(); // removes cookie
     return NextResponse.json({ ok: true });
-  } catch (error) {
+  } catch {
     return serverError('user', 'logout', null)
   }
 }

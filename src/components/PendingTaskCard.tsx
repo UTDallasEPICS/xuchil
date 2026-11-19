@@ -1,4 +1,5 @@
 import React from "react";
+import { Calendar, User, ChevronRight } from "lucide-react";
 import styles from "../styles/PendingTaskCard.module.css";
 
 interface PendingTaskCardProps {
@@ -8,6 +9,7 @@ interface PendingTaskCardProps {
   currentStep: string;
   currentStepNumber: number;
   totalSteps: number;
+  onClick?: () => void;
 }
 
 const PendingTaskCard: React.FC<PendingTaskCardProps> = ({
@@ -17,26 +19,35 @@ const PendingTaskCard: React.FC<PendingTaskCardProps> = ({
   currentStep,
   currentStepNumber,
   totalSteps,
+  onClick,
 }) => {
   return (
-    <div className={styles.card}>
-      <div className={styles.leftColumn}>
-        <h3 className={styles.header}>{productName}</h3>
-        <h4 className={styles.subheader}>Fecha:</h4>
-        <p className={styles.text}>{startDate}</p>
+    <button type="button" className={styles.card} onClick={onClick}>
+      <div className={styles.body}>
+        <p className={styles.name}>{productName}</p>
+        <p className={styles.step}>{currentStep}</p>
 
-        <h4 className={styles.subheader}>Comenzado por:</h4>
-        <p className={styles.text}>{startedBy}</p>
+        <p className={styles.meta}>
+          <span className={styles.metaItem}>
+            <Calendar size={14} className={styles.metaIcon} />
+            {startDate}
+          </span>
+          <span className={styles.metaItem}>
+            <User size={14} className={styles.metaIcon} />
+            {startedBy}
+          </span>
+        </p>
+      </div>
 
-        <h4 className={styles.subheader}>Paso Actual:</h4>
-        <p className={styles.text}>{currentStep}</p>
-      </div>
-      <div className={styles.rightColumn}>
-        <div className={styles.circle}>
-          {currentStepNumber} / {totalSteps}
-        </div>
-      </div>
-    </div>
+      <span className={styles.progress}>
+        <span className={styles.progressValue}>
+          {currentStepNumber}
+          <span className={styles.progressTotal}>{` / ${totalSteps}`}</span>
+        </span>
+      </span>
+
+      <ChevronRight size={18} className={styles.chevron} />
+    </button>
   );
 };
 

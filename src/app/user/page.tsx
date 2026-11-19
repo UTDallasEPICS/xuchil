@@ -1,30 +1,26 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Pencil, ChevronRight } from "lucide-react";
 import Button from "@/components/Button";
-import HeaderXuchil from "@/components/HeaderXuchil";
 import Modal from "@/components/Modal";
 import styles from "./User.module.css";
 
-interface Guest {
-  id: number;
-  displayName: string;
-  contactInfo: string | null;
+interface UserData {
+  name: string;
+  email: string;
+  phone: string;
+  avatar: string;
+  position: string;
+  expiresAt: string | null;
+  hours: string;
 }
 
 const UserProfile = () => {
   const router = useRouter();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [role, setRole] = useState<"user" | "admin" | null>(null);
-  const [userData, setUserData] = useState<any>(null);
-
-  // Guest management state
-  const [guests, setGuests] = useState<Guest[]>([]);
-  const [showGuestSection, setShowGuestSection] = useState(false);
-  const [newGuestName, setNewGuestName] = useState("");
-  const [newGuestContact, setNewGuestContact] = useState("");
-  const [newGuestPassword, setNewGuestPassword] = useState("");
-  const [guestLoading, setGuestLoading] = useState(false);
+  const [userData, setUserData] = useState<UserData | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -44,9 +40,10 @@ const UserProfile = () => {
         setUserData({
           name: authUser.worker?.fullName ?? "",
           email: authUser.email,
-          phone: authUser.worker?.phone ?? "No especificado",
+          phone: authUser.worker?.phone ?? "",
           avatar: authUser.worker?.profilePhotoUrl ?? "",
           position: authUser.worker?.role?.name ?? "Operador",
+          expiresAt: authUser.worker?.expiresAt ?? null,
           hours: "",
         });
       } catch {
@@ -59,65 +56,7 @@ const UserProfile = () => {
     return () => {
       mounted = false;
     };
-  }, []);
-
-  // Load guests when admin opens section
-  useEffect(() => {
-    if (role === "admin" && showGuestSection) {
-      loadGuests();
-    }
-  }, [role, showGuestSection]);
-
-  const loadGuests = async () => {
-    try {
-      const res = await fetch("/api/guests", { credentials: "include" });
-      if (res.ok) {
-        const data = await res.json();
-        setGuests(data);
-      }
-    } catch (e) {
-      console.error("Failed to load guests:", e);
-    }
-  };
-
-  const handleCreateGuest = async () => {
-    if (!newGuestName.trim()) return;
-    setGuestLoading(true);
-    try {
-      const res = await fetch("/api/guests", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          displayName: newGuestName.trim(),
-          contactInfo: newGuestContact.trim() || null,
-          password: newGuestPassword || null,
-        }),
-      });
-      if (res.ok) {
-        setNewGuestName("");
-        setNewGuestContact("");
-        setNewGuestPassword("");
-        await loadGuests();
-      }
-    } catch (e) {
-      console.error("Failed to create guest:", e);
-    } finally {
-      setGuestLoading(false);
-    }
-  };
-
-  const handleDeleteGuest = async (guestId: number) => {
-    try {
-      await fetch(`/api/guests/${guestId}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-      await loadGuests();
-    } catch (e) {
-      console.error("Failed to delete guest:", e);
-    }
-  };
+  }, [router]);
 
   const confirmLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" }).catch(() => null);
@@ -126,144 +65,102 @@ const UserProfile = () => {
 
   if (!role || !userData) return null;
 
+  const iniciales = (userData.name || userData.email || "?")
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((p: string) => p.charAt(0).toUpperCase())
+    .join("");
+
   return (
-    <div className={`page ${styles.pageWrapper}`}>
-      <HeaderXuchil />
+    <div className={styles.wrapper}>
+      <header className={styles.head}>
+        <h1 className={styles.title}>Perfil de usuario</h1>
 
-      <div className={styles.actionButtonRight}>
-        <Button
-          size="small"
-          action="secondary"
-          onClick={() => router.push("/edit_user")}
-        >
-          Editar
-        </Button>
-      </div>
-
-      {role === "admin" && (
-        <div className={styles.actionButtonLeft}>
+        <div className={styles.editBtn}>
           <Button
             size="small"
-            action="primary"
-            onClick={() => router.push("/create_user")}
+            action="outline"
+            onClick={() => router.push("/edit_user")}
           >
-            Crear usuario
+            <Pencil size={15} />
+            Editar
           </Button>
         </div>
-      )}
+      </header>
 
-      <div className={styles.headerContainer}>
-        <h1>Perfil de usuario</h1>
-      </div>
+      <section className={styles.card}>
+        <div className={styles.identity}>
+          {userData.avatar ? (
+            <img
+              className={styles.avatar}
+              src={userData.avatar}
+              alt={`Foto de ${userData.name}`}
+            />
+          ) : (
+            <span className={styles.avatarFallback} aria-hidden="true">
+              {iniciales}
+            </span>
+          )}
 
-      <div className={styles.contentWrapper}>
-        <div className={styles.profileCard}>
-          <img
-            className={styles.avatar}
-            src={userData.avatar || "/globe.svg"}
-            alt="Avatar del usuario"
-          />
-
-          <h2 className={styles.profileName}>{userData.name}</h2>
-          <p className={styles.profilePosition}>{userData.position}</p>
-          <p className={styles.profileHours}>{userData.hours}</p>
-
-          <div className={styles.infoGroup}>
-            <p className={styles.infoLabel}>Correo electrónico:</p>
-            <p className={styles.infoValue}>{userData.email}</p>
-
-            <p className={styles.infoLabel}>Teléfono:</p>
-            <p className={styles.infoValue}>{userData.phone}</p>
-          </div>
-        </div>
-
-        {/* Guest Management Section - Admin only */}
-        {role === "admin" && (
-          <div className={styles.guestSection}>
-            <button
-              className={styles.guestToggle}
-              onClick={() => setShowGuestSection(!showGuestSection)}
-            >
-              <span>👥 Invitados</span>
-              <span>{showGuestSection ? "▲" : "▼"}</span>
-            </button>
-
-            {showGuestSection && (
-              <div className={styles.guestContent}>
-                {/* Guest List */}
-                {guests.length > 0 ? (
-                  <div className={styles.guestList}>
-                    {guests.map((guest) => (
-                      <div key={guest.id} className={styles.guestItem}>
-                        <div>
-                          <strong>{guest.displayName}</strong>
-                          {guest.contactInfo && (
-                            <span className={styles.guestContact}>
-                              {" "}— {guest.contactInfo}
-                            </span>
-                          )}
-                        </div>
-                        <button
-                          className={styles.deleteGuestBtn}
-                          onClick={() => handleDeleteGuest(guest.id)}
-                          title="Eliminar invitado"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className={styles.noGuests}>No hay invitados registrados</p>
-                )}
-
-                {/* Create Guest Form */}
-                <div className={styles.guestForm}>
-                  <h3 className={styles.guestFormTitle}>Nuevo invitado</h3>
-                  <input
-                    type="text"
-                    placeholder="Nombre del invitado *"
-                    value={newGuestName}
-                    onChange={(e) => setNewGuestName(e.target.value)}
-                    className={styles.guestInput}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Información de contacto"
-                    value={newGuestContact}
-                    onChange={(e) => setNewGuestContact(e.target.value)}
-                    className={styles.guestInput}
-                  />
-                  <input
-                    type="password"
-                    placeholder="Contraseña"
-                    value={newGuestPassword}
-                    onChange={(e) => setNewGuestPassword(e.target.value)}
-                    className={styles.guestInput}
-                  />
-                  <Button
-                    size="small"
-                    action="primary"
-                    onClick={handleCreateGuest}
-                  >
-                    {guestLoading ? "Creando..." : "Agregar invitado"}
-                  </Button>
-                </div>
-              </div>
+          <div className={styles.identityText}>
+            <h2 className={styles.name}>{userData.name}</h2>
+            {!!userData.position && (
+              <p className={styles.position}>{userData.position}</p>
             )}
           </div>
-        )}
-
-        <div className={styles.logoutWrapper}>
-          <Button
-            size="regular"
-            action="negative"
-            onClick={() => setShowLogoutModal(true)}
-          >
-            Cerrar sesión
-          </Button>
         </div>
-      </div>
+      </section>
+
+      <section className={styles.card}>
+        <div className={styles.infoRow}>
+          <p className={styles.infoLabel}>Correo electrónico</p>
+          <p className={styles.infoValue}>{userData.email}</p>
+        </div>
+
+        <div className={styles.infoRow}>
+          <p className={styles.infoLabel}>Teléfono</p>
+          {userData.phone ? (
+            <p className={styles.infoValue}>{userData.phone}</p>
+          ) : (
+            <button
+              type="button"
+              className={styles.infoAdd}
+              onClick={() => router.push("/edit_user")}
+            >
+              Agregar
+            </button>
+          )}
+        </div>
+
+        {userData.expiresAt && (
+          <div className={styles.infoRow}>
+            <p className={styles.infoLabel}>Vigencia</p>
+            <p className={styles.infoValue}>
+              {new Date(userData.expiresAt).toLocaleDateString("es-MX")}
+            </p>
+          </div>
+        )}
+      </section>
+
+      {role === "admin" && (
+        <button
+          type="button"
+          className={styles.menuRow}
+          onClick={() => router.push("/create_user")}
+        >
+          <span className={styles.menuText}>Gestión de usuarios</span>
+          <ChevronRight size={18} className={styles.menuChevron} />
+        </button>
+      )}
+
+      <button
+        type="button"
+        className={styles.logout}
+        onClick={() => setShowLogoutModal(true)}
+      >
+        Cerrar sesión
+      </button>
 
       <Modal
         open={showLogoutModal}

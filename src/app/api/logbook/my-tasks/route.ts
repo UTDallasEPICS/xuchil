@@ -5,6 +5,9 @@ import {serverError} from "@/utils/responses";
 
 export async function GET(request: NextRequest) {
   const workerId = (await verifySession())?.workerId;
+  if (!workerId) {
+    return NextResponse.json([]);
+  }
 
   const searchParams = request.nextUrl.searchParams;
   const dateFrom = searchParams.get('dateFrom');

@@ -7,6 +7,7 @@ async function clearDatabase() {
   // Delete from dependents to parents to satisfy foreign keys.
   await prisma.$transaction([
     prisma.stepParticipant.deleteMany(),
+    prisma.materialReservation.deleteMany(),
     prisma.stepMaterialUsage.deleteMany(),
     prisma.processPause.deleteMany(),
     prisma.stepExecution.deleteMany(),
@@ -19,7 +20,6 @@ async function clearDatabase() {
     prisma.processTemplate.deleteMany(),
     prisma.orderItem.deleteMany(),
     prisma.order.deleteMany(),
-    prisma.guestCollaborator.deleteMany(),
     prisma.authUser.deleteMany(),
     prisma.worker.deleteMany(),
     prisma.role.deleteMany(),

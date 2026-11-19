@@ -43,7 +43,7 @@ const Modal: React.FC<ModalProps> = ({
     >
       <div
         style={{
-          backgroundColor: "#fff",
+          backgroundColor: "#f3f3f3",
           borderRadius: "10px",
           padding: "24px",
           width: width, // Usamos la prop width
@@ -69,6 +69,7 @@ const Modal: React.FC<ModalProps> = ({
           marginBottom: "24px",
           lineHeight: "1.5", // Mejor legibilidad
           wordBreak: "break-word", // Evita desbordamiento de texto
+          whiteSpace: "pre-line",
         }}>
           {message}
         </p>

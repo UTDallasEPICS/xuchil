@@ -6,19 +6,26 @@
   background-color: var(--color-green-dark);
   display: flex;
   justify-content: space-around;
-  align-items: center;
+  align-items: stretch;
   padding: 12px 0;
   z-index: 100;
 }
 
 .tab {
+  position: relative;
   display: flex;
   align-items: center;
+  justify-content: center;
   text-decoration: none;
-  color: var(--color-text-light);
+  color: var(--color-gray-dark);
   font-size: 14px;
   padding: 8px 12px;
-  transition: transform 0.2s ease-in-out, color 0.3s;
+  transition: color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tab:hover {
+  color: var(--color-text-light);
 }
 
 .tabIcon {
@@ -35,9 +42,9 @@
   display: none;
 }
 
-.tabActive {
+.tabActive,
+.tabActive:hover {
   color: var(--color-accent);
-  transform: scale(1.1);
 }
 
 .tabActive .tabIcon {
@@ -46,6 +53,17 @@
 
 .tabActive .tabText {
   font-weight: bold;
+}
+
+.tabActive::before {
+  content: "";
+  position: absolute;
+  top: -12px;
+  left: 6px;
+  right: 6px;
+  height: 3px;
+  border-radius: 0 0 3px 3px;
+  background-color: var(--color-accent);
 }
 
 @media (min-width: 1024px) {

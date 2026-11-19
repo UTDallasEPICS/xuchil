@@ -19,9 +19,19 @@ export async function GET() {
         stepExecutions: {
           include: {
             templateStep: true,
+            worker: true,
+            stepParticipants: {
+              include: {
+                worker: true,
+              },
+            },
           },
           orderBy: { id: "asc" },
         },
+        materialReservations: {
+          include: { rawMaterial: true, unit: true },
+        },
+        processPauses: true,
       },
       orderBy: { startedAt: "desc" },
     });

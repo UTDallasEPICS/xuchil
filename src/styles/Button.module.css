@@ -33,7 +33,6 @@
     background-color: var(--color-green-light);
 }
 
-
 .inverted {
     font-weight: bold;
     color: var(--color-green-dark);
@@ -42,4 +41,16 @@
 
 .negative {
     background-color: var(--color-negative);
+}
+.outline {
+    font-weight: bold;
+    color: var(--color-green-dark);
+    background-color: transparent;
+    border: 2px solid var(--color-gray-light);
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.outline:hover {
+    border-color: var(--color-green-dark);
+    background-color: rgb(var(--rgb-green-light) / 0.14);
 }

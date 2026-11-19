@@ -2,24 +2,34 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import HeaderXuchil from "@/components/HeaderXuchil";
 import Button from "@/components/Button";
-import BottomButton from "@/components/BottomButton";
 import ProductCard from "@/components/ProductCard";
 import DeliveryType from "@/components/DeliveryType";
 import { fetchOrderByIdClient, putOrderStatusClient } from "@/lib/ordersClient";
 import {
+  ArrowLeft,
+  Pencil,
   CircleUserRound as UserIcon,
   Calendar as CalendarIcon,
+  MapPin,
+  Package,
+  AlertCircle,
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
 } from "lucide-react";
 
 import styles from "./OrderDetails.module.css";
 
+type OrderDetails = Awaited<ReturnType<typeof fetchOrderByIdClient>>;
+
 const formatMXDateLong = (raw: string) => {
+  if (!raw) return "Sin fecha";
   const [dd, mm, yyyy] = raw.split("/").map(Number);
+  if (!dd || !mm || !yyyy) return raw;
   const months = [
-    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
+    "enero", "febrero", "marzo", "abril", "mayo", "junio",
+    "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
   ];
   return `${dd} de ${months[mm - 1]} de ${yyyy}`;
 };
@@ -28,13 +38,17 @@ const OrderDetailsPage = () => {
   const { orderId } = useParams<{ orderId: string }>();
   const router = useRouter();
 
-  const [order, setOrder] = useState<any | null>(null);
+  const [order, setOrder] = useState<OrderDetails | null>(null);
   const [loading, setLoading] = useState(true);
+  const [statusError, setStatusError] = useState<string | null>(null);
+  const [stockWarnings, setStockWarnings] = useState<string[]>([]);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
 
   useEffect(() => {
     let mounted = true;
     const idNum = Number(orderId);
     if (Number.isNaN(idNum)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setOrder(null);
       setLoading(false);
       return;
@@ -51,79 +65,183 @@ const OrderDetailsPage = () => {
     };
   }, [orderId]);
 
-  if (loading) return <p>Cargando pedido...</p>;
-  if (!order) return <p>Pedido no encontrado</p>;
+  if (loading) {
+    return (
+      <div className={styles.wrapper}>
+        <p className={styles.stateMessage}>Cargando pedido...</p>
+      </div>
+    );
+  }
+
+  if (!order) {
+    return (
+      <div className={styles.wrapper}>
+        <div className={styles.card}>
+          <p className={styles.stateMessage}>Pedido no encontrado.</p>
+          <Button action="secondary" onClick={() => router.push("/orders/deliveries")}>
+            Volver a entregas
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   const { id, clientName, address, deliveryDate, deliveryVariant, products, delivered } = order;
 
   const handleEdit = () => {
     router.push(`/orders/deliveries/${id}/edit`);
-  }
+  };
 
   const handleDelivered = async () => {
+    setStatusError(null);
+    setStockWarnings([]);
+    setUpdatingStatus(true);
     try {
       const newStatus = delivered ? "SCHEDULED" : "DELIVERED";
-      const updated = await putOrderStatusClient(id, newStatus as any);
-      setOrder((prev: any) => {
+      const updated = await putOrderStatusClient(id, newStatus);
+      setOrder((prev) => {
         if (!prev) return prev;
         return {
           ...prev,
           delivered: updated?.status === "DELIVERED" || Boolean(updated?.deliveredAt),
         };
       });
+      if (Array.isArray(updated?.stockWarnings) && updated.stockWarnings.length > 0) {
+        setStockWarnings(updated.stockWarnings);
+      }
       router.refresh();
     } catch (err) {
       console.error("Failed to update order status", err);
-      alert("No se pudo cambiar el estado del pedido");
+      setStatusError("No se pudo actualizar el estado del pedido. Intenta de nuevo.");
+    } finally {
+      setUpdatingStatus(false);
     }
   };
 
   return (
     <div className={styles.wrapper}>
-      <div className={styles.editWrapper}>
-        <Button
+      <div className={styles.head}>
+        <button
           type="button"
-          size="small"
-          action="secondary"
-          onClick={handleEdit}
+          className={styles.backBtn}
+          onClick={() => router.push("/orders/deliveries")}
+          aria-label="Volver a entregas"
         >
-          Editar
+          <ArrowLeft size={20} strokeWidth={2.2} />
+        </button>
+
+        <div className={styles.headMain}>
+          <h1 className={styles.title}>{`Pedido #${id}`}</h1>
+          <div className={styles.badges}>
+            <DeliveryType variant={deliveryVariant} type="badge" size="sm" />
+            <span
+              className={`${styles.statusPill} ${
+                delivered ? styles.statusDelivered : styles.statusPending
+              }`}
+            >
+              {delivered ? (
+                <>
+                  <CheckCircle2 size={14} strokeWidth={2.4} />
+                  <span>Entregado</span>
+                </>
+              ) : (
+                <>
+                  <Clock size={14} strokeWidth={2.4} />
+                  <span>Pendiente</span>
+                </>
+              )}
+            </span>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          className={styles.editBtn}
+          onClick={handleEdit}
+          aria-label="Editar pedido"
+        >
+          <Pencil size={16} strokeWidth={2.2} />
+          <span>Editar</span>
+        </button>
+      </div>
+
+      {statusError && (
+        <div className={styles.errorBanner} role="alert">
+          <AlertCircle size={18} strokeWidth={2.2} />
+          <span>{statusError}</span>
+        </div>
+      )}
+
+      {stockWarnings.length > 0 && (
+        <div className={styles.warningBanner} role="status">
+          <AlertTriangle size={18} strokeWidth={2.2} className={styles.warningIcon} />
+          <div className={styles.warningContent}>
+            <strong>El pedido se marcó como entregado con faltante en inventario:</strong>
+            <ul className={styles.warningList}>
+              {stockWarnings.map((w, idx) => (
+                <li key={idx}>{w}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
+
+      <section className={styles.card}>
+        <div className={styles.infoGrid}>
+          <div className={styles.infoItem}>
+            <span className={styles.infoLabel}>
+              <UserIcon size={16} strokeWidth={2.2} />
+              <span>Cliente</span>
+            </span>
+            <strong className={styles.infoValue}>{clientName}</strong>
+          </div>
+
+          <div className={styles.infoItem}>
+            <span className={styles.infoLabel}>
+              <CalendarIcon size={16} strokeWidth={2.2} />
+              <span>Fecha de entrega</span>
+            </span>
+            <strong className={styles.infoValue}>{formatMXDateLong(deliveryDate)}</strong>
+          </div>
+
+          <div className={styles.infoItem}>
+            <span className={styles.infoLabel}>
+              <MapPin size={16} strokeWidth={2.2} />
+              <span>Dirección de entrega</span>
+            </span>
+            <p className={styles.addressText}>{address || "Sin dirección especificada"}</p>
+          </div>
+        </div>
+      </section>
+
+      <section className={styles.card}>
+        <div className={styles.sectionHeader}>
+          <span className={styles.infoLabel}>
+            <Package size={16} strokeWidth={2.2} />
+            <span>Productos ({products.length})</span>
+          </span>
+        </div>
+
+        <div className={styles.productContainer}>
+          {products.map((product) => (
+            <ProductCard key={product.id} {...product} />
+          ))}
+        </div>
+      </section>
+
+      <div className={styles.actions}>
+        <Button
+          action={delivered ? "secondary" : "primary"}
+          onClick={handleDelivered}
+          disabled={updatingStatus}
+        >
+          {updatingStatus
+            ? "Actualizando..."
+            : delivered
+            ? "Marcar como pendiente"
+            : "Marcar como entregado"}
         </Button>
       </div>
-
-      <HeaderXuchil />
-
-      <h1>{`Pedido #${id}`}</h1>
-
-      <div className={styles.deliveryType}>
-        <DeliveryType variant={deliveryVariant} type="badge" size="sm" />
-      </div>
-
-      <h3>Cliente:</h3>
-      <div className={styles.row}>
-        <UserIcon size={18} strokeWidth={2} className={styles.icon} />
-        <strong>{clientName}</strong>
-      </div>
-
-      <h3>Fecha de entrega:</h3>
-      <div className={styles.row}>
-        <CalendarIcon size={18} strokeWidth={2} className={styles.icon} />
-        <strong>{formatMXDateLong(deliveryDate)}</strong>
-      </div>
-
-      <h3>Dirección de entrega:</h3>
-      <p className={styles.address}>{address}</p>
-
-      <h3>Productos:</h3>
-      <div className={styles.productContainer}>
-        {products.map((product: any) => (
-          <ProductCard key={product.id} {...product} />
-        ))}
-      </div>
-
-      <BottomButton onClick={handleDelivered}>
-        {delivered ? "Marcar como pendiente" : "Marcar como entregado"}
-      </BottomButton>
     </div>
   );
 };

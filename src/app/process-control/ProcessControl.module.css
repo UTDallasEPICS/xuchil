@@ -1,32 +1,36 @@
-.pageWrapper {
-  position: relative;
-  padding: 0 0 2rem;
+.wrapper {
+  width: 100%;
+  max-width: 686px;
+  margin: 0 auto;
+  padding: 20px 14px 40px 14px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
-.newProcessButtonWrapper {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  z-index: 10;
+.title {
+  text-align: left;
+  width: 100%;
+  margin: 0;
+  font-size: var(--font-size-h2);
 }
 
-.headerContainer {
-  margin: 2rem auto 1rem;
-  padding: 0 1rem;
-  text-align: center;
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .activeTasksSection {
   width: 100%;
-  max-width: 400px;
-  margin: 0 auto 1.5rem;
-  padding: 0 1rem;
+  margin-bottom: 0.5rem;
 }
 
 .sectionTitle {
   font-size: 1rem;
   font-weight: 700;
-  color: var(--color-text);
+  color: var(--color-text-dark);
   margin: 0 0 0.5rem;
 }
 
@@ -36,11 +40,104 @@
   gap: 8px;
 }
 
-.container {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  max-width: 320px;
+.card {
   width: 100%;
-  margin-inline: auto;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 18px;
+  background-color: var(--color-field);
+  border: 1px solid var(--color-gray-light);
+  border-radius: 14px;
+  text-align: left;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: border-color 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.card:hover {
+  border-color: var(--color-green-light);
+}
+
+.card:focus-visible {
+  outline: 2px solid var(--color-green-light);
+  outline-offset: 2px;
+}
+
+.cardIcon {
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  background-color: var(--color-green-dark);
+  color: var(--color-text-light);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cardBody {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.cardTitle {
+  display: block;
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-text-dark);
+}
+
+.cardText {
+  display: block;
+  margin: 3px 0 0 0;
+  font-size: 0.9rem;
+  color: var(--color-gray-dark);
+}
+
+.cardChevron {
+  flex: 0 0 auto;
+  color: var(--color-gray-dark);
+}
+
+.addBtn {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 15px 16px;
+  background-color: transparent;
+  border: 1px dashed var(--color-gray-light);
+  border-radius: 14px;
+  color: var(--color-green-dark);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.18s ease, border-color 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.addBtn:hover {
+  background-color: rgb(var(--rgb-green-light) / 0.09);
+  border-color: var(--color-green-light);
+}
+
+@media (max-width: 480px) {
+  .card {
+    padding: 16px 14px;
+    gap: 13px;
+  }
+
+  .cardIcon {
+    width: 46px;
+    height: 46px;
+  }
 }

@@ -1,0 +1,84 @@
+.bar {
+  position: sticky;
+  top: 0;
+  z-index: 90;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-gray-light);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: 10px;
+  line-height: 0;
+  transition: background-color 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.brand:hover {
+  background-color: rgb(var(--rgb-green-light) / 0.14);
+}
+
+.brand:focus-visible {
+  outline: 2px solid var(--color-green-light);
+  outline-offset: 2px;
+}
+
+.logo {
+  height: 38px;
+  width: auto;
+  object-fit: contain;
+}
+
+.avatar {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-green-dark);
+  color: var(--color-text-light);
+  transition: background-color 0.18s ease, transform 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.avatar:hover {
+  background-color: var(--color-green-light);
+  color: var(--color-text-light);
+}
+
+.avatar:focus-visible {
+  outline: 2px solid var(--color-green-light);
+  outline-offset: 2px;
+}
+
+.avatarActive {
+  background-color: var(--color-accent);
+  color: var(--color-text-dark);
+}
+
+@media (max-width: 480px) {
+  .bar {
+    padding: 8px 12px;
+  }
+
+  .logo {
+    height: 32px;
+  }
+
+  .avatar {
+    width: 38px;
+    height: 38px;
+  }
+}

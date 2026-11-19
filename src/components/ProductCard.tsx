@@ -7,6 +7,7 @@ export interface ProductCardProps {
   presentation?: string;
   quantity: number | string;
   units: string;
+  note?: string;
   onClick?: () => void;
 }
 
@@ -16,6 +17,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   presentation,
   quantity,
   units,
+  note,
   onClick,
 }) => (
   <div className={styles.card} onClick={onClick}>
@@ -24,6 +26,9 @@ const ProductCard: React.FC<ProductCardProps> = ({
       <h3 className={styles.name}>{name}</h3>
       {!!presentation && (
         <p className={styles.presentation}>{presentation}</p>
+      )}
+      {!!note && (
+        <p className={styles.presentation}>{note}</p>
       )}
     </div>
     <div className={styles.amount}>
