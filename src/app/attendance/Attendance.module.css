@@ -9,7 +9,9 @@
   padding: 0 0 3rem;
 }
 
-.attendanceCard {
+/* Scoped under .content so it outranks Card.module.css's .card (min-width: 75vw,
+   margin: 10px) no matter which stylesheet Next.js happens to load last. */
+.content .attendanceCard {
   width: 100%;
   min-width: 0;
   margin: 0;

@@ -29,4 +29,12 @@
     top: 16px;
     z-index: 10;
 }
+
+/* Match the new-order page: keep content in a centered column on wide screens. */
+@media (min-width: 600px) {
+    .wrapper {
+      max-width: 500px;
+      margin: 0 auto;
+    }
+}
   
