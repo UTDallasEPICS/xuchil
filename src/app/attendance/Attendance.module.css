@@ -60,6 +60,11 @@
   background: var(--color-text-light);
 }
 
+.comparisonLink {
+  color: var(--color-green-dark);
+  font-weight: 700;
+}
+
 .refreshButton:disabled {
   cursor: not-allowed;
   opacity: 0.55;
