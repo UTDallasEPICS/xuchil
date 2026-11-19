@@ -14,6 +14,7 @@
     "build": "pnpm db:provider && prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
+    "test:analytics": "mocha --no-config --require tsx/cjs --reporter spec --timeout 120000 --exit \"tests/specs/analytics*.test.ts\"",
     "test:selenium": "mocha",
     "test:selenium:headless": "set HEADLESS=true && mocha",
     "test:selenium:watch": "mocha --watch",

@@ -87,20 +87,28 @@ function deliveredInRange(orders: RawOrder[], filter: FilterType, now: Date): (R
 }
 
 // Count orders per hour (today) or per day (week/month).
+// Every hour/day in the window gets a bar, zero included, so the x-axis always spans the
+// whole filter: 00:00 to now for "today", the last 7 or 30 days (plus today) otherwise.
 export function toOrderPoints(orders: RawOrder[], filter: FilterType, now = new Date()): OrderPoint[] {
+  const label = (d: Date) =>
+    filter === "today"
+      ? `${d.getHours().toString().padStart(2, "0")}:00`
+      : d.toLocaleDateString("es-MX", { day: "2-digit", month: "2-digit" });
+
+  // Empty buckets first, oldest to newest; JS objects keep string keys in insertion order.
   const grouped: Record<string, number> = {};
-  // Sort oldest-first so the object's keys (bars) come out in time order;
-  // JS objects keep string keys in the order they were first added.
-  const sorted = deliveredInRange(orders, filter, now).sort(
-    (a, b) => new Date(a.deliveredAt).getTime() - new Date(b.deliveredAt).getTime()
-  );
-  for (const o of sorted) {
-    const d = new Date(o.deliveredAt);
-    const label =
-      filter === "today"
-        ? `${d.getHours().toString().padStart(2, "0")}:00`
-        : d.toLocaleDateString("es-MX", { day: "2-digit", month: "2-digit" });
-    grouped[label] = (grouped[label] || 0) + 1;
+  if (filter === "today") {
+    for (let h = 0; h <= now.getHours(); h++) grouped[label(new Date(2000, 0, 1, h))] = 0;
+  } else {
+    // inRange is inclusive (exactly 7 / 30 days ago counts), so that day gets a bar too.
+    for (let i = filter === "weekly" ? 7 : 30; i >= 0; i--) {
+      grouped[label(new Date(now.getFullYear(), now.getMonth(), now.getDate() - i))] = 0;
+    }
+  }
+
+  for (const o of deliveredInRange(orders, filter, now)) {
+    const key = label(new Date(o.deliveredAt));
+    grouped[key] = (grouped[key] ?? 0) + 1;
   }
   return Object.entries(grouped).map(([date, orderCount]) => ({ date, orderCount }));
 }

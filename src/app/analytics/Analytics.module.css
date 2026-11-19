@@ -120,6 +120,9 @@ button.card {
   padding: 0.5rem;
   border-bottom: 1px solid var(--color-gray-light);
   overflow-x: auto;
+  /* globals' .page centers children (justify-items), which shrink-wraps this to its 31 bars and
+     lets the ends get clipped. Stretch to the column instead so extra bars scroll inside. */
+  justify-self: stretch;
 }
 
 .barColumn {
