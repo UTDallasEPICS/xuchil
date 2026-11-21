@@ -71,6 +71,8 @@ const CreateUserPage = () => {
   const [editIsActive, setEditIsActive] = useState(true);
   const [editRole, setEditRole] = useState<"empleado" | "temporal">("empleado");
   const [additionalDays, setAdditionalDays] = useState("0");
+  const [editPassword, setEditPassword] = useState("");
+  const [editConfirmPassword, setEditConfirmPassword] = useState("");
 
   // Validations from feat/users-validations
   const passwordTooShort = permPassword.length > 0 && permPassword.length < 8;
@@ -270,10 +272,25 @@ const CreateUserPage = () => {
     const isExpiredOrMissing =
       !user.expiresAt || new Date(user.expiresAt) <= new Date();
     setAdditionalDays(user.role === "temporal" && isExpiredOrMissing ? "7" : "0");
+    setEditPassword("");
+    setEditConfirmPassword("");
   };
+
+  // Panel renders at the bottom of the page; bring it into view when a user is picked.
+  useEffect(() => {
+    if (selectedUser) document.getElementById("edit-panel")?.scrollIntoView({ behavior: "smooth" });
+  }, [selectedUser]);
 
   const handleUpdateUser = async () => {
     if (!selectedUser) return;
+    if (editPassword && editPassword.trim().length < 8) {
+      setNotificationModal({ open: true, title: "Error", message: "La nueva contraseña debe tener al menos 8 caracteres.", error: true });
+      return;
+    }
+    if (editPassword !== editConfirmPassword) {
+      setNotificationModal({ open: true, title: "Error", message: "Las contraseñas no coinciden.", error: true });
+      return;
+    }
     setLoading(true);
 
     try {
@@ -286,6 +303,7 @@ const CreateUserPage = () => {
           isActive: editIsActive,
           role: editRole,
           additionalDays: Number.parseInt(additionalDays, 10) || 0,
+          newPassword: editPassword || undefined,
         }),
       });
 
@@ -798,6 +816,7 @@ const CreateUserPage = () => {
       {/* PANEL DE EDICIÓN FLUIDO */}
       {selectedUser && (
         <div
+          id="edit-panel"
           style={{
             marginTop: "20px",
             backgroundColor: "var(--color-field)",
@@ -874,6 +893,36 @@ const CreateUserPage = () => {
                 />
               </div>
             )}
+
+            {/* Restablecer contraseña (opcional) */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+              <label htmlFor="edit-password" style={{ fontWeight: "bold", fontSize: "0.85rem", color: "#334155" }}>
+                Restablecer contraseña:
+              </label>
+              <input
+                id="edit-password"
+                type="password"
+                autoComplete="new-password"
+                placeholder="Dejar vacío para no cambiarla"
+                value={editPassword}
+                onChange={(e) => setEditPassword(e.target.value)}
+                className={styles.input}
+              />
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+              <label htmlFor="edit-confirm-password" style={{ fontWeight: "bold", fontSize: "0.85rem", color: "#334155" }}>
+                Confirmar contraseña:
+              </label>
+              <input
+                id="edit-confirm-password"
+                type="password"
+                autoComplete="new-password"
+                value={editConfirmPassword}
+                onChange={(e) => setEditConfirmPassword(e.target.value)}
+                className={styles.input}
+              />
+            </div>
 
             <div className={styles.actions}>
               <Button

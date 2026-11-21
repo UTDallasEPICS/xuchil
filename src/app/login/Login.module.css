@@ -47,4 +47,9 @@
   margin-top: 12px;
   color: var(--color-text-light);
   font-size: 0.85rem;
+  background: none;
+  border: none;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 8px;
 }

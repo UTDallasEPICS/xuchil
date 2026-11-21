@@ -12,7 +12,8 @@ const Login = () => {
   const [user, setUser] = useState("");
   const [password, setPassword] = useState("");
   const [showErrorModal, setShowErrorModal] = useState(false);
-  
+  const [showForgotModal, setShowForgotModal] = useState(false);
+
   const handleLogin = async () => {
     try {
       const response = await fetch("/api/auth/login", {
@@ -67,8 +68,23 @@ const Login = () => {
             </Button>
           </div>
 
-          <p className={styles.help}>¿Perdiste tu contraseña?</p>
+          <button
+            type="button"
+            className={styles.help}
+            onClick={() => setShowForgotModal(true)}
+          >
+            ¿Perdiste tu contraseña?
+          </button>
         </div>
+
+        <Modal
+          open={showForgotModal}
+          title="¿Olvidaste tu contraseña?"
+          message="Comunícate con el administrador para restablecer tu contraseña."
+          confirmText="Entendido"
+          onlyConfirm
+          onConfirm={() => setShowForgotModal(false)}
+        />
 
         <Modal
           open={showErrorModal}
