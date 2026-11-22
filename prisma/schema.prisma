@@ -173,6 +173,7 @@ model Worker {
   processRuns      ProcessRun[]
   stepExecutions   StepExecution[]
   stepParticipants StepParticipant[]
+  shifts           WorkerShift[]
 }
 
 model AuthUser {
@@ -184,9 +185,41 @@ model AuthUser {
   isActive     Boolean   @default(true)
   lastLoginAt  DateTime?
 
-  worker Worker? @relation(fields: [workerId], references: [id])
+  worker           Worker?           @relation(fields: [workerId], references: [id])
+  shiftCorrections ShiftCorrection[]
 
   @@index([workerId])
+}
+
+model WorkerShift {
+  id        Int       @id @default(autoincrement())
+  workerId  Int
+  startedAt DateTime
+  endedAt   DateTime?
+
+  worker      Worker            @relation(fields: [workerId], references: [id])
+  corrections ShiftCorrection[]
+
+  @@index([workerId, startedAt])
+  @@index([workerId, endedAt])
+}
+
+model ShiftCorrection {
+  id                Int       @id @default(autoincrement())
+  workerShiftId     Int
+  editorAuthUserId  Int
+  reason            String
+  originalStartedAt DateTime
+  originalEndedAt   DateTime?
+  updatedStartedAt  DateTime
+  updatedEndedAt    DateTime?
+  correctedAt       DateTime  @default(now())
+
+  workerShift WorkerShift @relation(fields: [workerShiftId], references: [id])
+  editor      AuthUser    @relation(fields: [editorAuthUserId], references: [id])
+
+  @@index([workerShiftId, correctedAt])
+  @@index([editorAuthUserId, correctedAt])
 }
 
 model ProcessTemplate {
