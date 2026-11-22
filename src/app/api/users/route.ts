@@ -166,12 +166,18 @@ export async function PUT(req: NextRequest) {
   }
   try {
     const body = await req.json();
-    const { userId, isActive, role, additionalDays } = body;
+    const { userId, isActive, role, additionalDays, newPassword } = body;
 
     if (!userId) {
       return NextResponse.json({ error: "userId is required" }, { status: 400 });
     }
 
+    // Optional admin password reset. Empty/absent = keep current password.
+    if (newPassword !== undefined && (typeof newPassword !== "string" || newPassword.trim().length < 8)) {
+      return NextResponse.json({ error: "newPassword must be at least 8 characters" }, { status: 400 });
+    }
+
+    // 1. Encontrar el AuthUser y su Worker asociado actualmente
     const currentAccount = await prisma.authUser.findUnique({
       where: { id: Number(userId) },
       include: { worker: true },
@@ -225,6 +231,7 @@ export async function PUT(req: NextRequest) {
       where: { id: Number(userId) },
       data: {
         isActive: nextActive,
+        passwordHash: newPassword ? await bcrypt.hash(newPassword, 10) : undefined,
         worker: {
           update: {
             isActive: nextActive,

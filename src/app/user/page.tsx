@@ -154,6 +154,18 @@ const UserProfile = () => {
         </button>
       )}
 
+      {/* Admins see all analytics; workers see only their own task counts. */}
+      <button
+        type="button"
+        className={styles.menuRow}
+        onClick={() => router.push("/analytics")}
+      >
+        <span className={styles.menuText}>
+          {role === "admin" ? "Analíticas" : "Mis estadísticas"}
+        </span>
+        <ChevronRight size={18} className={styles.menuChevron} />
+      </button>
+
       <button
         type="button"
         className={styles.logout}

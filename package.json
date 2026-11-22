@@ -13,6 +13,7 @@
     "build": "pnpm db:provider && prisma generate && next build",
     "start": "next start",
     "lint": "eslint .",
+    "test:analytics": "mocha --no-config --require tsx/cjs --reporter spec --timeout 120000 --exit \"tests/specs/analytics*.test.ts\"",
     "test:selenium": "tsx node_modules/mocha/bin/mocha.js \"tests/specs/**/*.test.ts\"",
     "test:selenium:headless": "HEADLESS=true pnpm test:selenium",
     "test:selenium:watch": "tsx node_modules/mocha/bin/mocha.js --watch \"tests/specs/**/*.test.ts\"",
